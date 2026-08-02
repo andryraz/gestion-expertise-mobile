@@ -17,22 +17,37 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
   const theme = useTheme();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleRegister = () => {
     setIsLoading(true);
-    // Simulate login (no backend yet)
+    // Simulate registration (no backend yet)
     setTimeout(() => {
       setIsLoading(false);
     }, 1500);
   };
 
-  const isFormValid = email.trim().length > 0 && password.trim().length > 0;
+  const isFormValid =
+    name.trim().length > 0 &&
+    email.trim().length > 0 &&
+    password.trim().length > 0 &&
+    confirmPassword.trim().length > 0 &&
+    password === confirmPassword;
+
+  const passwordsMatch = password === confirmPassword || confirmPassword.length === 0;
+
+  const getPasswordValidationColor = () => {
+    if (confirmPassword.length === 0) return undefined;
+    return passwordsMatch ? '#34C759' : '#FF3B30';
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -49,21 +64,48 @@ export default function LoginScreen() {
               <View style={[styles.logoContainer, { backgroundColor: theme.backgroundElement }]}>
                 <SymbolView
                   tintColor={theme.text}
-                  name={{ ios: 'person.circle.fill', web: 'person.circle.fill' } as any}
-                  size={40}
+                  name={{ ios: 'person.badge.plus.fill', web: 'person.badge.plus.fill' } as any}
+                  size={36}
                   weight="bold"
                 />
               </View>
               <ThemedText type="title" style={styles.title}>
-                Bienvenue
+                Créer un compte
               </ThemedText>
               <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-                Connectez-vous pour continuer
+                Rejoignez-nous en créant votre profil
               </ThemedText>
             </ThemedView>
 
             {/* Form */}
             <ThemedView type="backgroundElement" style={styles.formCard}>
+              {/* Full Name */}
+              <ThemedView style={styles.inputGroup}>
+                <ThemedText type="smallBold" style={styles.label}>
+                  Nom complet
+                </ThemedText>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    { borderColor: theme.backgroundSelected, backgroundColor: theme.background },
+                  ]}>
+                  <SymbolView
+                    tintColor={theme.textSecondary}
+                    name={{ ios: 'person.fill', web: 'person.fill' } as any}
+                    size={16}
+                  />
+                  <TextInput
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder="Jean Dupont"
+                    placeholderTextColor={theme.textSecondary}
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+              </ThemedView>
+
               {/* Email */}
               <ThemedView style={styles.inputGroup}>
                 <ThemedText type="smallBold" style={styles.label}>
@@ -109,7 +151,7 @@ export default function LoginScreen() {
                   />
                   <TextInput
                     style={[styles.input, { color: theme.text }]}
-                    placeholder="Votre mot de passe"
+                    placeholder="Minimum 8 caractères"
                     placeholderTextColor={theme.textSecondary}
                     value={password}
                     onChangeText={setPassword}
@@ -132,19 +174,68 @@ export default function LoginScreen() {
                 </View>
               </ThemedView>
 
-              {/* Forgot password */}
-              <Pressable style={styles.forgotPassword} hitSlop={8}>
-                <ThemedText type="link" themeColor="textSecondary">
-                  Mot de passe oublié ?
+              {/* Confirm Password */}
+              <ThemedView style={styles.inputGroup}>
+                <ThemedText type="smallBold" style={styles.label}>
+                  Confirmer le mot de passe
                 </ThemedText>
-              </Pressable>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    {
+                      borderColor: getPasswordValidationColor() ?? theme.backgroundSelected,
+                      backgroundColor: theme.background,
+                    },
+                  ]}>
+                  <SymbolView
+                    tintColor={getPasswordValidationColor() ?? theme.textSecondary}
+                    name={{
+                      ios: passwordsMatch && confirmPassword.length > 0
+                        ? 'checkmark.circle.fill'
+                        : 'lock.fill',
+                      web: passwordsMatch && confirmPassword.length > 0
+                        ? 'checkmark.circle.fill'
+                        : 'lock.fill',
+                    } as any}
+                    size={16}
+                  />
+                  <TextInput
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder="Répétez le mot de passe"
+                    placeholderTextColor={theme.textSecondary}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                  />
+                  <Pressable
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={styles.eyeButton}
+                    hitSlop={8}>
+                    <SymbolView
+                      tintColor={theme.textSecondary}
+                      name={{
+                        ios: showConfirmPassword ? 'eye.slash.fill' : 'eye.fill',
+                        web: showConfirmPassword ? 'eye.slash.fill' : 'eye.fill',
+                      } as any}
+                      size={16}
+                    />
+                  </Pressable>
+                </View>
+                {!passwordsMatch && confirmPassword.length > 0 && (
+                  <ThemedText
+                    style={{ color: '#FF3B30', fontSize: 12, marginTop: 4 }}>
+                    Les mots de passe ne correspondent pas
+                  </ThemedText>
+                )}
+              </ThemedView>
 
-              {/* Login button */}
+              {/* Register button */}
               <Pressable
-                onPress={handleLogin}
+                onPress={handleRegister}
                 disabled={!isFormValid || isLoading}
                 style={({ pressed }) => [
-                  styles.loginButton,
+                  styles.registerButton,
                   {
                     backgroundColor: isFormValid ? theme.text : theme.backgroundSelected,
                     opacity: pressed && isFormValid ? 0.85 : 1,
@@ -152,25 +243,25 @@ export default function LoginScreen() {
                 ]}>
                 <ThemedText
                   style={[
-                    styles.loginButtonText,
+                    styles.registerButtonText,
                     { color: isFormValid ? theme.background : theme.textSecondary },
                   ]}>
-                  {isLoading ? 'Connexion...' : 'Se connecter'}
+                  {isLoading ? 'Inscription...' : "S'inscrire"}
                 </ThemedText>
               </Pressable>
             </ThemedView>
 
-            {/* Register link */}
+            {/* Login link */}
             <ThemedView style={styles.footer}>
-              <ThemedText themeColor="textSecondary">Pas encore de compte ?</ThemedText>
+              <ThemedText themeColor="textSecondary">Déjà un compte ?</ThemedText>
               <Pressable
-                onPress={() => router.push('/register' as any)}
+                onPress={() => router.back()}
                 hitSlop={8}
                 style={({ pressed }) => pressed && styles.pressed}>
                 <ThemedText
                   type="linkPrimary"
-                  style={styles.registerLink}>
-                  S'inscrire
+                  style={styles.loginLink}>
+                  Se connecter
                 </ThemedText>
               </Pressable>
             </ThemedView>
@@ -252,17 +343,14 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: Spacing.half,
   },
-  forgotPassword: {
-    alignItems: 'flex-end',
-  },
-  loginButton: {
+  registerButton: {
     paddingVertical: Spacing.three,
     borderRadius: Spacing.three,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.one,
   },
-  loginButtonText: {
+  registerButtonText: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '600',
@@ -274,7 +362,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     marginTop: Spacing.five,
   },
-  registerLink: {
+  loginLink: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '600',
