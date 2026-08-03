@@ -1,35 +1,49 @@
-import { useState } from 'react';
+import { router } from "expo-router";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import {
+  AuthFooter,
+  FormField,
+  LogoMark,
+  PrimaryButton,
+} from "@/components/auth";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { useAuth } from "@/context/auth-context";
+import { ApiError } from "@/services/api-client";
 
 export default function LoginScreen() {
-  const theme = useTheme();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const { login } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
     setIsLoading(true);
-    // Simulate login (no backend yet)
-    setTimeout(() => {
+    setError(null);
+    try {
+      await login(email, password);
+      router.replace("/(tabs)/dashboard" as any); // adapte à ta route d'accueil
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Impossible de se connecter",
+      );
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const isFormValid = email.trim().length > 0 && password.trim().length > 0;
@@ -39,141 +53,85 @@ export default function LoginScreen() {
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
+            showsVerticalScrollIndicator={false}
+          >
             {/* Header */}
-            <ThemedView style={styles.headerSection}>
-              <View style={[styles.logoContainer, { backgroundColor: theme.backgroundElement }]}>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'person.circle.fill', web: 'person.circle.fill' } as any}
-                  size={40}
-                  weight="bold"
-                />
+            <View style={styles.headerSection}>
+              <LogoMark />
+              <View style={styles.headingGroup}>
+                <ThemedText type="subtitle" style={{ textAlign: "center" }}>
+                  Connexion
+                </ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  Accès réservé aux experts agréés
+                </ThemedText>
               </View>
-              <ThemedText type="title" style={styles.title}>
-                Bienvenue
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-                Connectez-vous pour continuer
-              </ThemedText>
-            </ThemedView>
+            </View>
 
             {/* Form */}
             <ThemedView type="backgroundElement" style={styles.formCard}>
-              {/* Email */}
-              <ThemedView style={styles.inputGroup}>
-                <ThemedText type="smallBold" style={styles.label}>
-                  Email
-                </ThemedText>
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    { borderColor: theme.backgroundSelected, backgroundColor: theme.background },
-                  ]}>
-                  <SymbolView
-                    tintColor={theme.textSecondary}
-                    name={{ ios: 'envelope.fill', web: 'envelope.fill' } as any}
-                    size={16}
-                  />
-                  <TextInput
-                    style={[styles.input, { color: theme.text }]}
-                    placeholder="exemple@email.com"
-                    placeholderTextColor={theme.textSecondary}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-              </ThemedView>
+              <FormField
+                label="Adresse e-mail"
+                icon="envelope.fill"
+                placeholder="expert@cabinet.mg"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
 
-              {/* Password */}
-              <ThemedView style={styles.inputGroup}>
-                <ThemedText type="smallBold" style={styles.label}>
-                  Mot de passe
-                </ThemedText>
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    { borderColor: theme.backgroundSelected, backgroundColor: theme.background },
-                  ]}>
-                  <SymbolView
-                    tintColor={theme.textSecondary}
-                    name={{ ios: 'lock.fill', web: 'lock.fill' } as any}
-                    size={16}
-                  />
-                  <TextInput
-                    style={[styles.input, { color: theme.text }]}
-                    placeholder="Votre mot de passe"
-                    placeholderTextColor={theme.textSecondary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                  />
-                  <Pressable
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeButton}
-                    hitSlop={8}>
-                    <SymbolView
-                      tintColor={theme.textSecondary}
-                      name={{
-                        ios: showPassword ? 'eye.slash.fill' : 'eye.fill',
-                        web: showPassword ? 'eye.slash.fill' : 'eye.fill',
-                      } as any}
-                      size={16}
-                    />
+              <FormField
+                label="Mot de passe"
+                icon="lock.fill"
+                secureToggle
+                placeholder="Votre mot de passe"
+                value={password}
+                onChangeText={setPassword}
+                autoCapitalize="none"
+                rightElement={
+                  <Pressable hitSlop={8}>
+                    {/* <ThemedText type="link" themeColor="textSecondary">
+                      Mot de passe oublié ?
+                    </ThemedText> */}
                   </Pressable>
-                </View>
-              </ThemedView>
-
-              {/* Forgot password */}
-              <Pressable style={styles.forgotPassword} hitSlop={8}>
-                <ThemedText type="link" themeColor="textSecondary">
-                  Mot de passe oublié ?
-                </ThemedText>
-              </Pressable>
-
-              {/* Login button */}
-              <Pressable
+                }
+              />
+              <PrimaryButton
+                label="Se connecter"
+                loadingLabel="Connexion..."
                 onPress={handleLogin}
-                disabled={!isFormValid || isLoading}
-                style={({ pressed }) => [
-                  styles.loginButton,
-                  {
-                    backgroundColor: isFormValid ? theme.text : theme.backgroundSelected,
-                    opacity: pressed && isFormValid ? 0.85 : 1,
-                  },
-                ]}>
-                <ThemedText
-                  style={[
-                    styles.loginButtonText,
-                    { color: isFormValid ? theme.background : theme.textSecondary },
-                  ]}>
-                  {isLoading ? 'Connexion...' : 'Se connecter'}
-                </ThemedText>
-              </Pressable>
+                disabled={!isFormValid}
+                loading={isLoading}
+                icon="arrow.right"
+              />
             </ThemedView>
 
             {/* Register link */}
-            <ThemedView style={styles.footer}>
-              <ThemedText themeColor="textSecondary">Pas encore de compte ?</ThemedText>
+            <View style={styles.footer}>
+              <ThemedText themeColor="textSecondary">
+                Pas encore de compte ?
+              </ThemedText>
               <Pressable
-                onPress={() => router.push('/register' as any)}
+                onPress={() => router.push("/register" as any)}
                 hitSlop={8}
-                style={({ pressed }) => pressed && styles.pressed}>
-                <ThemedText
-                  type="linkPrimary"
-                  style={styles.registerLink}>
+                style={({ pressed }) => pressed && styles.pressed}
+              >
+                <ThemedText type="linkPrimary" style={styles.registerLink}>
                   S'inscrire
                 </ThemedText>
               </Pressable>
-            </ThemedView>
+            </View>
+
+            <AuthFooter
+              line1="Expertise Mobile · v1.0.0"
+              line2="Bâtiment & Travaux Publics"
+            />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -195,89 +153,40 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.six,
-    justifyContent: 'center',
-    alignSelf: 'center',
-    width: '100%',
+    justifyContent: "center",
+    alignSelf: "center",
+    width: "100%",
     maxWidth: MaxContentWidth,
   },
   headerSection: {
-    alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.four,
     marginBottom: Spacing.five,
   },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.two,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  subtitle: {
-    textAlign: 'center',
-    fontSize: 16,
-    lineHeight: 24,
+  headingGroup: {
+    gap: Spacing.one,
+    alignItems: "center",
   },
   formCard: {
     borderRadius: Spacing.four,
     padding: Spacing.four,
     gap: Spacing.three,
   },
-  inputGroup: {
-    gap: Spacing.one,
-  },
-  label: {
-    fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  statsRow: {
+    flexDirection: "row",
     gap: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Platform.OS === 'ios' ? Spacing.three : Spacing.two,
-    borderRadius: Spacing.three,
-    borderWidth: 1,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
-    padding: 0,
-  },
-  eyeButton: {
-    padding: Spacing.half,
-  },
-  forgotPassword: {
-    alignItems: 'flex-end',
-  },
-  loginButton: {
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginTop: Spacing.one,
   },
-  loginButtonText: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
-  },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: Spacing.one,
     marginTop: Spacing.five,
   },
   registerLink: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   pressed: {
     opacity: 0.7,
