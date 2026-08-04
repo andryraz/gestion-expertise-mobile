@@ -36,7 +36,7 @@ export default function LoginScreen() {
     setError(null);
     try {
       await login(email, password);
-      router.replace("/(tabs)/dashboard" as any); // adapte à ta route d'accueil
+      router.replace("/(tabs)/dashboard" as any);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Impossible de se connecter",
@@ -112,7 +112,6 @@ export default function LoginScreen() {
               />
             </ThemedView>
 
-            {/* Register link */}
             <View style={styles.footer}>
               <ThemedText themeColor="textSecondary">
                 Pas encore de compte ?

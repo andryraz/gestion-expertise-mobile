@@ -22,14 +22,11 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
 
-    // Écrans publics : login (index) et register
     const inAuthGroup = segments[0] === undefined || segments[0] === "register";
 
     if (!user && !inAuthGroup) {
-      // Pas connecté et sur un écran protégé -> retour au login
       router.replace("/");
     } else if (user && inAuthGroup) {
-      // Connecté mais encore sur login/register -> vers l'app
       router.replace("/(tabs)/dashboard" as any);
     }
   }, [user, isLoading, segments]);
