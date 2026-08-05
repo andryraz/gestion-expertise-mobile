@@ -12,19 +12,19 @@ function timestamp() {
 }
 
 function log(level: LogLevel, scope: string, message: string, data?: unknown) {
-  if (!__DEV__ && level === "debug") return; // pas de debug en prod
+  if (!__DEV__ && level === "debug") return; // skip debug logs in production
 
   const prefix = `[${timestamp()}] [${scope}]`;
 
   if (__DEV__) {
-    // %c fonctionne dans la console Metro/Chrome DevTools
+    // %c works in the Metro / Chrome DevTools console
     console.log(
       `%c${prefix} ${message}`,
       `color: ${COLORS[level]}`,
       data ?? "",
     );
   } else {
-    // en prod : pas de couleur, et on pourrait brancher un service distant ici (Sentry, etc.)
+    // In production: no colors, and a remote service (Sentry, etc.) could be hooked here
     console.log(`${prefix} ${message}`, data ?? "");
   }
 }
@@ -40,7 +40,6 @@ export const logger = {
     log("error", scope, message, data),
 };
 
-// ajoute dans logger.ts
 export function maskToken(token: string) {
   if (token.length <= 12) return "***";
   return `${token.slice(0, 6)}...${token.slice(-4)}`;

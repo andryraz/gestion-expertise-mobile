@@ -17,37 +17,6 @@ type RequestOptions = {
   auth?: boolean;
 };
 
-// export async function apiRequest<T>(
-//   path: string,
-//   options: RequestOptions = {},
-// ): Promise<T> {
-//   const headers: Record<string, string> = {
-//     "Content-Type": "application/json",
-//   };
-
-//   if (options.auth) {
-//     const token = await getToken();
-//     if (token) headers.Authorization = `Bearer ${token}`;
-//   }
-
-//   const response = await fetch(`${API_URL}${path}`, {
-//     method: options.method ?? "GET",
-//     headers,
-//     body: options.body ? JSON.stringify(options.body) : undefined,
-//   });
-
-//   const data = await response.json().catch(() => null);
-
-//   if (!response.ok) {
-//     const message = Array.isArray(data?.message)
-//       ? data.message[0]
-//       : data?.message;
-//     throw new ApiError(response.status, message ?? "Une erreur est survenue");
-//   }
-
-//   return data as T;
-// }
-
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
@@ -62,7 +31,9 @@ export async function apiRequest<T>(
   }
 
   const method = options.method ?? "GET";
-  logger.debug("API", `→ ${method} ${path}`, options.body);
+  // Never log request bodies for auth endpoints (they contain credentials)
+  const loggableBody = path.startsWith("/auth") ? undefined : options.body;
+  logger.debug("API", `→ ${method} ${path}`, loggableBody);
 
   const response = await fetch(`${API_URL}${path}`, {
     method,

@@ -9,6 +9,14 @@ export type MissionStatus =
   | "TERMINEE"
   | "ENVOYEE";
 
+export type MissionType =
+  | "PATHOLOGIE"
+  | "EVALUATION_TERRAIN"
+  | "EVALUATION_BATIMENT"
+  | "CONFORMITE_TRAVAUX"
+  | "LITIGE_TRAVAUX"
+  | "AUTRE";
+
 export type MissionBrief = {
   id: string;
   reference: string;
@@ -25,7 +33,7 @@ export type Mission = {
   id: string;
   reference: string;
   title: string;
-  missionType: string;
+  missionType: MissionType;
   status: MissionStatus;
   buildingAddress?: string | null;
   buildingType?: string | null;

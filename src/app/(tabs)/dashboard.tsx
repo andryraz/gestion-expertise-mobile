@@ -1,23 +1,19 @@
 import { router } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useState } from "react";
-import {
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { LogoMark } from "@/components/auth";
 import {
-    MissionsTable,
-    PendingQuoteRow,
-    QuickActionBanner,
-    SectionCard,
-    StatsGrid,
-    StatTile,
+  MissionsTable,
+  PendingQuoteRow,
+  QuickActionBanner,
+  SectionCard,
+  StatsGrid,
+  StatTile,
 } from "@/components/dashboard";
+import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { STATUS_LABELS } from "@/constants/mission-labels";
@@ -49,7 +45,7 @@ export default function DashboardScreen() {
       ]);
       setStats(statsResult);
       setMissions(missionsResult.data);
-      logger.info("Dashboard", "Chargement réussi", {
+      logger.info("Dashboard", "Load successful", {
         total: statsResult.total,
       });
     } catch (err) {
@@ -58,7 +54,7 @@ export default function DashboardScreen() {
           ? err.message
           : "Impossible de charger le tableau de bord";
       setError(message);
-      logger.error("Dashboard", "Échec du chargement", message);
+      logger.error("Dashboard", "Load failed", message);
     }
   }, []);
 
@@ -76,101 +72,102 @@ export default function DashboardScreen() {
   return (
     <ThemedView className="flex-1">
       <SafeAreaView className="flex-1">
-        {/* Header */}
-        <View className="flex-row items-center justify-between px-four py-two">
-          <LogoMark compact />
-          <Pressable onPress={handleRefresh} hitSlop={8}>
-            <SymbolView
-              tintColor={theme.text}
-              name={
-                {
-                  ios: "arrow.trianglehead.2.clockwise",
-                  web: "arrow.trianglehead.2.clockwise",
-                } as any
-              }
-              size={18}
-            />
-          </Pressable>
-        </View>
-
-        <ScrollView
-          contentContainerClassName="gap-three self-center w-full max-w-content px-four pb-six"
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="mb-two gap-one">
-            <ThemedText type="subtitle">Vue d'ensemble des missions</ThemedText>
-            {/* <ThemedText themeColor="textSecondary">
-              Suivi global des projets d'ingénierie en cours
-            </ThemedText> */}
+        <ScreenFade>
+          <View className="flex-row items-center justify-between px-four py-two">
+            <LogoMark compact />
+            <Pressable onPress={handleRefresh} hitSlop={8}>
+              <SymbolView
+                tintColor={theme.accent}
+                name={
+                  {
+                    ios: "arrow.trianglehead.2.clockwise",
+                    web: "arrow.trianglehead.2.clockwise",
+                  } as any
+                }
+                size={18}
+              />
+            </Pressable>
           </View>
 
-          {isLoading && (
-            <ThemedText themeColor="textSecondary">Chargement...</ThemedText>
-          )}
+          <ScrollView
+            contentContainerClassName="gap-three self-center w-full max-w-content px-four pb-six"
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+          >
+            <View className="mb-two gap-one">
+              <ThemedText type="subtitle" themeColor="accent">
+                Vue d'ensemble des missions
+              </ThemedText>
+            </View>
 
-          {error && !isLoading && (
-            <ThemedText themeColor="danger">{error}</ThemedText>
-          )}
+            {isLoading && (
+              <ThemedText themeColor="textSecondary">Chargement...</ThemedText>
+            )}
 
-          {stats && !isLoading && (
-            <>
-              <StatsGrid>
-                {stats.byStatus.map((entry) => (
-                  <StatTile
-                    key={entry.status}
-                    label={STATUS_LABELS[entry.status]}
-                    value={entry.count}
-                  />
-                ))}
-                <StatTile
-                  label="En retard"
-                  value={stats.overdue.count}
-                  valueColor={
-                    stats.overdue.count > 0 ? theme.danger : undefined
-                  }
-                />
-                <StatTile label="Archivées" value={stats.archived.count} />
-              </StatsGrid>
+            {error && !isLoading && (
+              <ThemedText themeColor="danger">{error}</ThemedText>
+            )}
 
-              {stats.pendingClientResponse.count > 0 && (
-                <SectionCard
-                  icon="doc.badge.ellipsis"
-                  title="Devis en attente de réponse"
-                >
-                  {stats.pendingClientResponse.missions.map((mission) => (
-                    <PendingQuoteRow
-                      key={mission.id}
-                      reference={mission.reference}
-                      title={mission.title}
+            {stats && !isLoading && (
+              <>
+                <StatsGrid>
+                  {stats.byStatus.map((entry) => (
+                    <StatTile
+                      key={entry.status}
+                      label={STATUS_LABELS[entry.status]}
+                      value={entry.count}
                     />
                   ))}
-                </SectionCard>
-              )}
+                  <StatTile
+                    label="En retard"
+                    value={stats.overdue.count}
+                    valueColor={
+                      stats.overdue.count > 0 ? theme.danger : undefined
+                    }
+                  />
+                  <StatTile label="Archivées" value={stats.archived.count} />
+                </StatsGrid>
 
-              <QuickActionBanner
-                eyebrow="Action rapide"
-                title="Créer une nouvelle mission d'expertise"
-                actionLabel="Nouvelle mission"
-                onPress={() => router.push("/missions/new" as any)}
-              />
+                {stats.pendingClientResponse.count > 0 && (
+                  <SectionCard
+                    icon="doc.badge.ellipsis"
+                    title="Devis en attente de réponse"
+                    accent
+                  >
+                    {stats.pendingClientResponse.missions.map((mission) => (
+                      <PendingQuoteRow
+                        key={mission.id}
+                        reference={mission.reference}
+                        title={mission.title}
+                      />
+                    ))}
+                  </SectionCard>
+                )}
 
-              <SectionCard title="Missions recents">
-                <MissionsTable
-                  missions={missions}
-                  onPressMission={(mission) =>
-                    router.push(`/missions/${mission.id}` as any)
-                  }
+                <QuickActionBanner
+                  eyebrow="Action rapide"
+                  title="Créer une nouvelle mission d'expertise"
+                  actionLabel="Nouvelle mission"
+                  onPress={() => router.push("/missions/new" as any)}
                 />
-              </SectionCard>
-            </>
-          )}
-        </ScrollView>
+
+                <SectionCard title="Missions récentes">
+                  <MissionsTable
+                    missions={missions}
+                    onPressMission={(mission) =>
+                      router.push(`/missions/${mission.id}` as any)
+                    }
+                  />
+                </SectionCard>
+              </>
+            )}
+          </ScrollView>
+        </ScreenFade>
       </SafeAreaView>
     </ThemedView>
   );

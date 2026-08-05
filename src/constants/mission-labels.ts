@@ -1,4 +1,4 @@
-import { MissionStatus } from "@/types/mission";
+import { MissionStatus, MissionType } from "@/types/mission";
 
 export const STATUS_LABELS: Record<MissionStatus, string> = {
   BROUILLON: "Brouillon",
@@ -10,4 +10,13 @@ export const STATUS_LABELS: Record<MissionStatus, string> = {
   EN_COURS: "En cours",
   TERMINEE: "Terminée",
   ENVOYEE: "Envoyée",
+};
+
+export const MISSION_TYPE_LABELS: Record<MissionType, string> = {
+  PATHOLOGIE: "Pathologie",
+  EVALUATION_TERRAIN: "Évaluation terrain",
+  EVALUATION_BATIMENT: "Évaluation bâtiment",
+  CONFORMITE_TRAVAUX: "Conformité travaux",
+  LITIGE_TRAVAUX: "Litige travaux",
+  AUTRE: "Autre",
 };

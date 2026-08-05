@@ -1,13 +1,11 @@
 import { apiRequest } from "@/services/api-client";
 import {
-    MissionsStats,
-    MissionStatus,
-    PaginatedMissions,
+  MissionsStats,
+  MissionStatus,
+  PaginatedMissions,
 } from "@/types/mission";
-import { logger } from "@/utils/logger";
 
 export function getMissionsStats() {
-  logger.debug("Missions", "Chargement des statistiques");
   return apiRequest<MissionsStats>("/missions/stats", { auth: true });
 }
 
@@ -27,7 +25,6 @@ export function getMissions(params: GetMissionsParams = {}) {
     if (value !== undefined) query.append(key, String(value));
   });
   const qs = query.toString();
-  logger.debug("Missions", `Chargement des missions`, params);
   return apiRequest<PaginatedMissions>(`/missions${qs ? `?${qs}` : ""}`, {
     auth: true,
   });

@@ -45,10 +45,16 @@ export default function RootLayout() {
             screenOptions={{
               headerShown: false,
               animation: "slide_from_right",
+              animationDuration: 350,
+              gestureEnabled: true,
+              fullScreenGestureEnabled: true,
             }}
           >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="register" />
+            <Stack.Screen name="index" options={{ animation: "fade" }} />
+            <Stack.Screen
+              name="register"
+              options={{ animation: "slide_from_bottom" }}
+            />
             <Stack.Screen name="(tabs)" />
           </Stack>
         </RouteGuard>

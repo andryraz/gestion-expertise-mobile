@@ -1,9 +1,9 @@
-import { ReactNode, useState } from 'react';
-import { Pressable, TextInput, TextInputProps, View } from 'react-native';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView } from "expo-symbols";
+import { ReactNode, useState } from "react";
+import { Pressable, TextInput, TextInputProps, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
+import { ThemedText } from "@/components/themed-text";
+import { useTheme } from "@/hooks/use-theme";
 
 type FormFieldProps = TextInputProps & {
   label: string;
@@ -35,17 +35,18 @@ export function FormField({
   return (
     <View className="gap-one">
       <View className="flex-row items-center justify-between">
-        <ThemedText type="eyebrow" themeColor="textSecondary" className="mb-0">
+        <ThemedText type="eyebrow" themeColor="accent" className="mb-0">
           {label}
         </ThemedText>
         {rightElement}
       </View>
       <View
         className={[
-          'flex-row items-center gap-two rounded-three border px-three py-three android:py-two bg-background dark:bg-background-dark',
-          borderColor ? '' : 'border-border dark:border-border-dark',
-        ].join(' ')}
-        style={borderColor ? { borderColor } : undefined}>
+          "flex-row items-center gap-two rounded-three border px-three py-three android:py-two bg-background dark:bg-background-dark",
+          borderColor ? "" : "border-border dark:border-border-dark",
+        ].join(" ")}
+        style={borderColor ? { borderColor } : undefined}
+      >
         <SymbolView
           tintColor={iconColor ?? theme.textSecondary}
           name={{ ios: icon, web: icon } as any}
@@ -59,13 +60,19 @@ export function FormField({
           {...rest}
         />
         {secureToggle && (
-          <Pressable onPress={() => setHidden(!hidden)} className="p-half" hitSlop={8}>
+          <Pressable
+            onPress={() => setHidden(!hidden)}
+            className="p-half"
+            hitSlop={8}
+          >
             <SymbolView
               tintColor={theme.textSecondary}
-              name={{
-                ios: hidden ? 'eye.fill' : 'eye.slash.fill',
-                web: hidden ? 'eye.fill' : 'eye.slash.fill',
-              } as any}
+              name={
+                {
+                  ios: hidden ? "eye.fill" : "eye.slash.fill",
+                  web: hidden ? "eye.fill" : "eye.slash.fill",
+                } as any
+              }
               size={16}
             />
           </Pressable>
@@ -75,7 +82,8 @@ export function FormField({
         <ThemedText
           type="small"
           className="text-xs leading-4"
-          style={helperColor ? { color: helperColor } : undefined}>
+          style={helperColor ? { color: helperColor } : undefined}
+        >
           {helperText}
         </ThemedText>
       )}

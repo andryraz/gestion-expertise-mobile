@@ -39,50 +39,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       logger.debug(
         "Auth",
-        token ? "Token trouvé au démarrage" : "Aucun token au démarrage",
+        token ? "Token found on startup" : "No token on startup",
       );
     });
   }, []);
 
-  // async function login(email: string, password: string) {
-  //   const { accessToken, user } = await loginRequest({ email, password });
-  //   await saveToken(accessToken);
-  //   setUser(user);
-  // }
   async function login(email: string, password: string) {
-    logger.info("Auth", `Tentative de connexion`, { email });
+    logger.info("Auth", "Login attempt", { email });
     try {
       const { accessToken, user } = await loginRequest({ email, password });
       await saveToken(accessToken);
       setUser(user);
-      logger.info("Auth", `Connexion réussie`, {
+      logger.info("Auth", "Login successful", {
         userId: user.id,
         token: maskToken(accessToken),
       });
     } catch (err) {
-      logger.warn("Auth", `Échec de connexion`, {
+      logger.warn("Auth", "Login failed", {
         email,
         error: err instanceof Error ? err.message : err,
       });
-      throw err; // on relance pour que l'écran gère l'affichage de l'erreur
+      throw err; // rethrow so the screen can display the error
     }
   }
-
-  // async function register(
-  //   name: string,
-  //   email: string,
-  //   password: string,
-  //   phone?: string,
-  // ) {
-  //   const { accessToken, user } = await registerRequest({
-  //     name,
-  //     email,
-  //     password,
-  //     phone,
-  //   });
-  //   await saveToken(accessToken);
-  //   setUser(user);
-  // }
 
   async function register(
     name: string,
@@ -90,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     phone?: string,
   ) {
-    logger.info("Auth", `Tentative d'inscription`, { email });
+    logger.info("Auth", "Registration attempt", { email });
     try {
       const { accessToken, user } = await registerRequest({
         name,
@@ -100,23 +79,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       await saveToken(accessToken);
       setUser(user);
-      logger.info("Auth", `Inscription réussie`, { userId: user.id });
+      logger.info("Auth", "Registration successful", { userId: user.id });
     } catch (err) {
-      logger.warn("Auth", `Échec d'inscription`, {
+      logger.warn("Auth", "Registration failed", {
         email,
         error: err instanceof Error ? err.message : err,
       });
-      throw err;
+      throw err; // rethrow so the screen can display the error
     }
   }
   async function logout() {
-    logger.info("Auth", `Déconnexion`, { userId: user?.id });
+    logger.info("Auth", "Logout", { userId: user?.id });
     try {
       await logoutRequest();
     } finally {
       await clearToken();
       setUser(null);
-      logger.info("Auth", `Déconnexion terminée`);
+      logger.info("Auth", "Logout complete");
     }
   }
 
@@ -129,6 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth doit être utilisé dans un AuthProvider");
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
   return ctx;
 }

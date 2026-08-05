@@ -85,13 +85,13 @@ function TabButton({
         className="min-w-[56px] items-center gap-0.5 rounded-two px-one py-one"
       >
         <SymbolView
-          tintColor={isFocused ? theme.text : theme.textSecondary}
+          tintColor={isFocused ? theme.accent : theme.textSecondary}
           name={{ ios: icon, web: icon } as any}
           size={18}
         />
         <ThemedText
           type="small"
-          themeColor={isFocused ? "text" : "textSecondary"}
+          themeColor={isFocused ? "accent" : "textSecondary"}
           numberOfLines={1}
           className="text-[11px] leading-[14px]"
         >

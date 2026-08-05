@@ -16,6 +16,7 @@ import {
   LogoMark,
   PrimaryButton,
 } from "@/components/auth";
+import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuth } from "@/context/auth-context";
@@ -70,129 +71,141 @@ export default function RegisterScreen() {
   return (
     <ThemedView className="flex-1">
       <SafeAreaView className="flex-1">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <ScrollView
-            contentContainerClassName="grow justify-center self-center w-full max-w-content px-four pb-six"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+        <ScreenFade>
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
-            {/* Header */}
-            <View className="mb-four gap-three">
-              <LogoMark compact />
-              <View className="items-center gap-one">
-                <ThemedText type="subtitle">Inscription</ThemedText>
-                <ThemedText themeColor="textSecondary" className="text-center">
-                  Créez votre compte pour accéder au portail technique
-                </ThemedText>
+            <ScrollView
+              contentContainerClassName="grow justify-center self-center w-full max-w-content px-four pb-six"
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View className="mb-four gap-three">
+                <LogoMark compact />
+                <View className="items-center gap-one">
+                  <ThemedText type="subtitle" themeColor="accent">
+                    Inscription
+                  </ThemedText>
+                  <ThemedText
+                    themeColor="textSecondary"
+                    className="text-center"
+                  >
+                    Créez votre compte pour accéder au portail technique
+                  </ThemedText>
+                </View>
               </View>
-            </View>
 
-            {/* Form */}
-            <ThemedView type="backgroundElement" className="gap-three rounded-four p-four">
-              <FormField
-                label="Nom complet"
-                icon="person.fill"
-                placeholder="Jean Dupont"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
-
-              <FormField
-                label="Adresse e-mail"
-                icon="envelope.fill"
-                placeholder="j.dupont@gmail.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-
-              <FormField
-                label="Numéro de téléphone"
-                icon="phone.fill"
-                placeholder="+261 34 00 000 00"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-              />
-
-              <FormField
-                label="Mot de passe"
-                icon="lock.fill"
-                secureToggle
-                placeholder="Minimum 8 caractères"
-                value={password}
-                onChangeText={setPassword}
-                autoCapitalize="none"
-              />
-
-              <FormField
-                label="Confirmer le mot de passe"
-                icon={
-                  passwordsMatch && confirmPassword.length > 0
-                    ? "checkmark.circle.fill"
-                    : "lock.fill"
-                }
-                iconColor={getPasswordValidationColor()}
-                borderColor={getPasswordValidationColor()}
-                secureToggle
-                placeholder="Répétez le mot de passe"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                autoCapitalize="none"
-                helperText={
-                  !passwordsMatch && confirmPassword.length > 0
-                    ? "Les mots de passe ne correspondent pas"
-                    : undefined
-                }
-                helperColor={theme.danger}
-              />
-
-              <CheckboxRow
-                checked={acceptedTerms}
-                onToggle={() => setAcceptedTerms(!acceptedTerms)}
+              <ThemedView
+                type="backgroundElement"
+                className="gap-three rounded-four p-four"
               >
-                En continuant, vous acceptez nos Conditions d'utilisation et
-                notre Politique de confidentialité.
-              </CheckboxRow>
+                <FormField
+                  label="Nom complet"
+                  icon="person.fill"
+                  placeholder="Jean Dupont"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                />
 
-              <PrimaryButton
-                label="Créer mon compte"
-                loadingLabel="Inscription..."
-                onPress={handleRegister}
-                disabled={!isFormValid}
-                loading={isLoading}
-              />
-            </ThemedView>
+                <FormField
+                  label="Adresse e-mail"
+                  icon="envelope.fill"
+                  placeholder="j.dupont@gmail.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-            {/* Login link */}
-            <View className="mt-five flex-row items-center justify-center gap-one">
-              <ThemedText themeColor="textSecondary">
-                Déjà un compte ?
-              </ThemedText>
-              <Pressable
-                onPress={() => router.back()}
-                hitSlop={8}
-                style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}
-              >
-                <ThemedText type="linkPrimary" className="text-base leading-6 font-semibold">
-                  Se connecter
+                <FormField
+                  label="Numéro de téléphone"
+                  icon="phone.fill"
+                  placeholder="+261 34 00 000 00"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+
+                <FormField
+                  label="Mot de passe"
+                  icon="lock.fill"
+                  secureToggle
+                  placeholder="Minimum 8 caractères"
+                  value={password}
+                  onChangeText={setPassword}
+                  autoCapitalize="none"
+                />
+
+                <FormField
+                  label="Confirmer le mot de passe"
+                  icon={
+                    passwordsMatch && confirmPassword.length > 0
+                      ? "checkmark.circle.fill"
+                      : "lock.fill"
+                  }
+                  iconColor={getPasswordValidationColor()}
+                  borderColor={getPasswordValidationColor()}
+                  secureToggle
+                  placeholder="Répétez le mot de passe"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  autoCapitalize="none"
+                  helperText={
+                    !passwordsMatch && confirmPassword.length > 0
+                      ? "Les mots de passe ne correspondent pas"
+                      : undefined
+                  }
+                  helperColor={theme.danger}
+                />
+
+                <CheckboxRow
+                  checked={acceptedTerms}
+                  onToggle={() => setAcceptedTerms(!acceptedTerms)}
+                >
+                  En continuant, vous acceptez nos Conditions d'utilisation et
+                  notre Politique de confidentialité.
+                </CheckboxRow>
+
+                <PrimaryButton
+                  label="Créer mon compte"
+                  loadingLabel="Inscription..."
+                  onPress={handleRegister}
+                  disabled={!isFormValid}
+                  loading={isLoading}
+                />
+              </ThemedView>
+
+              <View className="mt-five flex-row items-center justify-center gap-one">
+                <ThemedText themeColor="textSecondary">
+                  Déjà un compte ?
                 </ThemedText>
-              </Pressable>
-            </View>
+                <Pressable
+                  onPress={() => router.back()}
+                  hitSlop={8}
+                  style={({ pressed }) =>
+                    pressed ? { opacity: 0.7 } : undefined
+                  }
+                >
+                  <ThemedText
+                    type="linkPrimary"
+                    className="text-base leading-6 font-semibold"
+                  >
+                    Se connecter
+                  </ThemedText>
+                </Pressable>
+              </View>
 
-            <AuthFooter
-              line1="Expertise Mobile · v1.0.0"
-              line2="Bâtiment & Travaux Publics"
-            />
-          </ScrollView>
-        </KeyboardAvoidingView>
+              <AuthFooter
+                line1="Expertise Mobile · v1.0.0"
+                line2="Bâtiment & Travaux Publics"
+              />
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </ScreenFade>
       </SafeAreaView>
     </ThemedView>
   );
