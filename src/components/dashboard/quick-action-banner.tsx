@@ -1,4 +1,4 @@
-import { SymbolView } from "expo-symbols";
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -36,12 +36,7 @@ export function QuickActionBanner({
           opacity: pressed ? 0.85 : 1,
         })}
       >
-        <SymbolView
-          tintColor={theme.text}
-          name={{ ios: "plus", web: "plus" } as any}
-          size={14}
-          weight="bold"
-        />
+        <Ionicons name="add" color={theme.text} size={16} />
         <ThemedText type="smallBold">{actionLabel}</ThemedText>
       </Pressable>
     </View>

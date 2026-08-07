@@ -20,3 +20,18 @@ export const MISSION_TYPE_LABELS: Record<MissionType, string> = {
   LITIGE_TRAVAUX: "Litige travaux",
   AUTRE: "Autre",
 };
+
+export type StatusTone = "muted" | "accent" | "success" | "danger";
+
+export const STATUS_TONE: Record<MissionStatus, StatusTone> = {
+  BROUILLON: "muted",
+  PRISE_DE_CONTACT: "accent",
+  DEVIS_EN_PREPARATION: "accent",
+  DEVIS_ENVOYE: "accent",
+  ACCEPTEE: "accent",
+  EN_COURS: "accent",
+  REFUSEE: "danger",
+  TERMINEE: "success",
+  ENVOYEE: "success",
+};
+

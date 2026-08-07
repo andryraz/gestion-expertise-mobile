@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import {
   TabList,
   Tabs,
@@ -5,7 +6,6 @@ import {
   TabTrigger,
   TabTriggerSlotProps,
 } from "expo-router/ui";
-import { SymbolView } from "expo-symbols";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,13 +19,13 @@ const TABS = [
     name: "dashboard",
     href: "/(tabs)/dashboard",
     label: "Dashboard",
-    icon: "square.grid.2x2.fill",
+    icon: "grid",
   },
   {
     name: "missions",
     href: "/(tabs)/missions",
     label: "Missions",
-    icon: "doc.text.fill",
+    icon: "document-text",
   },
   {
     name: "calendar",
@@ -37,7 +37,7 @@ const TABS = [
     name: "settings",
     href: "/(tabs)/settings",
     label: "Settings",
-    icon: "gearshape.fill",
+    icon: "settings",
   },
 ] as const;
 
@@ -76,7 +76,10 @@ function TabButton({
   icon,
   isFocused,
   ...props
-}: TabTriggerSlotProps & { label: string; icon: string }) {
+}: TabTriggerSlotProps & {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}) {
   const theme = useTheme();
   return (
     <Pressable {...props} className="flex-1 shrink items-center">
@@ -84,9 +87,9 @@ function TabButton({
         type={isFocused ? "backgroundSelected" : undefined}
         className="min-w-[56px] items-center gap-0.5 rounded-two px-one py-one"
       >
-        <SymbolView
-          tintColor={isFocused ? theme.accent : theme.textSecondary}
-          name={{ ios: icon, web: icon } as any}
+        <Ionicons
+          name={icon}
+          color={isFocused ? theme.accent : theme.textSecondary}
           size={18}
         />
         <ThemedText

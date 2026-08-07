@@ -1,4 +1,4 @@
-import { SymbolView } from "expo-symbols";
+import { Ionicons } from "@expo/vector-icons";
 import { ReactNode, useState } from "react";
 import { Pressable, TextInput, TextInputProps, View } from "react-native";
 
@@ -7,7 +7,7 @@ import { useTheme } from "@/hooks/use-theme";
 
 type FormFieldProps = TextInputProps & {
   label: string;
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   rightElement?: ReactNode;
   secureToggle?: boolean;
   borderColor?: string;
@@ -47,10 +47,10 @@ export function FormField({
         ].join(" ")}
         style={borderColor ? { borderColor } : undefined}
       >
-        <SymbolView
-          tintColor={iconColor ?? theme.textSecondary}
-          name={{ ios: icon, web: icon } as any}
-          size={16}
+        <Ionicons
+          name={icon}
+          color={iconColor ?? theme.textSecondary}
+          size={18}
         />
         <TextInput
           className="flex-1 p-0 text-base leading-6 text-text dark:text-text-dark"
@@ -65,15 +65,10 @@ export function FormField({
             className="p-half"
             hitSlop={8}
           >
-            <SymbolView
-              tintColor={theme.textSecondary}
-              name={
-                {
-                  ios: hidden ? "eye.fill" : "eye.slash.fill",
-                  web: hidden ? "eye.fill" : "eye.slash.fill",
-                } as any
-              }
-              size={16}
+            <Ionicons
+              name={hidden ? "eye" : "eye-off"}
+              color={theme.textSecondary}
+              size={18}
             />
           </Pressable>
         )}

@@ -1,4 +1,4 @@
-import { SymbolView } from "expo-symbols";
+import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -10,7 +10,7 @@ type PrimaryButtonProps = {
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  icon?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
 };
 
 export function PrimaryButton({
@@ -51,11 +51,10 @@ export function PrimaryButton({
             {loading ? (loadingLabel ?? label) : label}
           </ThemedText>
           {icon && (
-            <SymbolView
-              tintColor={isActive ? theme.background : theme.textSecondary}
-              name={{ ios: icon, web: icon } as any}
-              size={16}
-              weight="bold"
+            <Ionicons
+              name={icon}
+              color={isActive ? theme.background : theme.textSecondary}
+              size={18}
             />
           )}
         </>

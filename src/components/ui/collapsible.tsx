@@ -1,7 +1,7 @@
-import { SymbolView } from 'expo-symbols';
-import { PropsWithChildren, useState } from 'react';
-import { Pressable } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { Ionicons } from "@expo/vector-icons";
+import { PropsWithChildren, useState } from "react";
+import { Pressable } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -18,11 +18,10 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
         style={({ pressed }: { pressed: boolean }) => (pressed ? { opacity: 0.7 } : undefined)}
         onPress={() => setIsOpen((value) => !value)}>
         <ThemedView type="backgroundElement" className="h-6 w-6 items-center justify-center rounded-[12px]">
-          <SymbolView
-            name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+          <Ionicons
+            name="chevron-forward"
             size={14}
-            weight="bold"
-            tintColor={theme.text}
+            color={theme.text}
             style={{ transform: [{ rotate: isOpen ? '-90deg' : '90deg' }] }}
           />
         </ThemedView>

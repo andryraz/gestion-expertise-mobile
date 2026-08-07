@@ -1,4 +1,4 @@
-import { SymbolView } from "expo-symbols";
+import { Ionicons } from "@expo/vector-icons";
 import { ReactNode } from "react";
 import { View } from "react-native";
 
@@ -7,7 +7,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useTheme } from "@/hooks/use-theme";
 
 type SectionCardProps = {
-  icon?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
   title: string;
   children: ReactNode;
   accent?: boolean;
@@ -30,10 +30,10 @@ export function SectionCard({
     >
       <View className="flex-row items-center gap-one">
         {icon && (
-          <SymbolView
-            tintColor={accent ? theme.accent : theme.text}
-            name={{ ios: icon, web: icon } as any}
-            size={16}
+          <Ionicons
+            name={icon}
+            color={accent ? theme.accent : theme.text}
+            size={18}
           />
         )}
         <ThemedText type="eyebrow" themeColor={accent ? "accent" : "text"}>

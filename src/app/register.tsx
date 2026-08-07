@@ -102,7 +102,7 @@ export default function RegisterScreen() {
               >
                 <FormField
                   label="Nom complet"
-                  icon="person.fill"
+                  icon="person-outline"
                   placeholder="Jean Dupont"
                   value={name}
                   onChangeText={setName}
@@ -112,7 +112,7 @@ export default function RegisterScreen() {
 
                 <FormField
                   label="Adresse e-mail"
-                  icon="envelope.fill"
+                  icon="mail-outline"
                   placeholder="j.dupont@gmail.com"
                   value={email}
                   onChangeText={setEmail}
@@ -123,7 +123,7 @@ export default function RegisterScreen() {
 
                 <FormField
                   label="Numéro de téléphone"
-                  icon="phone.fill"
+                  icon="call-outline"
                   placeholder="+261 34 00 000 00"
                   value={phone}
                   onChangeText={setPhone}
@@ -132,7 +132,7 @@ export default function RegisterScreen() {
 
                 <FormField
                   label="Mot de passe"
-                  icon="lock.fill"
+                  icon="lock-closed-outline"
                   secureToggle
                   placeholder="Minimum 8 caractères"
                   value={password}
@@ -144,8 +144,8 @@ export default function RegisterScreen() {
                   label="Confirmer le mot de passe"
                   icon={
                     passwordsMatch && confirmPassword.length > 0
-                      ? "checkmark.circle.fill"
-                      : "lock.fill"
+                      ? "checkmark-circle"
+                      : "lock-closed-outline"
                   }
                   iconColor={getPasswordValidationColor()}
                   borderColor={getPasswordValidationColor()}

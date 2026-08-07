@@ -81,7 +81,7 @@ export default function LoginScreen() {
               >
                 <FormField
                   label="Adresse e-mail"
-                  icon="envelope.fill"
+                  icon="mail-outline"
                   placeholder="expert@cabinet.mg"
                   value={email}
                   onChangeText={setEmail}
@@ -92,7 +92,7 @@ export default function LoginScreen() {
 
                 <FormField
                   label="Mot de passe"
-                  icon="lock.fill"
+                  icon="lock-closed-outline"
                   secureToggle
                   placeholder="Votre mot de passe"
                   value={password}
@@ -105,7 +105,7 @@ export default function LoginScreen() {
                   onPress={handleLogin}
                   disabled={!isFormValid}
                   loading={isLoading}
-                  icon="arrow.right"
+                  icon="arrow-forward"
                 />
               </ThemedView>
 

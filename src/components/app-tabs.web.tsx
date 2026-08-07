@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import {
   Tabs,
   TabList,
@@ -6,7 +7,6 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
-import { SymbolView } from 'expo-symbols';
 import { Pressable, useColorScheme, View } from 'react-native';
 
 import { ExternalLink } from './external-link';
@@ -65,11 +65,7 @@ export function CustomTabList(props: TabListProps) {
         <ExternalLink href="https://docs.expo.dev" asChild>
           <Pressable className="ml-three flex-row items-center justify-center gap-one">
             <ThemedText type="link">Docs</ThemedText>
-            <SymbolView
-              tintColor={colors.text}
-              name={{ ios: 'arrow.up.right.square', web: 'link' }}
-              size={12}
-            />
+            <Ionicons name="open-outline" color={colors.text} size={14} />
           </Pressable>
         </ExternalLink>
       </ThemedView>

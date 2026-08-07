@@ -1,5 +1,5 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { SymbolView } from "expo-symbols";
 import { Platform, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -51,15 +51,7 @@ export default function TabTwoScreen() {
             <Pressable style={({ pressed }) => (pressed ? { opacity: 0.7 } : undefined)}>
               <ThemedView type="backgroundElement" className="flex-row items-center justify-center gap-one rounded-five px-four py-two">
                 <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{
-                    ios: "arrow.up.right.square",
-                    android: "link",
-                    web: "link",
-                  }}
-                  size={12}
-                />
+                <Ionicons name="open-outline" color={theme.text} size={14} />
               </ThemedView>
             </Pressable>
           </ExternalLink>

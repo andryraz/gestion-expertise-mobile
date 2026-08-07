@@ -1,0 +1,3779 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Compte créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email déjà utilisé"
+          }
+        },
+        "summary": "Creation d'un compte utilisateur",
+        "tags": [
+          "Authentification"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connexion réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Email ou mot de passe incorrect"
+          }
+        },
+        "summary": "Connexion d'un utilisateur",
+        "tags": [
+          "Authentification"
+        ]
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "operationId": "AuthController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Profil de l'utilisateur connecté",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtenir le profil de l'utilisateur connecte",
+        "tags": [
+          "Authentification"
+        ]
+      },
+      "patch": {
+        "operationId": "AuthController_updateProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié / Mot de passe actuel incorrect"
+          },
+          "409": {
+            "description": "Email déjà utilisé"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mettre à jour le profil de l'utilisateur connecté",
+        "tags": [
+          "Authentification"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [
+          {
+            "name": "authorization",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Déconnexion réussie"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deconnexion de l'utilisateur connecté",
+        "tags": [
+          "Authentification"
+        ]
+      }
+    },
+    "/missions": {
+      "post": {
+        "operationId": "MissionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMissionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mission créée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Créer une mission",
+        "tags": [
+          "Missions"
+        ]
+      },
+      "get": {
+        "operationId": "MissionsController_findAll",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BROUILLON",
+                "PRISE_DE_CONTACT",
+                "DEVIS_EN_PREPARATION",
+                "DEVIS_ENVOYE",
+                "ACCEPTEE",
+                "REFUSEE",
+                "EN_COURS",
+                "TERMINEE",
+                "ENVOYEE"
+              ]
+            }
+          },
+          {
+            "name": "missionType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PATHOLOGIE",
+                "EVALUATION_TERRAIN",
+                "EVALUATION_BATIMENT",
+                "CONFORMITE_TRAVAUX",
+                "LITIGE_TRAVAUX",
+                "AUTRE"
+              ]
+            }
+          },
+          {
+            "name": "archived",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par missions archivées : 'true' pour uniquement les archivées, 'false' ou omis pour les non-archivées",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "expertId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Recherche dans le titre et la référence",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "updatedAt",
+                "reference",
+                "title"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des missions (filtrée, triée, paginée)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMissionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les missions",
+        "tags": [
+          "Missions"
+        ]
+      }
+    },
+    "/missions/stats": {
+      "get": {
+        "description": "Retourne les statistiques globales des missions : nombre par statut, missions en attente de réponse client, missions en retard, et nombre de missions archivées.",
+        "operationId": "MissionsController_getStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Statistiques des missions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionsStatsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Statistiques du tableau de bord",
+        "tags": [
+          "Missions"
+        ]
+      }
+    },
+    "/missions/{id}": {
+      "get": {
+        "operationId": "MissionsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Détails d'une mission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Voir les details d'une mission",
+        "tags": [
+          "Missions"
+        ]
+      },
+      "patch": {
+        "description": "Met à jour les champs d'une mission . Le statut ne peut pas être modifié via cet endpoint.",
+        "operationId": "MissionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMissionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mission mise à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mettre à jour une mission",
+        "tags": [
+          "Missions"
+        ]
+      }
+    },
+    "/missions/{id}/status": {
+      "patch": {
+        "description": "Effectue une transition de statut en respectant les règles métier : progression linéaire sans saut ni retour en arrière. Transitions autorisées : BROUILLON → PRISE_DE_CONTACT → DEVIS_EN_PREPARATION → DEVIS_ENVOYE → ACCEPTEE|REFUSEE → EN_COURS → TERMINEE → ENVOYEE.",
+        "operationId": "MissionsController_updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMissionStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Statut mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Transition de statut d'une mission",
+        "tags": [
+          "Missions"
+        ]
+      }
+    },
+    "/missions/{id}/archive": {
+      "patch": {
+        "description": "Archive une mission en renseignant la date d'archivage. Une mission déjà archivée ne peut pas l'être à nouveau.",
+        "operationId": "MissionsController_archive",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveMissionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mission archivée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archiver une mission",
+        "tags": [
+          "Missions"
+        ]
+      }
+    },
+    "/missions/{id}/unarchive": {
+      "patch": {
+        "description": "Désarchive une mission en supprimant la date d'archivage. Une mission non archivée ne peut pas être désarchivée.",
+        "operationId": "MissionsController_unarchive",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mission désarchivée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Désarchiver une mission",
+        "tags": [
+          "Missions"
+        ]
+      }
+    },
+    "/missions/{missionId}/parties": {
+      "post": {
+        "description": "Crée une nouvelle partie prenante pour une mission. Vérifie que la mission appartient à l'expert connecté. ",
+        "operationId": "MissionPartiesController_create",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMissionPartyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Partie prenante créée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionPartyResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ajouter une partie prenante à une mission",
+        "tags": [
+          "Parties prenantes"
+        ]
+      },
+      "get": {
+        "description": "Retourne toutes les parties prenantes d'une mission, triées par date de création.",
+        "operationId": "MissionPartiesController_findAll",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des parties prenantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MissionPartyResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les parties prenantes d'une mission",
+        "tags": [
+          "Parties prenantes"
+        ]
+      }
+    },
+    "/parties/{id}": {
+      "patch": {
+        "description": "Met à jour les informations d'une partie prenante. Les champs sont optionnels.",
+        "operationId": "MissionPartiesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMissionPartyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partie prenante mise à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionPartyResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier une partie prenante",
+        "tags": [
+          "Parties prenantes"
+        ]
+      },
+      "delete": {
+        "description": "Supprime définitivement une partie prenante. Impossible si la mission est archivée.",
+        "operationId": "MissionPartiesController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partie prenante supprimée avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer une partie prenante",
+        "tags": [
+          "Parties prenantes"
+        ]
+      }
+    },
+    "/missions/{missionId}/appointments": {
+      "post": {
+        "description": "Crée un nouveau rendez-vous pour une mission. Le statut est automatiquement défini à PLANIFIE. Vérifie que la mission appartient à l'expert connecté.",
+        "operationId": "AppointmentsController_create",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rendez-vous créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Créer un rendez-vous pour une mission",
+        "tags": [
+          "Rendez-vous"
+        ]
+      },
+      "get": {
+        "description": "Retourne tous les rendez-vous d'une mission, triés par date de rendez-vous (ordre croissant).",
+        "operationId": "AppointmentsController_findAllByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des rendez-vous",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppointmentResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les rendez-vous d'une mission",
+        "tags": [
+          "Rendez-vous"
+        ]
+      }
+    },
+    "/appointments": {
+      "get": {
+        "description": "Retourne les rendez-vous dans une plage de dates donnée. Utile pour une vue calendrier.",
+        "operationId": "AppointmentsController_findAllByDateRange",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Date de début (inclus)",
+            "schema": {
+              "example": "2026-08-01T00:00:00.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Date de fin (inclus)",
+            "schema": {
+              "example": "2026-08-31T23:59:59.000Z",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des rendez-vous dans la période",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppointmentResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rechercher des rendez-vous par période",
+        "tags": [
+          "Rendez-vous"
+        ]
+      }
+    },
+    "/appointments/{id}": {
+      "patch": {
+        "description": "Met à jour les champs d'un rendez-vous. Les champs sont optionnels. Vérifie que la mission appartient à l'expert connecté.",
+        "operationId": "AppointmentsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rendez-vous mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier un rendez-vous",
+        "tags": [
+          "Rendez-vous"
+        ]
+      },
+      "delete": {
+        "description": "Supprime un rendez-vous uniquement. Vérifie que la mission appartient à l'expert connecté.",
+        "operationId": "AppointmentsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rendez-vous supprimé avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer un rendez-vous",
+        "tags": [
+          "Rendez-vous"
+        ]
+      }
+    },
+    "/appointments/{id}/reschedule": {
+      "post": {
+        "description": "Reporte un rendez-vous.",
+        "operationId": "AppointmentsController_reschedule",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Nouveau rendez-vous créé après report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reporter un rendez-vous",
+        "tags": [
+          "Rendez-vous"
+        ]
+      }
+    },
+    "/missions/{missionId}/quotes": {
+      "post": {
+        "description": "Crée un nouveau devis pour une mission. La version est automatiquement incrémentée en fonction des devis existants.",
+        "operationId": "QuotesController_create",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Devis créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Créer un devis pour une mission",
+        "tags": [
+          "Devis"
+        ]
+      },
+      "get": {
+        "description": "Retourne tous les devis d'une mission, triés par version (ordre croissant).",
+        "operationId": "QuotesController_findAllByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des devis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuoteResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les devis d'une mission",
+        "tags": [
+          "Devis"
+        ]
+      }
+    },
+    "/missions/{missionId}/quotes/latest": {
+      "get": {
+        "description": "Retourne le devis le plus récent (version la plus élevée) d'une mission.",
+        "operationId": "QuotesController_findLatestByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dernier devis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Récupérer le dernier devis d'une mission",
+        "tags": [
+          "Devis"
+        ]
+      }
+    },
+    "/missions/{missionId}/quotes/{quoteId}/respond": {
+      "post": {
+        "description": "Permet de répondre à un devis (accepter / refuser / contre-proposition) ",
+        "operationId": "QuotesController_respond",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse enregistrée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Répondre à un devis",
+        "tags": [
+          "Devis"
+        ]
+      }
+    },
+    "/quotes/{id}": {
+      "patch": {
+        "description": "Modifie un devis. Seuls les devis en statut BROUILLON peuvent être modifiés.",
+        "operationId": "QuotesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Devis modifié avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier un devis",
+        "tags": [
+          "Devis"
+        ]
+      },
+      "delete": {
+        "description": "Supprime un devis. Seuls les devis en statut BROUILLON peuvent être supprimés.",
+        "operationId": "QuotesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devis supprimé avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer un devis",
+        "tags": [
+          "Devis"
+        ]
+      }
+    },
+    "/missions/{missionId}/zones": {
+      "post": {
+        "description": "Crée une nouvelle zone de construction pour une mission. Le champ parentZoneId est optionnel. S'il est fourni, la zone parente doit appartenir à la même mission.",
+        "operationId": "BuildingZonesController_create",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBuildingZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Zone créée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingZoneResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Créer une zone ou sous-zone",
+        "tags": [
+          "Zones de construction"
+        ]
+      },
+      "get": {
+        "description": "Retourne toutes les zones d'une mission, triées par date de création croissante.",
+        "operationId": "BuildingZonesController_findAllByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des zones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BuildingZoneResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les zones d'une mission (vue plate)",
+        "tags": [
+          "Zones de construction"
+        ]
+      }
+    },
+    "/missions/{missionId}/zones/tree": {
+      "get": {
+        "description": "Retourne toutes les zones d'une mission sous forme d'arborescence. Les racines sont les zones sans parent, chaque nœud contient un tableau children contenant ses sous-zones. Les données sont récupérées en une seule requête plate, puis l'arbre est reconstruit en mémoire côté serveur.",
+        "operationId": "BuildingZonesController_findTreeByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Arbre des zones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BuildingZoneTreeItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Afficher l'arbre des zones d'une mission",
+        "tags": [
+          "Zones de construction"
+        ]
+      }
+    },
+    "/zones/{id}": {
+      "patch": {
+        "description": "Modifie le nom, le type et/ou le parent d'une zone. Si parentZoneId est défini, la zone parente doit appartenir à la même mission et la zone ne peut pas devenir son propre ancêtre (vérification anti-cycle). Passer parentZoneId à null retire le rattachement (la zone devient une racine).",
+        "operationId": "BuildingZonesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBuildingZoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zone modifiée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingZoneResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier une zone",
+        "tags": [
+          "Zones de construction"
+        ]
+      },
+      "delete": {
+        "description": "Supprime une zone ainsi que ses sous-zones et toutes les observations liées (cascade gérée par la base de données).",
+        "operationId": "BuildingZonesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zone supprimée avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer une zone",
+        "tags": [
+          "Zones de construction"
+        ]
+      }
+    },
+    "/disorder-types": {
+      "post": {
+        "description": "Crée un nouveau type de désordre. Le nom doit être unique : si un type de désordre portant le même nom existe déjà, une erreur 409 est renvoyée.",
+        "operationId": "DisorderTypesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDisorderTypeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Type de désordre créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisorderTypeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Créer un type de désordre",
+        "tags": [
+          "Types de désordres"
+        ]
+      },
+      "get": {
+        "description": "Retourne tous les types de désordres, avec filtrage optionnel par catégorie et recherche texte insensible à la casse sur le nom et la description. Pas de pagination.",
+        "operationId": "DisorderTypesController_findAll",
+        "parameters": [
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par catégorie de désordre",
+            "schema": {
+              "example": "STRUCTUREL",
+              "type": "string",
+              "enum": [
+                "STRUCTUREL",
+                "HUMIDITE",
+                "INTEMPERIES",
+                "CORROSION",
+                "AUTRE"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Recherche texte insensible à la casse dans le nom et la description",
+            "schema": {
+              "example": "fiss",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des types de désordres",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DisorderTypeResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les types de désordres",
+        "tags": [
+          "Types de désordres"
+        ]
+      }
+    },
+    "/disorder-types/{id}": {
+      "patch": {
+        "description": "Modifie le nom, la catégorie et/ou la description d'un type de désordre. Le nom doit rester unique (hors du type modifié lui-même).",
+        "operationId": "DisorderTypesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisorderTypeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Type de désordre modifié avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisorderTypeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier un type de désordre",
+        "tags": [
+          "Types de désordres"
+        ]
+      },
+      "delete": {
+        "description": "Supprime un type de désordre. La suppression est bloquée (409) si le type est déjà utilisé par une ou plusieurs observations.",
+        "operationId": "DisorderTypesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Type de désordre supprimé avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer un type de désordre",
+        "tags": [
+          "Types de désordres"
+        ]
+      }
+    },
+    "/zones/{zoneId}/observations": {
+      "post": {
+        "description": "Crée une nouvelle observation sur une zone. La création n'est possible que si la mission de la zone est en cours ",
+        "operationId": "ObservationsController_create",
+        "parameters": [
+          {
+            "name": "zoneId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateObservationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Observation créée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Créer une observation pour une zone",
+        "tags": [
+          "Observations"
+        ]
+      },
+      "get": {
+        "description": "Retourne les observations d'une seule zone. Filtrage optionnel par sévérité. Tri par date de création croissante.",
+        "operationId": "ObservationsController_findAllByZone",
+        "parameters": [
+          {
+            "name": "zoneId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "severity",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par sévérité du désordre",
+            "schema": {
+              "example": "URGENT",
+              "type": "string",
+              "enum": [
+                "MINEUR",
+                "MODERE",
+                "URGENT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des observations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ObservationResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les observations d'une zone",
+        "tags": [
+          "Observations"
+        ]
+      }
+    },
+    "/missions/{missionId}/observations": {
+      "get": {
+        "description": "Retourne toutes les observations des zones d'une mission. Filtrage optionnel par sévérité. Tri par date de création croissante.",
+        "operationId": "ObservationsController_findAllByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "severity",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par sévérité du désordre",
+            "schema": {
+              "example": "URGENT",
+              "type": "string",
+              "enum": [
+                "MINEUR",
+                "MODERE",
+                "URGENT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des observations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ObservationResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les observations d'une mission",
+        "tags": [
+          "Observations"
+        ]
+      }
+    },
+    "/observations/{id}": {
+      "get": {
+        "description": "Retourne le détail complet d'une observation, incluant la zone, le type de désordre, les photos, les mesures et les résultats de calcul liés.",
+        "operationId": "ObservationsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Détail de l'observation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Détail d'une observation",
+        "tags": [
+          "Observations"
+        ]
+      },
+      "patch": {
+        "description": "Modifie la description, la sévérité, la cause probable et/ou le type de désordre d'une observation. Passer probableCause à null efface la cause actuelle.",
+        "operationId": "ObservationsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateObservationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Observation modifiée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier une observation",
+        "tags": [
+          "Observations"
+        ]
+      },
+      "delete": {
+        "description": "Supprime une observation. Les photos et mesures liées sont détachées (observationId mis à null) mais ne sont pas supprimées.",
+        "operationId": "ObservationsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Observation supprimée avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer une observation",
+        "tags": [
+          "Observations"
+        ]
+      }
+    },
+    "/missions/{missionId}/photos": {
+      "post": {
+        "description": "Upload une photo pour une mission. La création n'est possible que si la mission est en cours (statut EN_COURS). zoneId, observationId, caption et annotation sont optionnels. Seuls les fichiers image sont acceptés (10 Mo max).",
+        "operationId": "PhotosController_create",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "zoneId": {
+                    "type": "string"
+                  },
+                  "observationId": {
+                    "type": "string"
+                  },
+                  "caption": {
+                    "type": "string"
+                  },
+                  "annotation": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Photo uploadée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Uploader une photo pour une mission",
+        "tags": [
+          "Photos"
+        ]
+      },
+      "get": {
+        "description": "Retourne toutes les photos d'une mission, de la plus récente à la plus ancienne.",
+        "operationId": "PhotosController_findAllByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des photos de la mission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galerie complète d'une mission",
+        "tags": [
+          "Photos"
+        ]
+      }
+    },
+    "/zones/{zoneId}/photos": {
+      "get": {
+        "description": "Retourne les photos rattachées à une zone, de la plus récente à la plus ancienne.",
+        "operationId": "PhotosController_findAllByZone",
+        "parameters": [
+          {
+            "name": "zoneId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des photos de la zone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galerie d'une zone",
+        "tags": [
+          "Photos"
+        ]
+      }
+    },
+    "/observations/{observationId}/photos": {
+      "get": {
+        "description": "Retourne les photos rattachées à une observation, de la plus récente à la plus ancienne.",
+        "operationId": "PhotosController_findAllByObservation",
+        "parameters": [
+          {
+            "name": "observationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des photos de observation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galerie d'un désordre (observation)",
+        "tags": [
+          "Photos"
+        ]
+      }
+    },
+    "/photos/{id}/attach": {
+      "patch": {
+        "description": "Rattache une photo à une zone et/ou une observation. La zone ou l observation doit appartenir à la même mission que la photo. Passer null pour détacher.",
+        "operationId": "PhotosController_attach",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachPhotoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Photo rattachée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rattacher une photo à une zone ou une observation",
+        "tags": [
+          "Photos"
+        ]
+      }
+    },
+    "/photos/{id}": {
+      "patch": {
+        "description": "Modifie la légende d'une photo. Passer caption à null pour effacer la légende actuelle.",
+        "operationId": "PhotosController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePhotoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Photo modifiée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier la légende d une photo",
+        "tags": [
+          "Photos"
+        ]
+      },
+      "delete": {
+        "description": "Supprime une photo : l'enregistrement en base et le fichier stocké sur disque.",
+        "operationId": "PhotosController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Photo supprimée avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer une photo",
+        "tags": [
+          "Photos"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Expertise Bâtiment API",
+    "description": "API de gestion des expertises bâtiment",
+    "version": "1.0",
+    "contact": {
+
+    }
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Jean Rakoto"
+          },
+          "email": {
+            "type": "string",
+            "example": "jean@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "motdepasse123"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+261 34 12 345 67"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "EXPERT",
+              "ADMIN"
+            ],
+            "default": "EXPERT"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "name": {
+            "type": "string",
+            "example": "Jean Rakoto"
+          },
+          "email": {
+            "type": "string",
+            "example": "jean@example.com"
+          },
+          "role": {
+            "type": "string",
+            "example": "EXPERT"
+          },
+          "phone": {
+            "type": "object",
+            "example": "+261 34 12 345 67",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "phone",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkplYW4gUmFrb3RvIiwiaWF0IjoxNTE2MjM5MDIyfQ"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "user"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "jean@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "motdepasse123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Jean Rakoto"
+          },
+          "email": {
+            "type": "string",
+            "example": "jean@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+261 34 12 345 67"
+          },
+          "currentPassword": {
+            "type": "string",
+            "description": "Mot de passe actuel (requis si nouveau mot de passe fourni)"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "nouveauMotdepasse123"
+          }
+        }
+      },
+      "CreateMissionDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Expertise bâtiment fissuré - Ambondrona"
+          },
+          "missionType": {
+            "type": "string",
+            "enum": [
+              "PATHOLOGIE",
+              "EVALUATION_TERRAIN",
+              "EVALUATION_BATIMENT",
+              "CONFORMITE_TRAVAUX",
+              "LITIGE_TRAVAUX",
+              "AUTRE"
+            ],
+            "example": "PATHOLOGIE"
+          },
+          "expertId": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "buildingAddress": {
+            "type": "string",
+            "example": "Lot IVN 99, Ambondrona, Antananarivo",
+            "description": "Adresse du bâtiment (optionnelle pour brouillon)"
+          },
+          "buildingType": {
+            "type": "string",
+            "example": "Immeuble R+2"
+          },
+          "buildingGpsLat": {
+            "type": "number",
+            "example": -18.8792
+          },
+          "buildingGpsLng": {
+            "type": "number",
+            "example": 47.5079
+          },
+          "legalContext": {
+            "type": "string",
+            "example": "Mission ordonnée par le tribunal de commerce"
+          }
+        },
+        "required": [
+          "title",
+          "missionType",
+          "expertId"
+        ]
+      },
+      "ExpertBriefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "MissionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "reference": {
+            "type": "string",
+            "example": "001/2026"
+          },
+          "title": {
+            "type": "string",
+            "example": "Expertise bâtiment fissuré - Ambondrona"
+          },
+          "missionType": {
+            "type": "string",
+            "example": "PATHOLOGIE"
+          },
+          "status": {
+            "type": "string",
+            "example": "BROUILLON"
+          },
+          "buildingAddress": {
+            "type": "object",
+            "example": "Lot IVN 99, Ambondrona, Antananarivo"
+          },
+          "buildingType": {
+            "type": "object",
+            "example": "Immeuble R+2"
+          },
+          "buildingGpsLat": {
+            "type": "object",
+            "example": -18.8792
+          },
+          "buildingGpsLng": {
+            "type": "object",
+            "example": 47.5079
+          },
+          "legalContext": {
+            "type": "object",
+            "example": "Mission ordonnée par le tribunal de commerce"
+          },
+          "expertId": {
+            "type": "string"
+          },
+          "expert": {
+            "$ref": "#/components/schemas/ExpertBriefDto"
+          },
+          "archivedAt": {
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title",
+          "missionType",
+          "status",
+          "expertId",
+          "expert",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedMissionResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissionResponseDto"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "example": {
+              "total": 25,
+              "page": 1,
+              "limit": 10,
+              "totalPages": 3
+            }
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "StatusCountDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "EN_COURS"
+          },
+          "count": {
+            "type": "number",
+            "example": 12
+          }
+        },
+        "required": [
+          "status",
+          "count"
+        ]
+      },
+      "MissionBriefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "example": "001/2026"
+          },
+          "title": {
+            "type": "string",
+            "example": "Expertise bâtiment fissuré"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title"
+        ]
+      },
+      "PendingClientResponseDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 3
+          },
+          "missions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissionBriefDto"
+            }
+          }
+        },
+        "required": [
+          "count",
+          "missions"
+        ]
+      },
+      "OverdueMissionsDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 2
+          },
+          "missions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissionBriefDto"
+            }
+          }
+        },
+        "required": [
+          "count",
+          "missions"
+        ]
+      },
+      "ArchivedStatsDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "MissionsStatsDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "example": 25
+          },
+          "byStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCountDto"
+            }
+          },
+          "pendingClientResponse": {
+            "$ref": "#/components/schemas/PendingClientResponseDto"
+          },
+          "overdue": {
+            "$ref": "#/components/schemas/OverdueMissionsDto"
+          },
+          "archived": {
+            "$ref": "#/components/schemas/ArchivedStatsDto"
+          }
+        },
+        "required": [
+          "total",
+          "byStatus",
+          "pendingClientResponse",
+          "overdue",
+          "archived"
+        ]
+      },
+      "UpdateMissionDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Expertise bâtiment fissuré - Ambondrona"
+          },
+          "missionType": {
+            "type": "string",
+            "enum": [
+              "PATHOLOGIE",
+              "EVALUATION_TERRAIN",
+              "EVALUATION_BATIMENT",
+              "CONFORMITE_TRAVAUX",
+              "LITIGE_TRAVAUX",
+              "AUTRE"
+            ],
+            "example": "PATHOLOGIE"
+          },
+          "buildingAddress": {
+            "type": "string",
+            "example": "Lot IVN 99, Ambondrona, Antananarivo",
+            "description": "Adresse du bâtiment"
+          },
+          "buildingType": {
+            "type": "string",
+            "example": "Immeuble R+2"
+          },
+          "buildingGpsLat": {
+            "type": "number",
+            "example": -18.8792
+          },
+          "buildingGpsLng": {
+            "type": "number",
+            "example": 47.5079
+          },
+          "legalContext": {
+            "type": "string",
+            "example": "Mission ordonnée par le tribunal de commerce"
+          }
+        }
+      },
+      "UpdateMissionStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "BROUILLON",
+              "PRISE_DE_CONTACT",
+              "DEVIS_EN_PREPARATION",
+              "DEVIS_ENVOYE",
+              "ACCEPTEE",
+              "REFUSEE",
+              "EN_COURS",
+              "TERMINEE",
+              "ENVOYEE"
+            ],
+            "example": "PRISE_DE_CONTACT"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ArchiveMissionDto": {
+        "type": "object",
+        "properties": {
+
+        }
+      },
+      "CreateMissionPartyDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Jean Dupont"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "REQUERANT",
+              "PROPRIETAIRE",
+              "AVOCAT",
+              "ENTREPRISE",
+              "AUTRE"
+            ],
+            "example": "CLIENT"
+          },
+          "email": {
+            "type": "string",
+            "example": "jean.dupont@email.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+261 34 12 345 67"
+          }
+        },
+        "required": [
+          "fullName",
+          "role"
+        ]
+      },
+      "MissionPartyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Jean Dupont"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "REQUERANT",
+              "PROPRIETAIRE",
+              "AVOCAT",
+              "ENTREPRISE",
+              "AUTRE"
+            ]
+          },
+          "email": {
+            "type": "object",
+            "example": "jean.dupont@email.com"
+          },
+          "phone": {
+            "type": "object",
+            "example": "+261 34 12 345 67"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "missionId",
+          "fullName",
+          "role",
+          "createdAt"
+        ]
+      },
+      "UpdateMissionPartyDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Jean Dupont"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "REQUERANT",
+              "PROPRIETAIRE",
+              "AVOCAT",
+              "ENTREPRISE",
+              "AUTRE"
+            ],
+            "example": "CLIENT"
+          },
+          "email": {
+            "type": "string",
+            "example": "jean.dupont@email.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+261 34 12 345 67"
+          }
+        }
+      },
+      "CreateAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "APPEL",
+              "VISITE_RECONNAISSANCE",
+              "RENDEZ_VOUS_SITE",
+              "AUTRE"
+            ],
+            "example": "RENDEZ_VOUS_SITE"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-08-15T09:00:00.000Z"
+          },
+          "location": {
+            "type": "string",
+            "example": "123 Rue Principale, Antananarivo"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Apporter les documents d'urbanisme"
+          }
+        },
+        "required": [
+          "type",
+          "scheduledAt"
+        ]
+      },
+      "AppointmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "APPEL",
+              "RENDEZ_VOUS_SITE",
+              "AUTRE"
+            ]
+          },
+          "scheduledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "location": {
+            "type": "object",
+            "example": "123 Rue Principale, Antananarivo"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANIFIE",
+              "CONFIRME",
+              "REALISE",
+              "ANNULE",
+              "REPORTE"
+            ]
+          },
+          "notes": {
+            "type": "object",
+            "example": "Apporter les documents"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "missionId",
+          "type",
+          "scheduledAt",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-08-20T14:00:00.000Z"
+          },
+          "location": {
+            "type": "string",
+            "example": "456 Avenue de la République, Antananarivo"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANIFIE",
+              "CONFIRME",
+              "REALISE",
+              "ANNULE",
+              "REPORTE"
+            ],
+            "example": "CONFIRME"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Annuler si mauvais temps"
+          }
+        }
+      },
+      "RescheduleAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "scheduledAt": {
+            "type": "string",
+            "example": "2026-09-01T10:00:00.000Z"
+          },
+          "location": {
+            "type": "string",
+            "example": "123 Rue Principale, Antananarivo"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Nouveau rendez-vous suite au report"
+          }
+        },
+        "required": [
+          "scheduledAt"
+        ]
+      },
+      "CreateQuoteDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Montant du devis",
+            "example": 1500000
+          },
+          "currency": {
+            "type": "string",
+            "description": "Devise (défaut: MGA)",
+            "example": "MGA",
+            "default": "MGA"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description / objet du devis",
+            "example": "Devis pour expertise de fissuration du bâtiment"
+          },
+          "proposedBy": {
+            "type": "string",
+            "description": "Proposé par (EXPERT ou CLIENT)",
+            "enum": [
+              "EXPERT",
+              "CLIENT"
+            ],
+            "example": "EXPERT"
+          },
+          "status": {
+            "type": "string",
+            "description": "Statut du devis (défaut: BROUILLON)",
+            "enum": [
+              "BROUILLON",
+              "ENVOYE",
+              "CONTRE_PROPOSITION",
+              "ACCEPTE",
+              "REFUSE",
+              "EXPIRE"
+            ],
+            "default": "BROUILLON"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Date de validité du devis",
+            "example": "2026-09-30T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "amount",
+          "proposedBy"
+        ]
+      },
+      "QuoteResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "example": 1500000
+          },
+          "currency": {
+            "type": "string",
+            "example": "MGA"
+          },
+          "description": {
+            "type": "object",
+            "example": "Devis pour expertise de fissuration"
+          },
+          "proposedBy": {
+            "type": "string",
+            "enum": [
+              "EXPERT",
+              "CLIENT"
+            ],
+            "example": "EXPERT"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "BROUILLON",
+              "ENVOYE",
+              "CONTRE_PROPOSITION",
+              "ACCEPTE",
+              "REFUSE",
+              "EXPIRE"
+            ],
+            "example": "BROUILLON"
+          },
+          "validUntil": {
+            "type": "object",
+            "example": "2026-09-30T00:00:00.000Z"
+          },
+          "sentAt": {
+            "type": "object",
+            "example": "2026-08-01T10:00:00.000Z"
+          },
+          "respondedAt": {
+            "type": "object",
+            "example": "2026-08-15T14:30:00.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "missionId",
+          "version",
+          "amount",
+          "currency",
+          "proposedBy",
+          "status",
+          "createdAt"
+        ]
+      },
+      "RespondQuoteDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Action à effectuer",
+            "enum": [
+              "ACCEPTE",
+              "REFUSE",
+              "CONTRE_PROPOSITION"
+            ],
+            "example": "ACCEPTE"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Nouveau montant (uniquement pour CONTRE_PROPOSITION)",
+            "example": 1800000
+          },
+          "description": {
+            "type": "string",
+            "description": "Nouvelle description (uniquement pour CONTRE_PROPOSITION)",
+            "example": "Contre-proposition : réduction suite au devis initial"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Nouvelle date de validité (uniquement pour CONTRE_PROPOSITION)",
+            "example": "2026-10-15T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "UpdateQuoteDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Montant du devis",
+            "example": 1500000
+          },
+          "currency": {
+            "type": "string",
+            "description": "Devise",
+            "example": "MGA"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description / objet du devis",
+            "example": "Devis pour expertise de fissuration du bâtiment"
+          },
+          "proposedBy": {
+            "type": "string",
+            "description": "Proposé par (EXPERT ou CLIENT)",
+            "enum": [
+              "EXPERT",
+              "CLIENT"
+            ],
+            "example": "EXPERT"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Date de validité du devis",
+            "example": "2026-09-30T00:00:00.000Z"
+          }
+        }
+      },
+      "CreateBuildingZoneDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom de la zone",
+            "example": "Rez-de-chaussée"
+          },
+          "zoneType": {
+            "type": "string",
+            "description": "Type de zone",
+            "enum": [
+              "ETAGE",
+              "PIECE",
+              "FACADE",
+              "TOITURE",
+              "FONDATION",
+              "TERRAIN",
+              "CLOTURE",
+              "AUTRE"
+            ],
+            "example": "ETAGE"
+          },
+          "parentZoneId": {
+            "type": "string",
+            "description": "ID de la zone parente (si sous-zone). Doit appartenir à la même mission.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          }
+        },
+        "required": [
+          "name",
+          "zoneType"
+        ]
+      },
+      "BuildingZoneResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string"
+          },
+          "parentZoneId": {
+            "type": "object"
+          },
+          "name": {
+            "type": "string",
+            "example": "Rez-de-chaussée"
+          },
+          "zoneType": {
+            "type": "string",
+            "enum": [
+              "ETAGE",
+              "PIECE",
+              "FACADE",
+              "TOITURE",
+              "FONDATION",
+              "TERRAIN",
+              "CLOTURE",
+              "AUTRE"
+            ],
+            "example": "ETAGE"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "missionId",
+          "name",
+          "zoneType",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "BuildingZoneTreeItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string"
+          },
+          "parentZoneId": {
+            "type": "object"
+          },
+          "name": {
+            "type": "string",
+            "example": "Rez-de-chaussée"
+          },
+          "zoneType": {
+            "type": "string",
+            "enum": [
+              "ETAGE",
+              "PIECE",
+              "FACADE",
+              "TOITURE",
+              "FONDATION",
+              "TERRAIN",
+              "CLOTURE",
+              "AUTRE"
+            ],
+            "example": "ETAGE"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          },
+          "children": {
+            "description": "Sous-zones (enfants)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildingZoneTreeItemDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "missionId",
+          "name",
+          "zoneType",
+          "createdAt",
+          "updatedAt",
+          "children"
+        ]
+      },
+      "UpdateBuildingZoneDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom de la zone",
+            "example": "Rez-de-chaussée"
+          },
+          "zoneType": {
+            "type": "string",
+            "description": "Type de zone",
+            "enum": [
+              "ETAGE",
+              "PIECE",
+              "FACADE",
+              "TOITURE",
+              "FONDATION",
+              "TERRAIN",
+              "CLOTURE",
+              "AUTRE"
+            ],
+            "example": "ETAGE"
+          },
+          "parentZoneId": {
+            "type": "object",
+            "description": "ID de la zone parente (si sous-zone). Doit appartenir à la même mission. Une zone ne peut pas devenir son propre ancêtre.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          }
+        }
+      },
+      "CreateDisorderTypeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom du type de désordre",
+            "example": "Fissuration"
+          },
+          "category": {
+            "type": "string",
+            "description": "Catégorie du désordre",
+            "enum": [
+              "STRUCTUREL",
+              "HUMIDITE",
+              "INTEMPERIES",
+              "CORROSION",
+              "AUTRE"
+            ],
+            "example": "STRUCTUREL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description du type de désordre",
+            "example": "Fissures de retrait apparaissant sur les murs porteurs"
+          }
+        },
+        "required": [
+          "name",
+          "category"
+        ]
+      },
+      "DisorderTypeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fissuration"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "STRUCTUREL",
+              "HUMIDITE",
+              "INTEMPERIES",
+              "CORROSION",
+              "AUTRE"
+            ],
+            "example": "STRUCTUREL"
+          },
+          "description": {
+            "type": "object",
+            "example": "Fissures de retrait sur les murs porteurs"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "createdAt"
+        ]
+      },
+      "UpdateDisorderTypeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom du type de désordre",
+            "example": "Fissuration"
+          },
+          "category": {
+            "type": "string",
+            "description": "Catégorie du désordre",
+            "enum": [
+              "STRUCTUREL",
+              "HUMIDITE",
+              "INTEMPERIES",
+              "CORROSION",
+              "AUTRE"
+            ],
+            "example": "STRUCTUREL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description du type de désordre",
+            "example": "Fissures de retrait apparaissant sur les murs porteurs"
+          }
+        }
+      },
+      "CreateObservationDto": {
+        "type": "object",
+        "properties": {
+          "disorderTypeId": {
+            "type": "string",
+            "description": "Type de désordre constaté",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description du désordre constaté",
+            "example": "Fissure horizontale sur le mur porteur"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Sévérité du désordre",
+            "enum": [
+              "MINEUR",
+              "MODERE",
+              "URGENT"
+            ],
+            "example": "MODERE"
+          },
+          "probableCause": {
+            "type": "string",
+            "description": "Cause probable du désordre",
+            "example": "Retrait du béton après séchage"
+          }
+        },
+        "required": [
+          "disorderTypeId",
+          "description",
+          "severity"
+        ]
+      },
+      "ObservationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "zoneId": {
+            "type": "string"
+          },
+          "disorderTypeId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "example": "Fissure horizontale sur le mur porteur"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "MINEUR",
+              "MODERE",
+              "URGENT"
+            ],
+            "example": "MODERE"
+          },
+          "probableCause": {
+            "type": "object",
+            "example": "Retrait du béton après séchage"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "zoneId",
+          "disorderTypeId",
+          "description",
+          "severity",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateObservationDto": {
+        "type": "object",
+        "properties": {
+          "disorderTypeId": {
+            "type": "string",
+            "description": "Type de désordre constaté",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description du désordre constaté",
+            "example": "Fissure horizontale sur le mur porteur"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Sévérité du désordre",
+            "enum": [
+              "MINEUR",
+              "MODERE",
+              "URGENT"
+            ],
+            "example": "MODERE"
+          },
+          "probableCause": {
+            "type": "object",
+            "description": "Cause probable du désordre. Passer null pour effacer la cause actuelle.",
+            "example": "Retrait du béton après séchage"
+          }
+        }
+      },
+      "PhotoResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string"
+          },
+          "zoneId": {
+            "type": "object"
+          },
+          "observationId": {
+            "type": "object"
+          },
+          "filePath": {
+            "type": "string",
+            "example": "uploads/photos/uuid.jpg"
+          },
+          "annotations": {
+            "type": "object",
+            "description": "Annotations de la photo (JSON)",
+            "example": {
+              "orientation": "NORD",
+              "niveau": "RDC"
+            }
+          },
+          "takenAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          },
+          "caption": {
+            "type": "object",
+            "example": "Fissure verticale sur le mur porteur"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "missionId",
+          "filePath",
+          "takenAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AttachPhotoDto": {
+        "type": "object",
+        "properties": {
+          "zoneId": {
+            "type": "object",
+            "description": "Zone à rattacher à la photo. Passer null pour détacher la zone actuelle.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "observationId": {
+            "type": "object",
+            "description": "Observation à rattacher à la photo. Passer null pour détacher.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          }
+        }
+      },
+      "UpdatePhotoDto": {
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "object",
+            "description": "Légende de la photo. Passer null pour effacer la légende actuelle.",
+            "example": "Fissure verticale sur le mur porteur"
+          }
+        }
+      }
+    }
+  }
+}

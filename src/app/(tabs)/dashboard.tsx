@@ -1,5 +1,5 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -76,16 +76,7 @@ export default function DashboardScreen() {
           <View className="flex-row items-center justify-between px-four py-two">
             <LogoMark compact />
             <Pressable onPress={handleRefresh} hitSlop={8}>
-              <SymbolView
-                tintColor={theme.accent}
-                name={
-                  {
-                    ios: "arrow.trianglehead.2.clockwise",
-                    web: "arrow.trianglehead.2.clockwise",
-                  } as any
-                }
-                size={18}
-              />
+              <Ionicons name="refresh" color={theme.accent} size={20} />
             </Pressable>
           </View>
 
@@ -135,7 +126,7 @@ export default function DashboardScreen() {
 
                 {stats.pendingClientResponse.count > 0 && (
                   <SectionCard
-                    icon="doc.badge.ellipsis"
+                    icon="document-text-outline"
                     title="Devis en attente de réponse"
                     accent
                   >

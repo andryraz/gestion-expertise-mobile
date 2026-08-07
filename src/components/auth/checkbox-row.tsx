@@ -1,4 +1,4 @@
-import { SymbolView } from "expo-symbols";
+import { Ionicons } from "@expo/vector-icons";
 import { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 
@@ -31,12 +31,7 @@ export function CheckboxRow({ checked, onToggle, children }: CheckboxRowProps) {
         ].join(" ")}
       >
         {checked && (
-          <SymbolView
-            tintColor={theme.background}
-            name={{ ios: "checkmark", web: "checkmark" } as any}
-            size={12}
-            weight="bold"
-          />
+          <Ionicons name="checkmark" color={theme.background} size={14} />
         )}
       </View>
       <ThemedText

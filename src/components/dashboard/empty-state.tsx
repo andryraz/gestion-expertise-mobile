@@ -1,11 +1,11 @@
-import { SymbolView } from 'expo-symbols';
-import { View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
+import { ThemedText } from "@/components/themed-text";
+import { useTheme } from "@/hooks/use-theme";
 
 type EmptyStateProps = {
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
   badge?: string;
@@ -15,14 +15,14 @@ export function EmptyState({
   icon,
   title,
   description,
-  badge = 'Bientôt disponible',
+  badge = "Bientôt disponible",
 }: EmptyStateProps) {
   const theme = useTheme();
 
   return (
     <View className="flex-1 items-center justify-center gap-two px-five">
       <View className="mb-one h-16 w-16 items-center justify-center rounded-four bg-background-element dark:bg-background-element-dark">
-        <SymbolView tintColor={theme.textSecondary} name={{ ios: icon, web: icon } as any} size={28} />
+        <Ionicons name={icon} color={theme.textSecondary} size={30} />
       </View>
       <ThemedText type="subtitle" className="text-center">
         {title}
