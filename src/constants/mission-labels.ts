@@ -23,6 +23,20 @@ export const MISSION_TYPE_LABELS: Record<MissionType, string> = {
 
 export type StatusTone = "muted" | "accent" | "success" | "danger";
 
+export const STATUS_TRANSITIONS: Partial<
+  Record<MissionStatus, MissionStatus[]>
+> = {
+  BROUILLON: ["PRISE_DE_CONTACT"],
+  PRISE_DE_CONTACT: ["DEVIS_EN_PREPARATION"],
+  DEVIS_EN_PREPARATION: ["DEVIS_ENVOYE"],
+  DEVIS_ENVOYE: ["ACCEPTEE", "REFUSEE"],
+  ACCEPTEE: ["EN_COURS"],
+  REFUSEE: ["EN_COURS"],
+  EN_COURS: ["TERMINEE"],
+  TERMINEE: ["ENVOYEE"],
+  ENVOYEE: [],
+};
+
 export const STATUS_TONE: Record<MissionStatus, StatusTone> = {
   BROUILLON: "muted",
   PRISE_DE_CONTACT: "accent",
@@ -34,4 +48,3 @@ export const STATUS_TONE: Record<MissionStatus, StatusTone> = {
   TERMINEE: "success",
   ENVOYEE: "success",
 };
-

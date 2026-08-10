@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +10,7 @@ import { MissionCard, MissionSearchBar, StatusFilterChips, type StatusFilterValu
 import { ScreenFade } from '@/components/screen-fade';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/context/auth-context';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/services/api-client';
@@ -20,6 +22,7 @@ const PAGE_SIZE = 20;
 
 export default function MissionsScreen() {
   const theme = useTheme();
+  const { user } = useAuth();
 
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebouncedValue(searchInput, 400);
@@ -42,6 +45,8 @@ export default function MissionsScreen() {
 
       try {
         const result = await getMissions({
+          // EXPERT accounts only ever see their own missions; ADMIN sees all.
+          expertId: user?.role === 'EXPERT' ? user.id : undefined,
           search: debouncedSearch.trim() || undefined,
           status: statusFilter === 'ALL' ? undefined : statusFilter,
           archived: false,
@@ -64,7 +69,7 @@ export default function MissionsScreen() {
         logger.error('Missions', 'Échec du chargement', message);
       }
     },
-    [debouncedSearch, statusFilter],
+    [debouncedSearch, statusFilter, user],
   );
 
   useEffect(() => {
@@ -101,7 +106,7 @@ export default function MissionsScreen() {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View className="w-full max-w-content self-center px-four">
-                <MissionCard mission={item} />
+                <MissionCard mission={item} onPress={() => router.push(`/missions/${item.id}` as any)} />
               </View>
             )}
             ItemSeparatorComponent={() => <View className="h-two" />}
@@ -132,7 +137,7 @@ export default function MissionsScreen() {
                 ) : (
                   <View className="px-four">
                     <EmptyState
-                      icon="document-text-outline"
+                      icon="search-outline"
                       title="Aucune mission trouvée"
                       description="Essaie une autre recherche ou un autre filtre de statut."
                       badge="0 résultat"
@@ -151,6 +156,13 @@ export default function MissionsScreen() {
             contentContainerClassName="pb-six"
             showsVerticalScrollIndicator={false}
           />
+
+          <Pressable
+            onPress={() => router.push('/missions/new' as any)}
+            className="absolute bottom-four right-four h-14 w-14 items-center justify-center rounded-five bg-accent active:opacity-85"
+            style={{ elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
+            <Ionicons name="add" color={theme.background} size={26} />
+          </Pressable>
         </ScreenFade>
       </SafeAreaView>
     </ThemedView>

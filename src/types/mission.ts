@@ -50,6 +50,21 @@ export type PaginatedMissions = {
   meta: { total: number; page: number; limit: number; totalPages: number };
 };
 
+export type CreateMissionPayload = {
+  title: string;
+  missionType: MissionType;
+  expertId: string;
+  buildingAddress?: string;
+  buildingType?: string;
+};
+
+export type UpdateMissionPayload = {
+  title?: string;
+  missionType?: MissionType;
+  buildingAddress?: string;
+  buildingType?: string;
+};
+
 export type MissionsStats = {
   total: number;
   byStatus: { status: MissionStatus; count: number }[];

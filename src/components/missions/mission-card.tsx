@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -30,61 +30,55 @@ const TONE_TEXT_COLOR = {
 
 type MissionCardProps = {
   mission: Mission;
+  onPress?: () => void;
 };
 
-export function MissionCard({ mission }: MissionCardProps) {
+export function MissionCard({ mission, onPress }: MissionCardProps) {
   const theme = useTheme();
   const tone = STATUS_TONE[mission.status];
 
   return (
-    <ThemedView
-      type="backgroundElement"
-      className="gap-two rounded-three border border-border p-three dark:border-border-dark"
-    >
-      <View className="flex-row items-center justify-between gap-two">
-        <ThemedText type="eyebrow" themeColor="textSecondary">
-          #{mission.reference}
+    <Pressable onPress={onPress} disabled={!onPress} className={onPress ? "active:opacity-70" : undefined}>
+      <ThemedView
+        type="backgroundElement"
+        className="gap-two rounded-three border border-border p-three dark:border-border-dark"
+      >
+        <View className="flex-row items-center justify-between gap-two">
+          <ThemedText type="eyebrow" themeColor="textSecondary">
+            #{mission.reference}
+          </ThemedText>
+          <View
+            className={[
+              "rounded-five border px-two py-half",
+              TONE_CLASSES[tone],
+            ].join(" ")}
+          >
+            <ThemedText type="eyebrow" themeColor={TONE_TEXT_COLOR[tone]}>
+              {STATUS_LABELS[mission.status]}
+            </ThemedText>
+          </View>
+        </View>
+
+        <ThemedText type="smallBold" className="text-base leading-6" numberOfLines={2}>
+          {mission.title}
         </ThemedText>
-        <View
-          className={[
-            "rounded-five border px-two py-half",
-            TONE_CLASSES[tone],
-          ].join(" ")}
-        >
-          <ThemedText type="eyebrow" themeColor={TONE_TEXT_COLOR[tone]}>
-            {STATUS_LABELS[mission.status]}
+
+        <View className="flex-row items-center gap-one">
+          <Ionicons name="location" color={theme.textSecondary} size={15} />
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} className="flex-1">
+            {mission.buildingAddress ?? "Lieu non renseigné"}
           </ThemedText>
         </View>
-      </View>
 
-      <ThemedText
-        type="smallBold"
-        className="text-base leading-6"
-        numberOfLines={2}
-      >
-        {mission.title}
-      </ThemedText>
-
-      <View className="flex-row items-center gap-one">
-        <Ionicons name="location" color={theme.textSecondary} size={15} />
-        <ThemedText
-          type="small"
-          themeColor="textSecondary"
-          numberOfLines={1}
-          className="flex-1"
-        >
-          {mission.buildingAddress ?? "Lieu non renseigné"}
-        </ThemedText>
-      </View>
-
-      <View className="flex-row items-center justify-between gap-two border-t border-border pt-two dark:border-border-dark">
-        <ThemedText type="small" themeColor="textSecondary">
-          {MISSION_TYPE_LABELS[mission.missionType]}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Mis à jour {formatRelativeTime(mission.updatedAt)}
-        </ThemedText>
-      </View>
-    </ThemedView>
+        <View className="flex-row items-center justify-between gap-two border-t border-border pt-two dark:border-border-dark">
+          <ThemedText type="small" themeColor="textSecondary">
+            {MISSION_TYPE_LABELS[mission.missionType]}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Mis à jour {formatRelativeTime(mission.updatedAt)}
+          </ThemedText>
+        </View>
+      </ThemedView>
+    </Pressable>
   );
 }

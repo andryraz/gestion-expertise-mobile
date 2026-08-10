@@ -6,8 +6,10 @@ import {
   useState,
 } from "react";
 
+import { setUnauthorizedHandler } from "@/services/api-client";
 import {
   User,
+  getProfileRequest,
   loginRequest,
   logoutRequest,
   registerRequest,
@@ -34,14 +36,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Au démarrage : si un token est déjà sur l'appareil, on restaure la session
+  // en rechargeant le profil avant d'afficher quoi que ce soit. Sans ça, un
+  // token valide reste inutilisé et l'utilisateur retombe sur le login à
+  // chaque réouverture de l'app.
   useEffect(() => {
-    getToken().then((token) => {
-      setIsLoading(false);
-      logger.debug(
-        "Auth",
-        token ? "Token found on startup" : "No token on startup",
-      );
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) {
+          logger.debug("Auth", "No token on startup");
+          return;
+        }
+        const profile = await getProfileRequest();
+        setUser(profile);
+        logger.info("Auth", "Session restaurée", { userId: profile.id });
+      } catch (err) {
+        // Token expiré/invalide : on l'efface pour ne pas boucler sur une
+        // session morte à chaque démarrage.
+        await clearToken();
+        logger.warn("Auth", "Session invalide au démarrage, jeton effacé", {
+          error: err instanceof Error ? err.message : err,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
+
+  // Branché sur api-client : un 401 sur une requête authentifiée (token
+  // expiré/révoqué en cours d'utilisation) déclenche la même déconnexion que
+  // logout(), sans attendre une action de l'utilisateur.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      logger.info("Auth", "Déconnexion automatique (401)");
+      clearToken();
+      setUser(null);
     });
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   async function login(email: string, password: string) {

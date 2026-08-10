@@ -56,6 +56,11 @@ export default function RootLayout() {
               options={{ animation: "slide_from_bottom" }}
             />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="missions/new"
+              options={{ presentation: "modal", animation: "slide_from_bottom" }}
+            />
+            <Stack.Screen name="missions/[id]" />
           </Stack>
         </RouteGuard>
       </ThemeProvider>
