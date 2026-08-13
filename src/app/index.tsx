@@ -30,6 +30,7 @@ export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
+    // async qui doit attendre la reponse backend
     setIsLoading(true);
     setError(null);
     try {

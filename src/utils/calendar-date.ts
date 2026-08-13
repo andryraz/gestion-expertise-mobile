@@ -21,6 +21,40 @@ export function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+export function isSameMonth(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+/** Lundi de la semaine contenant `date` (convention française : semaine démarrant lundi). */
+export function startOfWeek(date: Date): Date {
+  const mondayOffset = (date.getDay() + 6) % 7; // getDay(): 0 = dimanche, on veut 0 = lundi
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - mondayOffset);
+}
+
+/**
+ * Toutes les cellules d'une grille mensuelle (lundi → dimanche) : les derniers
+ * jours du mois précédent pour compléter la première semaine, tous les jours
+ * du mois, puis les premiers jours du mois suivant pour finir la dernière
+ * semaine. Le nombre de cellules est toujours un multiple de 7.
+ */
+export function getMonthGridDays(month: Date): Date[] {
+  const first = startOfMonth(month);
+  const start = startOfWeek(first);
+  const end = startOfWeek(endOfMonth(month));
+  end.setDate(end.getDate() + 6);
+
+  const days: Date[] = [];
+  for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+    days.push(new Date(day));
+  }
+  return days;
+}
+
+/** Clé locale (année-mois-jour) servant à indexer les rendez-vous par jour civil. */
+export function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -47,17 +81,4 @@ export function formatTime(iso: string): string {
   );
 }
 
-/** Regroupe une liste de rendez-vous (triés par date croissante) par jour civil. */
-export function groupByDay<T extends { scheduledAt: string }>(items: T[]): { day: Date; items: T[] }[] {
-  const groups: { day: Date; items: T[] }[] = [];
-  for (const item of items) {
-    const date = new Date(item.scheduledAt);
-    const last = groups[groups.length - 1];
-    if (last && isSameDay(last.day, date)) {
-      last.items.push(item);
-    } else {
-      groups.push({ day: date, items: [item] });
-    }
-  }
-  return groups;
-}
+

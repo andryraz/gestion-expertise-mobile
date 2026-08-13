@@ -31,11 +31,11 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, segments]);
 
-  return <>{children}</>;
+  return <>{children}</>; //affiche les composants dans routeguard
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme(); // detection de theme
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -58,7 +58,10 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen
               name="missions/new"
-              options={{ presentation: "modal", animation: "slide_from_bottom" }}
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
             />
             <Stack.Screen name="missions/[id]" />
           </Stack>

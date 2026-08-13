@@ -36,10 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Au démarrage : si un token est déjà sur l'appareil, on restaure la session
-  // en rechargeant le profil avant d'afficher quoi que ce soit. Sans ça, un
-  // token valide reste inutilisé et l'utilisateur retombe sur le login à
-  // chaque réouverture de l'app.
   useEffect(() => {
     (async () => {
       try {
@@ -52,8 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profile);
         logger.info("Auth", "Session restaurée", { userId: profile.id });
       } catch (err) {
-        // Token expiré/invalide : on l'efface pour ne pas boucler sur une
-        // session morte à chaque démarrage.
         await clearToken();
         logger.warn("Auth", "Session invalide au démarrage, jeton effacé", {
           error: err instanceof Error ? err.message : err,
@@ -64,9 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  // Branché sur api-client : un 401 sur une requête authentifiée (token
-  // expiré/révoqué en cours d'utilisation) déclenche la même déconnexion que
-  // logout(), sans attendre une action de l'utilisateur.
   useEffect(() => {
     setUnauthorizedHandler(() => {
       logger.info("Auth", "Déconnexion automatique (401)");
