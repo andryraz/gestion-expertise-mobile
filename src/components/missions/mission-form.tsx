@@ -1,13 +1,19 @@
-import { useState } from 'react';
-import { View } from 'react-native';
+import { useState } from "react";
+import { View } from "react-native";
 
-import { FormField, PrimaryButton } from '@/components/auth';
-import { ChipSelect } from '@/components/missions/chip-select';
-import { ThemedText } from '@/components/themed-text';
-import { MISSION_TYPE_LABELS, STATUS_LABELS, STATUS_TRANSITIONS } from '@/constants/mission-labels';
-import { Mission, MissionStatus, MissionType } from '@/types/mission';
+import { FormField, PrimaryButton } from "@/components/auth";
+import { ThemedText } from "@/components/themed-text";
+import { ChipSelect } from "@/components/ui/chip-select";
+import {
+    MISSION_TYPE_LABELS,
+    STATUS_LABELS,
+    STATUS_TRANSITIONS,
+} from "@/constants/mission-labels";
+import { Mission, MissionStatus, MissionType } from "@/types/mission";
 
-const MISSION_TYPE_OPTIONS = (Object.keys(MISSION_TYPE_LABELS) as MissionType[]).map((value) => ({
+const MISSION_TYPE_OPTIONS = (
+  Object.keys(MISSION_TYPE_LABELS) as MissionType[]
+).map((value) => ({
   value,
   label: MISSION_TYPE_LABELS[value],
 }));
@@ -45,11 +51,19 @@ export function MissionForm({
   error,
   onSubmit,
 }: MissionFormProps) {
-  const [title, setTitle] = useState(initialValues?.title ?? '');
-  const [missionType, setMissionType] = useState<MissionType>(initialValues?.missionType ?? 'AUTRE');
-  const [buildingAddress, setBuildingAddress] = useState(initialValues?.buildingAddress ?? '');
-  const [buildingType, setBuildingType] = useState(initialValues?.buildingType ?? '');
-  const [status, setStatus] = useState<MissionStatus>(initialValues?.status ?? 'BROUILLON');
+  const [title, setTitle] = useState(initialValues?.title ?? "");
+  const [missionType, setMissionType] = useState<MissionType>(
+    initialValues?.missionType ?? "AUTRE",
+  );
+  const [buildingAddress, setBuildingAddress] = useState(
+    initialValues?.buildingAddress ?? "",
+  );
+  const [buildingType, setBuildingType] = useState(
+    initialValues?.buildingType ?? "",
+  );
+  const [status, setStatus] = useState<MissionStatus>(
+    initialValues?.status ?? "BROUILLON",
+  );
 
   const isValid = title.trim().length > 0;
 
@@ -79,7 +93,11 @@ export function MissionForm({
         <ThemedText type="eyebrow" themeColor="accent">
           Type de mission
         </ThemedText>
-        <ChipSelect options={MISSION_TYPE_OPTIONS} value={missionType} onChange={setMissionType} />
+        <ChipSelect
+          options={MISSION_TYPE_OPTIONS}
+          value={missionType}
+          onChange={setMissionType}
+        />
       </View>
 
       <FormField
@@ -106,7 +124,7 @@ export function MissionForm({
             Statut
           </ThemedText>
           <ChipSelect
-            options={getStatusOptions(initialValues?.status ?? 'BROUILLON')}
+            options={getStatusOptions(initialValues?.status ?? "BROUILLON")}
             value={status}
             onChange={setStatus}
           />
@@ -119,7 +137,12 @@ export function MissionForm({
         </ThemedText>
       )}
 
-      <PrimaryButton label={submitLabel} onPress={handleSubmit} disabled={!isValid} loading={isSubmitting} />
+      <PrimaryButton
+        label={submitLabel}
+        onPress={handleSubmit}
+        disabled={!isValid}
+        loading={isSubmitting}
+      />
     </View>
   );
 }
