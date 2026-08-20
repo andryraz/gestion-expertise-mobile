@@ -170,6 +170,12 @@ export default function RegisterScreen() {
                   notre Politique de confidentialité.
                 </CheckboxRow>
 
+                {error && (
+                  <ThemedText themeColor="danger" type="small">
+                    {error}
+                  </ThemedText>
+                )}
+
                 <PrimaryButton
                   label="Créer mon compte"
                   loadingLabel="Inscription..."

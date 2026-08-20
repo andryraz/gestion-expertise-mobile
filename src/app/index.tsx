@@ -30,7 +30,6 @@ export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
-    // async qui doit attendre la reponse backend
     setIsLoading(true);
     setError(null);
     try {
@@ -100,6 +99,13 @@ export default function LoginScreen() {
                   onChangeText={setPassword}
                   autoCapitalize="none"
                 />
+
+                {error && (
+                  <ThemedText themeColor="danger" type="small">
+                    {error}
+                  </ThemedText>
+                )}
+
                 <PrimaryButton
                   label="Se connecter"
                   loadingLabel="Connexion..."
