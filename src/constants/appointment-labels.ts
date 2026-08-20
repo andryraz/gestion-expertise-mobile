@@ -16,8 +16,6 @@ export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   REPORTE: "Reporté",
 };
 
-// Même palette de tons (muted / accent / success / danger) que STATUS_TONE
-// pour les missions, afin de rester cohérent avec le design existant.
 export const APPOINTMENT_STATUS_TONE: Record<AppointmentStatus, StatusTone> = {
   PLANIFIE: "muted",
   CONFIRME: "accent",

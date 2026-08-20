@@ -10,7 +10,6 @@ import { MissionCard, MissionSearchBar, StatusFilterChips, type StatusFilterValu
 import { ScreenFade } from '@/components/screen-fade';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useAuth } from '@/context/auth-context';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/services/api-client';
@@ -22,7 +21,6 @@ const PAGE_SIZE = 20;
 
 export default function MissionsScreen() {
   const theme = useTheme();
-  const { user } = useAuth();
 
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebouncedValue(searchInput, 400);
@@ -45,8 +43,6 @@ export default function MissionsScreen() {
 
       try {
         const result = await getMissions({
-          // EXPERT accounts only ever see their own missions; ADMIN sees all.
-          expertId: user?.role === 'EXPERT' ? user.id : undefined,
           search: debouncedSearch.trim() || undefined,
           status: statusFilter === 'ALL' ? undefined : statusFilter,
           archived: false,
@@ -69,7 +65,7 @@ export default function MissionsScreen() {
         logger.error('Missions', 'Échec du chargement', message);
       }
     },
-    [debouncedSearch, statusFilter, user],
+    [debouncedSearch, statusFilter],
   );
 
   useEffect(() => {

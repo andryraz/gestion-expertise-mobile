@@ -16,7 +16,6 @@ import {
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const CELL_BASIS = "14.2857%";
-// Nombre maximal de rendez-vous affichés dans une cellule avant le "+N".
 const MAX_CELL_ITEMS = 2;
 
 type MonthGridProps = {
@@ -38,7 +37,6 @@ export function MonthGrid({
   const days = useMemo(() => getMonthGridDays(month), [month]);
   const rows = days.length / 7;
 
-  // Rendez-vous indexés par jour civil, pour un accès direct par cellule.
   const byDay = useMemo(() => {
     const map = new Map<string, Appointment[]>();
     for (const appointment of appointments) {
@@ -80,9 +78,9 @@ export function MonthGrid({
           const inCurrentMonth = isSameMonth(day, month);
           const isSelected = isSameDay(day, selectedDate);
           const isToday = isSameDay(day, today);
-          // Les cellules hors mois (jours du mois précédent/suivant) n'ont pas
-          // de rendez-vous : on ne récupère que la période du mois affiché.
-          const dayItems = inCurrentMonth ? byDay.get(toDateKey(day)) ?? [] : [];
+          const dayItems = inCurrentMonth
+            ? (byDay.get(toDateKey(day)) ?? [])
+            : [];
 
           return (
             <Pressable
@@ -126,7 +124,9 @@ export function MonthGrid({
                       className="h-one w-one rounded-full"
                       style={{
                         backgroundColor:
-                          toneColor[APPOINTMENT_STATUS_TONE[appointment.status]],
+                          toneColor[
+                            APPOINTMENT_STATUS_TONE[appointment.status]
+                          ],
                       }}
                     />
                     <ThemedText

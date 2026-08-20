@@ -53,7 +53,6 @@ export type PaginatedMissions = {
 export type CreateMissionPayload = {
   title: string;
   missionType: MissionType;
-  expertId: string;
   buildingAddress?: string;
   buildingType?: string;
 };

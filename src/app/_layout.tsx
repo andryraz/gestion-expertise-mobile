@@ -31,11 +31,11 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, segments]);
 
-  return <>{children}</>; //affiche les composants dans routeguard
+  return <>{children}</>;
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme(); // detection de theme
+  const colorScheme = useColorScheme();
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

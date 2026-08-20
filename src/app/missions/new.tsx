@@ -1,27 +1,30 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { MissionForm, type MissionFormValues } from '@/components/missions';
-import { ScreenFade } from '@/components/screen-fade';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useTheme } from '@/hooks/use-theme';
-import { useAuth } from '@/context/auth-context';
-import { ApiError } from '@/services/api-client';
-import { createMission } from '@/services/mission-services';
-import { logger } from '@/utils/logger';
+import { MissionForm, type MissionFormValues } from "@/components/missions";
+import { ScreenFade } from "@/components/screen-fade";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
+import { ApiError } from "@/services/api-client";
+import { createMission } from "@/services/mission-services";
+import { logger } from "@/utils/logger";
 
 export default function NewMissionScreen() {
   const theme = useTheme();
-  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (values: MissionFormValues) => {
-    if (!user) return;
     setIsSubmitting(true);
     setError(null);
     try {
@@ -30,14 +33,16 @@ export default function NewMissionScreen() {
         missionType: values.missionType,
         buildingAddress: values.buildingAddress,
         buildingType: values.buildingType,
-        expertId: user.id,
       });
-      logger.info('Missions', 'Mission créée', { id: mission.id });
-      router.replace('/missions' as any);
+      logger.info("Missions", "Mission créée", { id: mission.id });
+      router.replace("/missions" as any);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Impossible de créer la mission';
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Impossible de créer la mission";
       setError(message);
-      logger.error('Missions', 'Échec de la création', message);
+      logger.error("Missions", "Échec de la création", message);
     } finally {
       setIsSubmitting(false);
     }
@@ -56,11 +61,15 @@ export default function NewMissionScreen() {
             </ThemedText>
           </View>
 
-          <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
             <ScrollView
               contentContainerClassName="w-full max-w-content self-center px-four pb-six"
               keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}>
+              showsVerticalScrollIndicator={false}
+            >
               <MissionForm
                 submitLabel="Créer la mission"
                 isSubmitting={isSubmitting}

@@ -11,11 +11,9 @@ import { EmptyState } from "@/components/dashboard";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useAuth } from "@/context/auth-context";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
 import { getAppointments } from "@/services/appointment-services";
-import { getOwnedMissionIds } from "@/services/mission-services";
 import { Appointment } from "@/types/appointment";
 import {
   addMonths,
@@ -30,15 +28,14 @@ import { logger } from "@/utils/logger";
 
 export default function CalendarScreen() {
   const theme = useTheme();
-  const { user } = useAuth();
-  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    startOfMonth(new Date()),
+  );
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const isExpert = user?.role === "EXPERT";
 
   const loadAppointments = useCallback(async () => {
     setError(null);
@@ -46,62 +43,24 @@ export default function CalendarScreen() {
       const from = startOfMonth(visibleMonth).toISOString();
       const to = endOfMonth(visibleMonth).toISOString();
 
-      // Le endpoint GET /appointments ne filtre pas par expert côté serveur :
-      // pour un compte EXPERT on vérifie ici que chaque rendez-vous appartient
-      // bien à une de ses missions avant de l'afficher. Un ADMIN voit tout.
-      let ownedMissionIds: Set<string> | null = null;
-      if (isExpert) {
-        try {
-          ownedMissionIds = await getOwnedMissionIds(user.id);
-        } catch (err) {
-          // Sans la liste des missions on ne peut pas vérifier l'appartenance :
-          // on refuse d'afficher des rendez-vous potentiellement étrangers.
-          setAppointments([]);
-          setError(
-            "Impossible de vérifier tes missions. Aucun rendez-vous n'est affiché pour le moment.",
-          );
-          logger.error(
-            "Calendar",
-            "Impossible de charger les missions de l'expert connecté",
-            err instanceof Error ? err.message : err,
-          );
-          return;
-        }
-      }
-
       const result = await getAppointments(from, to);
 
-      // Le backend ne garantit pas explicitement l'ordre : on trie ici pour
-      // que l'affichage des rendez-vous du jour sélectionné soit chronologique.
-      let sorted = [...result].sort(
-        (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+      const sorted = [...result].sort(
+        (a, b) =>
+          new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
       );
-
-      if (ownedMissionIds) {
-        const filtered = sorted.filter((appointment) =>
-          ownedMissionIds.has(appointment.missionId),
-        );
-        if (filtered.length !== sorted.length) {
-          const hidden = sorted.filter(
-            (appointment) => !ownedMissionIds.has(appointment.missionId),
-          );
-          logger.warn(
-            "Calendar",
-            "Le backend a renvoyé des rendez-vous hors des missions de l'expert connecté — masqués côté client",
-            { hidden: hidden.length, ids: hidden.map((appointment) => appointment.id) },
-          );
-        }
-        sorted = filtered;
-      }
 
       setAppointments(sorted);
       logger.info("Calendar", "Chargement réussi", { count: sorted.length });
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Impossible de charger le calendrier";
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Impossible de charger le calendrier";
       setError(message);
       logger.error("Calendar", "Échec du chargement", message);
     }
-  }, [visibleMonth, isExpert, user]);
+  }, [visibleMonth]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -157,7 +116,11 @@ export default function CalendarScreen() {
           </View>
 
           <View className="w-full max-w-content flex-row items-center justify-between self-center px-four pb-three">
-            <Pressable onPress={() => changeMonth(-1)} hitSlop={8} className="p-one">
+            <Pressable
+              onPress={() => changeMonth(-1)}
+              hitSlop={8}
+              className="p-one"
+            >
               <Ionicons name="chevron-back" color={theme.text} size={20} />
             </Pressable>
             <Pressable
@@ -169,19 +132,32 @@ export default function CalendarScreen() {
                 {formatMonthLabel(visibleMonth)}
               </ThemedText>
             </Pressable>
-            <Pressable onPress={() => changeMonth(1)} hitSlop={8} className="p-one">
+            <Pressable
+              onPress={() => changeMonth(1)}
+              hitSlop={8}
+              className="p-one"
+            >
               <Ionicons name="chevron-forward" color={theme.text} size={20} />
             </Pressable>
           </View>
 
           <ScrollView
             contentContainerClassName="gap-three w-full max-w-content self-center px-four pb-six"
-            refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+              />
+            }
             showsVerticalScrollIndicator={false}
           >
-            {isLoading && <ThemedText themeColor="textSecondary">Chargement...</ThemedText>}
+            {isLoading && (
+              <ThemedText themeColor="textSecondary">Chargement...</ThemedText>
+            )}
 
-            {error && !isLoading && <ThemedText themeColor="danger">{error}</ThemedText>}
+            {error && !isLoading && (
+              <ThemedText themeColor="danger">{error}</ThemedText>
+            )}
 
             {!isLoading && !error && (
               <>
@@ -209,7 +185,11 @@ export default function CalendarScreen() {
                         <AppointmentCard
                           key={appointment.id}
                           appointment={appointment}
-                          onPress={() => router.push(`/missions/${appointment.missionId}` as any)}
+                          onPress={() =>
+                            router.push(
+                              `/missions/${appointment.missionId}` as any,
+                            )
+                          }
                         />
                       ))
                     ) : (

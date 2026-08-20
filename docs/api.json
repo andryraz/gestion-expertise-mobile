@@ -190,6 +190,7 @@
     },
     "/missions": {
       "post": {
+        "description": "Crée une mission attribuée à l'expert authentifié. L'attribution ne peut jamais être choisie par le client : expertId est toujours déduit du token JWT.",
         "operationId": "MissionsController_create",
         "parameters": [],
         "requestBody": {
@@ -228,6 +229,7 @@
         ]
       },
       "get": {
+        "description": "Retourne les missions de l'expert authentifié. Un compte EXPERT ne peut jamais voir les missions d'un autre expert, quel que soit le paramètre expertId fourni. Un compte ADMIN peut voir toutes les missions, et filtrer optionnellement par expertId.",
         "operationId": "MissionsController_findAll",
         "parameters": [
           {
@@ -366,7 +368,7 @@
     },
     "/missions/stats": {
       "get": {
-        "description": "Retourne les statistiques globales des missions : nombre par statut, missions en attente de réponse client, missions en retard, et nombre de missions archivées.",
+        "description": "Retourne les statistiques des missions de l'expert authentifié uniquement (nombre par statut, missions en attente de réponse client, missions en retard, missions archivées). Un compte ADMIN voit les statistiques globales, tous experts confondus.",
         "operationId": "MissionsController_getStats",
         "parameters": [],
         "responses": {
@@ -397,6 +399,7 @@
     },
     "/missions/{id}": {
       "get": {
+        "description": "Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
         "operationId": "MissionsController_findOne",
         "parameters": [
           {
@@ -434,7 +437,7 @@
         ]
       },
       "patch": {
-        "description": "Met à jour les champs d'une mission . Le statut ne peut pas être modifié via cet endpoint.",
+        "description": "Met à jour les champs d'une mission. Le statut ne peut pas être modifié via cet endpoint. Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
         "operationId": "MissionsController_update",
         "parameters": [
           {
@@ -484,7 +487,7 @@
     },
     "/missions/{id}/status": {
       "patch": {
-        "description": "Effectue une transition de statut en respectant les règles métier : progression linéaire sans saut ni retour en arrière. Transitions autorisées : BROUILLON → PRISE_DE_CONTACT → DEVIS_EN_PREPARATION → DEVIS_ENVOYE → ACCEPTEE|REFUSEE → EN_COURS → TERMINEE → ENVOYEE.",
+        "description": "Effectue une transition de statut en respectant les règles métier : progression linéaire sans saut ni retour en arrière. Transitions autorisées : BROUILLON → PRISE_DE_CONTACT → DEVIS_EN_PREPARATION → DEVIS_ENVOYE → ACCEPTEE|REFUSEE → EN_COURS → TERMINEE → ENVOYEE. Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
         "operationId": "MissionsController_updateStatus",
         "parameters": [
           {
@@ -534,7 +537,7 @@
     },
     "/missions/{id}/archive": {
       "patch": {
-        "description": "Archive une mission en renseignant la date d'archivage. Une mission déjà archivée ne peut pas l'être à nouveau.",
+        "description": "Archive une mission en renseignant la date d'archivage. Une mission déjà archivée ne peut pas l'être à nouveau. Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
         "operationId": "MissionsController_archive",
         "parameters": [
           {
@@ -584,7 +587,7 @@
     },
     "/missions/{id}/unarchive": {
       "patch": {
-        "description": "Désarchive une mission en supprimant la date d'archivage. Une mission non archivée ne peut pas être désarchivée.",
+        "description": "Désarchive une mission en supprimant la date d'archivage. Une mission non archivée ne peut pas être désarchivée. Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
         "operationId": "MissionsController_unarchive",
         "parameters": [
           {
@@ -844,7 +847,7 @@
         ]
       },
       "get": {
-        "description": "Retourne tous les rendez-vous d'une mission, triés par date de rendez-vous (ordre croissant).",
+        "description": "Retourne tous les rendez-vous d'une mission, triés par date de rendez-vous (ordre croissant). Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
         "operationId": "AppointmentsController_findAllByMission",
         "parameters": [
           {
@@ -887,7 +890,7 @@
     },
     "/appointments": {
       "get": {
-        "description": "Retourne les rendez-vous dans une plage de dates donnée. Utile pour une vue calendrier.",
+        "description": "Retourne les rendez-vous dans une plage de dates donnée, pour l'expert authentifié uniquement (jamais ceux d'un autre expert). Un compte ADMIN voit les rendez-vous de tous les experts sur la période. Utile pour une vue calendrier.",
         "operationId": "AppointmentsController_findAllByDateRange",
         "parameters": [
           {
@@ -2524,10 +2527,6 @@
             ],
             "example": "PATHOLOGIE"
           },
-          "expertId": {
-            "type": "string",
-            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-          },
           "buildingAddress": {
             "type": "string",
             "example": "Lot IVN 99, Ambondrona, Antananarivo",
@@ -2552,8 +2551,7 @@
         },
         "required": [
           "title",
-          "missionType",
-          "expertId"
+          "missionType"
         ]
       },
       "ExpertBriefDto": {

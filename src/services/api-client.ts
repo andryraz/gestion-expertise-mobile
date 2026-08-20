@@ -11,17 +11,8 @@ export class ApiError extends Error {
   }
 }
 
-// Délai max avant d'abandonner une requête (réseau lent/instable, cas fréquent
-// en usage terrain). Au-delà, on préfère un message clair plutôt qu'un écran
-// bloqué indéfiniment sur "Chargement...".
 const REQUEST_TIMEOUT_MS = 15000;
 
-// Enregistrée par AuthProvider au montage : permet à ce module (qui ne peut pas
-// importer le contexte React sans créer une dépendance circulaire avec
-// auth-service.ts) de déclencher une déconnexion quand le backend répond 401
-// sur une requête authentifiée, c'est-à-dire une session expirée/invalide —
-// à ne pas confondre avec un 401 de /auth/login (identifiants erronés), qui
-// n'est jamais envoyé avec `auth: true`.
 type UnauthorizedHandler = () => void;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 
@@ -66,14 +57,24 @@ export async function apiRequest<T>(
     });
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
-      logger.error("API", `← Timeout (${REQUEST_TIMEOUT_MS}ms) ${method} ${path}`);
+      logger.error(
+        "API",
+        `← Timeout (${REQUEST_TIMEOUT_MS}ms) ${method} ${path}`,
+      );
       throw new ApiError(
         0,
         "Le serveur met trop de temps à répondre. Vérifie ta connexion et réessaie.",
       );
     }
-    logger.error("API", `← Échec réseau ${method} ${path}`, err instanceof Error ? err.message : err);
-    throw new ApiError(0, "Impossible de joindre le serveur. Vérifie ta connexion.");
+    logger.error(
+      "API",
+      `← Échec réseau ${method} ${path}`,
+      err instanceof Error ? err.message : err,
+    );
+    throw new ApiError(
+      0,
+      "Impossible de joindre le serveur. Vérifie ta connexion.",
+    );
   } finally {
     clearTimeout(timeoutId);
   }
@@ -87,7 +88,10 @@ export async function apiRequest<T>(
     logger.error("API", `← ${response.status} ${method} ${path}`, message);
 
     if (response.status === 401 && options.auth) {
-      logger.warn("API", "Session expirée ou invalide (401) — déconnexion automatique");
+      logger.warn(
+        "API",
+        "Session expirée ou invalide (401) — déconnexion automatique",
+      );
       unauthorizedHandler?.();
     }
 

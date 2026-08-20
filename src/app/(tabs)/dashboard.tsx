@@ -17,39 +17,14 @@ import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { STATUS_LABELS } from "@/constants/mission-labels";
-import { useAuth } from "@/context/auth-context";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
-import {
-  computeMissionsStats,
-  getMissions,
-  getMissionsStats,
-} from "@/services/mission-services";
+import { getMissions, getMissionsStats } from "@/services/mission-services";
 import { Mission, MissionsStats } from "@/types/mission";
 import { logger } from "@/utils/logger";
 
-async function fetchAllPages(params: { expertId: string; archived?: boolean }) {
-  const missions: Mission[] = [];
-  let page = 1;
-  let totalPages = 1;
-  while (page <= totalPages) {
-    const result = await getMissions({
-      ...params,
-      sortBy: "updatedAt",
-      sortOrder: "desc",
-      page,
-      limit: 100,
-    });
-    missions.push(...result.data);
-    totalPages = result.meta.totalPages;
-    page += 1;
-  }
-  return missions;
-}
-
 export default function DashboardScreen() {
   const theme = useTheme();
-  const { user } = useAuth();
   const [stats, setStats] = useState<MissionsStats | null>(null);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,31 +33,19 @@ export default function DashboardScreen() {
 
   const loadDashboard = useCallback(async () => {
     setError(null);
-    let total = 0;
     try {
-      if (user?.role === "EXPERT") {
-        const [active, archived] = await Promise.all([
-          fetchAllPages({ expertId: user.id, archived: false }),
-          fetchAllPages({ expertId: user.id, archived: true }),
-        ]);
-        setStats(computeMissionsStats(active, archived.length));
-        setMissions(active.slice(0, 5));
-        total = active.length + archived.length;
-      } else {
-        const [statsResult, missionsResult] = await Promise.all([
-          getMissionsStats(),
-          getMissions({
-            archived: false,
-            sortBy: "updatedAt",
-            sortOrder: "desc",
-            limit: 5,
-          }),
-        ]);
-        setStats(statsResult);
-        setMissions(missionsResult.data);
-        total = statsResult.total;
-      }
-      logger.info("Dashboard", "Load successful", { total });
+      const [statsResult, missionsResult] = await Promise.all([
+        getMissionsStats(),
+        getMissions({
+          archived: false,
+          sortBy: "updatedAt",
+          sortOrder: "desc",
+          limit: 5,
+        }),
+      ]);
+      setStats(statsResult);
+      setMissions(missionsResult.data);
+      logger.info("Dashboard", "Load successful", { total: statsResult.total });
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -91,7 +54,7 @@ export default function DashboardScreen() {
       setError(message);
       logger.error("Dashboard", "Load failed", message);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
