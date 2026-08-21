@@ -57,10 +57,15 @@ export default function DashboardScreen() {
   }, []);
 
   useEffect(() => {
-    setIsLoading(true);
-    loadDashboard().finally(() => setIsLoading(false));
+    (async () => {
+      setIsLoading(true);
+      try {
+        await loadDashboard();
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, [loadDashboard]);
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await loadDashboard();

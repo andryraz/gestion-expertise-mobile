@@ -63,8 +63,14 @@ export default function CalendarScreen() {
   }, [visibleMonth]);
 
   useEffect(() => {
-    setIsLoading(true);
-    loadAppointments().finally(() => setIsLoading(false));
+    (async () => {
+      setIsLoading(true);
+      try {
+        await loadAppointments();
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, [loadAppointments]);
 
   const handleRefresh = async () => {

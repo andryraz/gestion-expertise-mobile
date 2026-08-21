@@ -37,6 +37,9 @@ export type Mission = {
   status: MissionStatus;
   buildingAddress?: string | null;
   buildingType?: string | null;
+  buildingGpsLat?: number | null;
+  buildingGpsLng?: number | null;
+  legalContext?: string | null;
   expertId: string;
   expert: ExpertBrief;
   archivedAt?: string | null;
@@ -55,6 +58,9 @@ export type CreateMissionPayload = {
   missionType: MissionType;
   buildingAddress?: string;
   buildingType?: string;
+  buildingGpsLat?: number;
+  buildingGpsLng?: number;
+  legalContext?: string;
 };
 
 export type UpdateMissionPayload = {
@@ -62,6 +68,9 @@ export type UpdateMissionPayload = {
   missionType?: MissionType;
   buildingAddress?: string;
   buildingType?: string;
+  buildingGpsLat?: number;
+  buildingGpsLng?: number;
+  legalContext?: string;
 };
 
 export type MissionsStats = {

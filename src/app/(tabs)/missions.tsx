@@ -1,30 +1,35 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FlatList, Pressable, RefreshControl, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { LogoMark } from '@/components/auth';
-import { EmptyState } from '@/components/dashboard';
-import { MissionCard, MissionSearchBar, StatusFilterChips, type StatusFilterValue } from '@/components/missions';
-import { ScreenFade } from '@/components/screen-fade';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { useTheme } from '@/hooks/use-theme';
-import { ApiError } from '@/services/api-client';
-import { getMissions } from '@/services/mission-services';
-import { Mission } from '@/types/mission';
-import { logger } from '@/utils/logger';
+import { LogoMark } from "@/components/auth";
+import { EmptyState } from "@/components/dashboard";
+import {
+  MissionCard,
+  MissionSearchBar,
+  StatusFilterChips,
+  type StatusFilterValue,
+} from "@/components/missions";
+import { ScreenFade } from "@/components/screen-fade";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useTheme } from "@/hooks/use-theme";
+import { ApiError } from "@/services/api-client";
+import { getMissions } from "@/services/mission-services";
+import { Mission } from "@/types/mission";
+import { logger } from "@/utils/logger";
 
 const PAGE_SIZE = 20;
 
 export default function MissionsScreen() {
   const theme = useTheme();
 
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 400);
-  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("ALL");
 
   const [missions, setMissions] = useState<Mission[]>([]);
   const [page, setPage] = useState(1);
@@ -37,52 +42,66 @@ export default function MissionsScreen() {
   const requestId = useRef(0);
 
   const fetchMissions = useCallback(
-    async (targetPage: number, mode: 'replace' | 'append') => {
+    async (targetPage: number, mode: "replace" | "append") => {
       const currentRequest = ++requestId.current;
       setError(null);
 
       try {
         const result = await getMissions({
           search: debouncedSearch.trim() || undefined,
-          status: statusFilter === 'ALL' ? undefined : statusFilter,
+          status: statusFilter === "ALL" ? undefined : statusFilter,
           archived: false,
-          sortBy: 'updatedAt',
-          sortOrder: 'desc',
+          sortBy: "updatedAt",
+          sortOrder: "desc",
           page: targetPage,
           limit: PAGE_SIZE,
         });
 
         if (currentRequest !== requestId.current) return;
 
-        setMissions((prev) => (mode === 'append' ? [...prev, ...result.data] : result.data));
+        setMissions((prev) =>
+          mode === "append" ? [...prev, ...result.data] : result.data,
+        );
         setPage(result.meta.page);
         setTotalPages(result.meta.totalPages);
-        logger.info('Missions', 'Chargement réussi', { page: result.meta.page, total: result.meta.total });
+        logger.info("Missions", "Chargement réussi", {
+          page: result.meta.page,
+          total: result.meta.total,
+        });
       } catch (err) {
         if (currentRequest !== requestId.current) return;
-        const message = err instanceof ApiError ? err.message : 'Impossible de charger les missions';
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : "Impossible de charger les missions";
         setError(message);
-        logger.error('Missions', 'Échec du chargement', message);
+        logger.error("Missions", "Échec du chargement", message);
       }
     },
     [debouncedSearch, statusFilter],
   );
 
   useEffect(() => {
-    setIsLoading(true);
-    fetchMissions(1, 'replace').finally(() => setIsLoading(false));
+    (async () => {
+      setIsLoading(true);
+      try {
+        await fetchMissions(1, "replace");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, [fetchMissions]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchMissions(1, 'replace');
+    await fetchMissions(1, "replace");
     setIsRefreshing(false);
   };
 
   const handleLoadMore = async () => {
     if (isLoadingMore || isLoading || page >= totalPages) return;
     setIsLoadingMore(true);
-    await fetchMissions(page + 1, 'append');
+    await fetchMissions(page + 1, "append");
     setIsLoadingMore(false);
   };
 
@@ -102,7 +121,10 @@ export default function MissionsScreen() {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View className="w-full max-w-content self-center px-four">
-                <MissionCard mission={item} onPress={() => router.push(`/missions/${item.id}` as any)} />
+                <MissionCard
+                  mission={item}
+                  onPress={() => router.push(`/missions/${item.id}` as any)}
+                />
               </View>
             )}
             ItemSeparatorComponent={() => <View className="h-two" />}
@@ -112,14 +134,24 @@ export default function MissionsScreen() {
                   <ThemedText type="subtitle" themeColor="accent">
                     Missions
                   </ThemedText>
-                  <MissionSearchBar value={searchInput} onChangeText={setSearchInput} />
+                  <MissionSearchBar
+                    value={searchInput}
+                    onChangeText={setSearchInput}
+                  />
                 </View>
-                <StatusFilterChips value={statusFilter} onChange={setStatusFilter} />
+                <StatusFilterChips
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                />
               </View>
             }
             ListFooterComponent={
               isLoadingMore ? (
-                <ThemedText themeColor="textSecondary" type="small" className="py-three text-center">
+                <ThemedText
+                  themeColor="textSecondary"
+                  type="small"
+                  className="py-three text-center"
+                >
                   Chargement...
                 </ThemedText>
               ) : null
@@ -146,7 +178,12 @@ export default function MissionsScreen() {
                 </ThemedText>
               )
             }
-            refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+              />
+            }
             onEndReachedThreshold={0.4}
             onEndReached={handleLoadMore}
             contentContainerClassName="pb-six"
@@ -154,9 +191,16 @@ export default function MissionsScreen() {
           />
 
           <Pressable
-            onPress={() => router.push('/missions/new' as any)}
+            onPress={() => router.push("/missions/new" as any)}
             className="absolute bottom-four right-four h-14 w-14 items-center justify-center rounded-five bg-accent active:opacity-85"
-            style={{ elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }}>
+            style={{
+              elevation: 4,
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
+            }}
+          >
             <Ionicons name="add" color={theme.background} size={26} />
           </Pressable>
         </ScreenFade>

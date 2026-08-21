@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   View,
@@ -33,9 +32,12 @@ export default function NewMissionScreen() {
         missionType: values.missionType,
         buildingAddress: values.buildingAddress,
         buildingType: values.buildingType,
+        buildingGpsLat: values.buildingGpsLat,
+        buildingGpsLng: values.buildingGpsLng,
+        legalContext: values.legalContext,
       });
       logger.info("Missions", "Mission créée", { id: mission.id });
-      router.replace("/missions" as any);
+      router.back();
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -63,7 +65,8 @@ export default function NewMissionScreen() {
 
           <KeyboardAvoidingView
             className="flex-1"
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior="padding"
+            keyboardVerticalOffset={44}
           >
             <ScrollView
               contentContainerClassName="w-full max-w-content self-center px-four pb-six"

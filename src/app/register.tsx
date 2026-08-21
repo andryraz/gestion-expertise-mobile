@@ -2,7 +2,6 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   View,
@@ -74,7 +73,7 @@ export default function RegisterScreen() {
         <ScreenFade>
           <KeyboardAvoidingView
             className="flex-1"
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior="padding"
           >
             <ScrollView
               contentContainerClassName="grow justify-center self-center w-full max-w-content px-four pb-six"

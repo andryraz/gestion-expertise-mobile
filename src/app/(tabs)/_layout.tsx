@@ -19,25 +19,29 @@ const TABS = [
     name: "dashboard",
     href: "/(tabs)/dashboard",
     label: "Dashboard",
-    icon: "grid",
+    icon: "grid" as const,
+    iconInactive: "grid-outline" as const,
   },
   {
     name: "missions",
     href: "/(tabs)/missions",
     label: "Missions",
-    icon: "document-text",
+    icon: "document-text" as const,
+    iconInactive: "document-text-outline" as const,
   },
   {
     name: "calendar",
     href: "/(tabs)/calendar",
     label: "Calendar",
-    icon: "calendar",
+    icon: "calendar" as const,
+    iconInactive: "calendar-outline" as const,
   },
   {
     name: "settings",
     href: "/(tabs)/settings",
     label: "Settings",
-    icon: "settings",
+    icon: "settings" as const,
+    iconInactive: "settings-outline" as const,
   },
 ] as const;
 
@@ -62,7 +66,11 @@ export default function TabsLayout() {
               href={tab.href as any}
               asChild
             >
-              <TabButton label={tab.label} icon={tab.icon} />
+              <TabButton
+                label={tab.label}
+                iconActive={tab.icon}
+                iconInactive={tab.iconInactive}
+              />
             </TabTrigger>
           ))}
         </View>
@@ -73,12 +81,14 @@ export default function TabsLayout() {
 
 function TabButton({
   label,
-  icon,
+  iconActive,
+  iconInactive,
   isFocused,
   ...props
 }: TabTriggerSlotProps & {
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  iconActive: keyof typeof Ionicons.glyphMap;
+  iconInactive: keyof typeof Ionicons.glyphMap;
 }) {
   const theme = useTheme();
   return (
@@ -88,7 +98,7 @@ function TabButton({
         className="min-w-[56px] items-center gap-0.5 rounded-two px-one py-one"
       >
         <Ionicons
-          name={icon}
+          name={isFocused ? iconActive : iconInactive}
           color={isFocused ? theme.accent : theme.textSecondary}
           size={18}
         />

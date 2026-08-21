@@ -50,10 +50,13 @@ export default function RootLayout() {
               fullScreenGestureEnabled: true,
             }}
           >
-            <Stack.Screen name="index" options={{ animation: "fade" }} />
+            <Stack.Screen name="index" />
             <Stack.Screen
               name="register"
-              options={{ animation: "slide_from_bottom" }}
+              options={{
+                animation: "slide_from_bottom",
+                gestureEnabled: false,
+              }}
             />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen
