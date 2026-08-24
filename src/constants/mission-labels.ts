@@ -48,3 +48,63 @@ export const STATUS_TONE: Record<MissionStatus, StatusTone> = {
   TERMINEE: "success",
   ENVOYEE: "success",
 };
+
+export const STATUS_ORDER: MissionStatus[] = [
+  "BROUILLON",
+  "PRISE_DE_CONTACT",
+  "DEVIS_EN_PREPARATION",
+  "DEVIS_ENVOYE",
+  "ACCEPTEE",
+  "REFUSEE",
+  "EN_COURS",
+  "TERMINEE",
+  "ENVOYEE",
+];
+
+export const STATUS_INDEX: Record<MissionStatus, number> = {
+  BROUILLON: 0,
+  PRISE_DE_CONTACT: 1,
+  DEVIS_EN_PREPARATION: 2,
+  DEVIS_ENVOYE: 3,
+  ACCEPTEE: 4,
+  REFUSEE: 5,
+  EN_COURS: 6,
+  TERMINEE: 7,
+  ENVOYEE: 8,
+};
+
+export const STATUS_ACTION_LABEL: Record<MissionStatus, string> = {
+  BROUILLON: "Confirmer la prise de contact",
+  PRISE_DE_CONTACT: "Préparer un devis",
+  DEVIS_EN_PREPARATION: "Envoyer le devis",
+  DEVIS_ENVOYE: "Voir le devis",
+  ACCEPTEE: "Commencer la mission",
+  REFUSEE: "Voir le devis",
+  EN_COURS: "Terminer la mission",
+  TERMINEE: "Envoyer le rapport",
+  ENVOYEE: "Mission terminée",
+};
+
+export const STATUS_ACTION_ICON: Record<MissionStatus, string> = {
+  BROUILLON: "checkmark-circle",
+  PRISE_DE_CONTACT: "document-text",
+  DEVIS_EN_PREPARATION: "send",
+  DEVIS_ENVOYE: "eye",
+  ACCEPTEE: "play-circle",
+  REFUSEE: "eye",
+  EN_COURS: "checkmark-done-circle",
+  TERMINEE: "paper-plane",
+  ENVOYEE: "checkmark-done",
+};
+
+export const STATUS_ADVANCE: Partial<Record<MissionStatus, MissionStatus>> = {
+  BROUILLON: "PRISE_DE_CONTACT",
+  PRISE_DE_CONTACT: "DEVIS_EN_PREPARATION",
+  DEVIS_EN_PREPARATION: "DEVIS_ENVOYE",
+  DEVIS_ENVOYE: "ACCEPTEE",
+  ACCEPTEE: "EN_COURS",
+  REFUSEE: "EN_COURS",
+  EN_COURS: "TERMINEE",
+  TERMINEE: "ENVOYEE",
+  ENVOYEE: "ENVOYEE",
+};

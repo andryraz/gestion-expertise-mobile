@@ -37,7 +37,7 @@ export default function NewMissionScreen() {
         legalContext: values.legalContext,
       });
       logger.info("Missions", "Mission créée", { id: mission.id });
-      router.back();
+      router.replace(`/missions/${mission.id}` as any);
     } catch (err) {
       const message =
         err instanceof ApiError
