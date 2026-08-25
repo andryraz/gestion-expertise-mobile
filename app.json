@@ -36,7 +36,13 @@
       "expo-font",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "L'application utilise votre position pour localiser automatiquement le bâtiment expertisé."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

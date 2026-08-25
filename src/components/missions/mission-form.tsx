@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { FormField, PrimaryButton } from "@/components/auth";
 import { ThemedText } from "@/components/themed-text";
@@ -9,6 +10,8 @@ import {
   STATUS_LABELS,
   STATUS_TRANSITIONS,
 } from "@/constants/mission-labels";
+import { useCurrentLocation } from "@/hooks/use-current-location";
+import { useTheme } from "@/hooks/use-theme";
 import { Mission, MissionStatus, MissionType } from "@/types/mission";
 
 const MISSION_TYPE_OPTIONS = (
@@ -54,6 +57,9 @@ export function MissionForm({
   error,
   onSubmit,
 }: MissionFormProps) {
+  const theme = useTheme();
+  const { getCurrentLocation, loading: locationLoading, error: locationError } = useCurrentLocation();
+
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [missionType, setMissionType] = useState<MissionType>(
     initialValues?.missionType ?? "AUTRE",
@@ -80,6 +86,14 @@ export function MissionForm({
   const [status, setStatus] = useState<MissionStatus>(
     initialValues?.status ?? "BROUILLON",
   );
+
+  const handleCaptureLocation = async () => {
+    const coords = await getCurrentLocation();
+    if (coords) {
+      setBuildingGpsLat(String(coords.latitude));
+      setBuildingGpsLng(String(coords.longitude));
+    }
+  };
 
   const isValid = title.trim().length > 0;
 
@@ -144,27 +158,43 @@ export function MissionForm({
         onChangeText={setBuildingType}
         autoCapitalize="sentences"
       />
-      <View className="flex-row gap-two">
-        <View className="flex-1">
-          <FormField
-            label="Latitude GPS"
-            icon="navigate-outline"
-            placeholder="-18.8792"
-            value={buildingGpsLat}
-            onChangeText={setBuildingGpsLat}
-            keyboardType="numeric"
-          />
-        </View>
-        <View className="flex-1">
-          <FormField
-            label="Longitude GPS"
-            icon="navigate-outline"
-            placeholder="47.5079"
-            value={buildingGpsLng}
-            onChangeText={setBuildingGpsLng}
-            keyboardType="numeric"
-          />
-        </View>
+      <View className="gap-one">
+        <ThemedText type="eyebrow" themeColor="accent">
+          Position GPS (optionnel)
+        </ThemedText>
+        <Pressable
+          onPress={handleCaptureLocation}
+          disabled={locationLoading}
+          className="flex-row items-center justify-center gap-two rounded-three border border-border dark:border-border-dark py-two px-three"
+          style={({ pressed }) => ({ opacity: pressed && !locationLoading ? 0.7 : 1 })}
+        >
+          {locationLoading ? (
+            <Ionicons name="hourglass" color={theme.accent} size={16} />
+          ) : (
+            <Ionicons name="locate" color={theme.accent} size={16} />
+          )}
+          <ThemedText type="default" themeColor="accent">
+            {locationLoading
+              ? "Recherche de la position..."
+              : buildingGpsLat && buildingGpsLng
+                ? "Ma position actuelle"
+                : "Capturer ma position GPS"
+            }
+          </ThemedText>
+        </Pressable>
+        {locationError && (
+          <ThemedText type="small" themeColor="textSecondary" className="text-center">
+            {locationError}
+          </ThemedText>
+        )}
+        {buildingGpsLat && buildingGpsLng && (
+          <ThemedText type="small" themeColor="textSecondary" className="text-center">
+            {buildingGpsLat}, {buildingGpsLng}
+          </ThemedText>
+        )}
+        <ThemedText type="small" themeColor="textSecondary" className="text-center">
+          Optionnel — vous pouvez saisir manuellement ou laisser vide
+        </ThemedText>
       </View>
 
       <FormField

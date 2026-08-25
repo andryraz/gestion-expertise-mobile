@@ -6,6 +6,7 @@ import { FormField } from "@/components/auth/form-field";
 import { PrimaryButton } from "@/components/auth/primary-button";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useCurrentLocation } from "@/hooks/use-current-location";
 import { useTheme } from "@/hooks/use-theme";
 import type { Mission, UpdateMissionPayload } from "@/types/mission";
 
@@ -51,6 +52,7 @@ export function MissionInfoTab({
   onUpdate,
 }: MissionInfoTabProps) {
   const theme = useTheme();
+  const { getCurrentLocation, loading: locationLoading, error: locationError } = useCurrentLocation();
   const [editing, setEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -102,6 +104,14 @@ export function MissionInfoTab({
     setEditing(false);
   };
 
+  const handleCaptureLocation = async () => {
+    const coords = await getCurrentLocation();
+    if (coords) {
+      setLat(String(coords.latitude));
+      setLng(String(coords.longitude));
+    }
+  };
+
   if (editing) {
     return (
       <View className="gap-three">
@@ -121,27 +131,43 @@ export function MissionInfoTab({
           onChangeText={setBuildingType}
           autoCapitalize="sentences"
         />
-        <View className="flex-row gap-two">
-          <View className="flex-1">
-            <FormField
-              label="Latitude"
-              icon="navigate-outline"
-              placeholder="-18.8792"
-              value={lat}
-              onChangeText={setLat}
-              keyboardType="numeric"
-            />
-          </View>
-          <View className="flex-1">
-            <FormField
-              label="Longitude"
-              icon="navigate-outline"
-              placeholder="47.5079"
-              value={lng}
-              onChangeText={setLng}
-              keyboardType="numeric"
-            />
-          </View>
+        <View className="gap-one">
+          <ThemedText type="eyebrow" themeColor="accent">
+            Position GPS (optionnel)
+          </ThemedText>
+          <Pressable
+            onPress={handleCaptureLocation}
+            disabled={locationLoading}
+            className="flex-row items-center justify-center gap-two rounded-three border border-border dark:border-border-dark py-two px-three"
+            style={({ pressed }) => ({ opacity: pressed && !locationLoading ? 0.7 : 1 })}
+          >
+            {locationLoading ? (
+              <Ionicons name="hourglass" color={theme.accent} size={16} />
+            ) : (
+              <Ionicons name="locate" color={theme.accent} size={16} />
+            )}
+            <ThemedText type="default" themeColor="accent">
+              {locationLoading
+                ? "Recherche de la position..."
+                : lat && lng
+                  ? "Ma position actuelle"
+                  : "Capturer ma position GPS"
+              }
+            </ThemedText>
+          </Pressable>
+          {locationError && (
+            <ThemedText type="small" themeColor="textSecondary" className="text-center">
+              {locationError}
+            </ThemedText>
+          )}
+          {lat && lng && (
+            <ThemedText type="small" themeColor="textSecondary" className="text-center">
+              {lat}, {lng}
+            </ThemedText>
+          )}
+          <ThemedText type="small" themeColor="textSecondary" className="text-center">
+            Optionnel — vous pouvez laisser vide
+          </ThemedText>
         </View>
         <FormField
           label="Contexte juridique"
