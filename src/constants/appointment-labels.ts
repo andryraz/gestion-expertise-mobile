@@ -23,3 +23,19 @@ export const APPOINTMENT_STATUS_TONE: Record<AppointmentStatus, StatusTone> = {
   REPORTE: "muted",
   ANNULE: "danger",
 };
+
+export const APPOINTMENT_STATUS_BG: Record<AppointmentStatus, string> = {
+  PLANIFIE: "bg-[#3B82F6]",
+  CONFIRME: "bg-[#8B5CF6]",
+  REALISE: "bg-success dark:bg-success-dark",
+  ANNULE: "bg-background-selected dark:bg-background-selected-dark",
+  REPORTE: "bg-[#F97316]",
+};
+
+export const APPOINTMENT_STATUS_FG: Record<AppointmentStatus, string> = {
+  PLANIFIE: "text-white",
+  CONFIRME: "text-white",
+  REALISE: "text-white",
+  ANNULE: "text-secondary dark:text-text-secondary-dark",
+  REPORTE: "text-white",
+};

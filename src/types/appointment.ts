@@ -29,3 +29,11 @@ export type CreateAppointmentPayload = {
   location?: string;
   notes?: string;
 };
+
+export type UpdateAppointmentPayload = {
+  type?: AppointmentType;
+  scheduledAt?: string;
+  location?: string;
+  notes?: string;
+  status?: AppointmentStatus;
+};

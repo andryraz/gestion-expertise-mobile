@@ -67,6 +67,13 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen name="missions/[id]" />
+            <Stack.Screen
+              name="missions/appointment-form"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
+            />
           </Stack>
         </RouteGuard>
       </ThemeProvider>
