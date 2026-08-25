@@ -35,14 +35,14 @@ export function FormField({
   return (
     <View className="gap-one">
       <View className="flex-row items-center justify-between">
-        <ThemedText type="eyebrow" themeColor="accent" className="mb-0">
+        <ThemedText type="small" themeColor="textSecondary" className="mb-0">
           {label}
         </ThemedText>
         {rightElement}
       </View>
       <View
         className={[
-          "flex-row items-center gap-two rounded-three border px-three py-three android:py-two bg-background dark:bg-background-dark",
+          "flex-row items-center gap-two rounded-three border px-three py-three android:py-two bg-background-element dark:bg-background-element-dark",
           borderColor ? "" : "border-border dark:border-border-dark",
         ].join(" ")}
         style={borderColor ? { borderColor } : undefined}

@@ -1,7 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PrimaryButton } from "@/components/auth/primary-button";
@@ -23,6 +31,7 @@ import {
 } from "@/services/appointment-services";
 import { type Appointment, type AppointmentType } from "@/types/appointment";
 import { logger } from "@/utils/logger";
+import { formatDateLong } from "@/utils/calendar-date";
 
 type Mode = "create" | "reschedule";
 
@@ -41,21 +50,6 @@ const TYPE_OPTIONS = [
   { value: "RENDEZ_VOUS_SITE" as AppointmentType, label: "Rendez-vous site" },
   { value: "AUTRE" as AppointmentType, label: "Autre" },
 ];
-
-function formatDateForDisplay(d: Date): string {
-  return d.toLocaleDateString("fr-MG", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function formatTimeForInput(d: Date): string {
-  return d.toLocaleTimeString("fr-MG", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function isDateInFuture(d: Date): boolean {
   const now = new Date();
@@ -286,142 +280,156 @@ export default function AppointmentFormScreen() {
     <ThemedView className="flex-1">
       <SafeAreaView className="flex-1">
         <ScreenFade className="flex-1">
-          <View className="flex-row items-center gap-two px-four pt-three pb-four">
-            <Pressable onPress={() => router.back()} hitSlop={8}>
-              <Ionicons name="chevron-back" color={theme.text} size={24} />
-            </Pressable>
-            <ThemedText type="smallBold" className="text-xl flex-1">
-              {isReschedule ? "Reporter le rendez-vous" : "Nouveau rendez-vous"}
-            </ThemedText>
-          </View>
-
-          <ScrollView
+          <KeyboardAvoidingView
             className="flex-1"
-            contentContainerClassName="px-four pb-20"
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            showsVerticalScrollIndicator={false}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
-            {!isReschedule && (
-              <View className="mb-four">
-                <ThemedText
-                  type="small"
-                  themeColor="textSecondary"
-                  className="mb-two"
-                >
-                  Type de rendez-vous
-                </ThemedText>
-                <ChipSelect
-                  options={TYPE_OPTIONS}
-                  value={type}
-                  onChange={setType}
-                />
-              </View>
-            )}
-
-            {isReschedule && appointment && (
-              <ThemedView
-                type="backgroundElement"
-                className="rounded-three border border-border dark:border-border-dark px-three py-two mb-four"
-              >
-                <ThemedText type="small" themeColor="textSecondary">
-                  Type : {APPOINTMENT_TYPE_LABELS[appointment.type]}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Statut actuel :{" "}
-                  {APPOINTMENT_STATUS_LABELS[appointment.status]}
-                </ThemedText>
-              </ThemedView>
-            )}
-
-            <View className="mb-three">
-              <Pressable
-                onPress={() => setShowCalendar(!showCalendar)}
-                className="flex-row items-center justify-between mb-two"
-              >
-                <ThemedText type="small" themeColor="textSecondary">
-                  Date du rendez-vous
-                </ThemedText>
-                <ThemedText type="smallBold" themeColor="accent">
-                  {formatDateForDisplay(scheduledAt)}
-                </ThemedText>
+            <View className="flex-row items-center gap-two px-four pt-three pb-four">
+              <Pressable onPress={() => router.back()} hitSlop={8}>
+                <Ionicons name="chevron-back" color={theme.text} size={24} />
               </Pressable>
-
-              {showCalendar && (
-                <InlineCalendar
-                  value={scheduledAt}
-                  onChange={(d) => {
-                    const newDate = new Date(scheduledAt);
-                    newDate.setFullYear(
-                      d.getFullYear(),
-                      d.getMonth(),
-                      d.getDate(),
-                    );
-                    setScheduledAt(newDate);
-                  }}
-                  minDate={new Date()}
-                />
-              )}
+              <ThemedText
+                type="smallBold"
+                className="text-xl flex-1"
+                themeColor="accent"
+              >
+                {isReschedule
+                  ? "Reporter le rendez-vous"
+                  : "Nouveau rendez-vous"}
+              </ThemedText>
             </View>
 
-            <TimePicker
-              value={scheduledAt}
-              onChange={setScheduledAt}
-              theme={theme}
-            />
+            <ScrollView
+              className="flex-1"
+              contentContainerStyle={{
+                paddingHorizontal: 16,
+                paddingBottom: 250,
+              }}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              showsVerticalScrollIndicator={false}
+            >
+              {!isReschedule && (
+                <View className="mb-four">
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    className="mb-two"
+                  >
+                    Type de rendez-vous
+                  </ThemedText>
+                  <ChipSelect
+                    options={TYPE_OPTIONS}
+                    value={type}
+                    onChange={setType}
+                  />
+                </View>
+              )}
 
-            {isLocationRequired && (
+              {isReschedule && appointment && (
+                <ThemedView
+                  type="backgroundElement"
+                  className="rounded-three border border-border dark:border-border-dark px-three py-two mb-four"
+                >
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Type : {APPOINTMENT_TYPE_LABELS[appointment.type]}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Statut actuel :{" "}
+                    {APPOINTMENT_STATUS_LABELS[appointment.status]}
+                  </ThemedText>
+                </ThemedView>
+              )}
+
               <View className="mb-three">
+                <Pressable
+                  onPress={() => setShowCalendar(!showCalendar)}
+                  className="flex-row items-center justify-between mb-two"
+                >
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Date du rendez-vous
+                  </ThemedText>
+                  <ThemedText type="smallBold" themeColor="accent">
+                    {formatDateLong(scheduledAt.toISOString())}
+                  </ThemedText>
+                </Pressable>
+
+                {showCalendar && (
+                  <InlineCalendar
+                    value={scheduledAt}
+                    onChange={(d) => {
+                      const newDate = new Date(scheduledAt);
+                      newDate.setFullYear(
+                        d.getFullYear(),
+                        d.getMonth(),
+                        d.getDate(),
+                      );
+                      setScheduledAt(newDate);
+                    }}
+                    minDate={new Date()}
+                  />
+                )}
+              </View>
+
+              <TimePicker
+                value={scheduledAt}
+                onChange={setScheduledAt}
+                theme={theme}
+              />
+
+              {isLocationRequired && (
+                <View className="mb-three">
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    className="mb-one"
+                  >
+                    Lieu *
+                  </ThemedText>
+                  <TextInput
+                    className="rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark text-text dark:text-text-dark px-three py-three text-base font-medium"
+                    placeholder="Adresse ou lieu du rendez-vous"
+                    placeholderTextColor={theme.textSecondary}
+                    value={location}
+                    onChangeText={setLocation}
+                  />
+                </View>
+              )}
+
+              <View className="mb-four">
                 <ThemedText
                   type="small"
                   themeColor="textSecondary"
                   className="mb-one"
                 >
-                  Lieu *
+                  Notes (optionnel)
                 </ThemedText>
                 <TextInput
-                  className="rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark px-three py-three text-base font-medium"
-                  placeholder="Adresse ou lieu du rendez-vous"
+                  className="rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark text-text dark:text-text-dark px-three py-three text-base font-medium min-h-[80px]"
+                  placeholder="Ajouter des notes..."
                   placeholderTextColor={theme.textSecondary}
-                  value={location}
-                  onChangeText={setLocation}
+                  value={notes}
+                  onChangeText={setNotes}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
                 />
               </View>
-            )}
 
-            <View className="mb-four">
-              <ThemedText
-                type="small"
-                themeColor="textSecondary"
-                className="mb-one"
-              >
-                Notes (optionnel)
-              </ThemedText>
-              <TextInput
-                className="rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark px-three py-three text-base font-medium min-h-[80px]"
-                placeholder="Ajouter des notes..."
-                placeholderTextColor={theme.textSecondary}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
+              <PrimaryButton
+                label={
+                  isReschedule
+                    ? "Reporter le rendez-vous"
+                    : "Créer le rendez-vous"
+                }
+                icon={isReschedule ? "time" : "add-circle"}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+                loading={isSubmitting}
+                loadingLabel="En cours..."
               />
-            </View>
-
-            <PrimaryButton
-              label={
-                isReschedule
-                  ? "Reporter le rendez-vous"
-                  : "Créer le rendez-vous"
-              }
-              icon={isReschedule ? "time" : "add-circle"}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              loading={isSubmitting}
-              loadingLabel="En cours..."
-            />
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </ScreenFade>
       </SafeAreaView>
     </ThemedView>
