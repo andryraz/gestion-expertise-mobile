@@ -58,7 +58,11 @@ export default function NewMissionScreen() {
             <Pressable onPress={() => router.back()} hitSlop={8}>
               <Ionicons name="chevron-back" color={theme.text} size={22} />
             </Pressable>
-            <ThemedText type="subtitle" themeColor="accent">
+            <ThemedText
+              type="smallBold"
+              themeColor="accent"
+              className="text-xl flex-1"
+            >
               Nouvelle mission
             </ThemedText>
           </View>

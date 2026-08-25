@@ -1,14 +1,15 @@
 export type PartyRole =
   | "CLIENT"
+  | "REQUERANT"
   | "AVOCAT"
   | "ENTREPRISE"
-  | "EXPERT"
+  | "PROPRIETAIRE"
   | "AUTRE";
 
 export type Party = {
   id: string;
   missionId: string;
-  name: string;
+  fullName: string;
   role: PartyRole;
   email?: string | null;
   phone?: string | null;
@@ -17,8 +18,23 @@ export type Party = {
 
 export const PARTY_ROLE_LABELS: Record<PartyRole, string> = {
   CLIENT: "Client",
+  REQUERANT: "Requérant",
   AVOCAT: "Avocat",
   ENTREPRISE: "Entreprise",
-  EXPERT: "Expert",
+  PROPRIETAIRE: "Propriétaire",
   AUTRE: "Autre",
+};
+
+export type CreatePartyPayload = {
+  fullName: string;
+  role: PartyRole;
+  email?: string;
+  phone?: string;
+};
+
+export type UpdatePartyPayload = {
+  fullName?: string;
+  role?: PartyRole;
+  email?: string;
+  phone?: string;
 };

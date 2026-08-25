@@ -52,7 +52,11 @@ export function MissionInfoTab({
   onUpdate,
 }: MissionInfoTabProps) {
   const theme = useTheme();
-  const { getCurrentLocation, loading: locationLoading, error: locationError } = useCurrentLocation();
+  const {
+    getCurrentLocation,
+    loading: locationLoading,
+    error: locationError,
+  } = useCurrentLocation();
   const [editing, setEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -132,40 +136,57 @@ export function MissionInfoTab({
           autoCapitalize="sentences"
         />
         <View className="gap-one">
-          <ThemedText type="eyebrow" themeColor="accent">
+          <ThemedText type="eyebrow" themeColor="textSecondary">
             Position GPS (optionnel)
           </ThemedText>
           <Pressable
             onPress={handleCaptureLocation}
             disabled={locationLoading}
             className="flex-row items-center justify-center gap-two rounded-three border border-border dark:border-border-dark py-two px-three"
-            style={({ pressed }) => ({ opacity: pressed && !locationLoading ? 0.7 : 1 })}
+            style={({ pressed }) => ({
+              opacity: pressed && !locationLoading ? 0.7 : 1,
+            })}
           >
             {locationLoading ? (
-              <Ionicons name="hourglass" color={theme.accent} size={16} />
+              <Ionicons
+                name="hourglass"
+                color={theme.textSecondary}
+                size={16}
+              />
             ) : (
-              <Ionicons name="locate" color={theme.accent} size={16} />
+              <Ionicons name="locate" color={theme.textSecondary} size={16} />
             )}
-            <ThemedText type="default" themeColor="accent">
+            <ThemedText type="default" themeColor="textSecondary">
               {locationLoading
                 ? "Recherche de la position..."
                 : lat && lng
                   ? "Ma position actuelle"
-                  : "Capturer ma position GPS"
-              }
+                  : "Capturer ma position GPS"}
             </ThemedText>
           </Pressable>
           {locationError && (
-            <ThemedText type="small" themeColor="textSecondary" className="text-center">
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              className="text-center"
+            >
               {locationError}
             </ThemedText>
           )}
           {lat && lng && (
-            <ThemedText type="small" themeColor="textSecondary" className="text-center">
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              className="text-center"
+            >
               {lat}, {lng}
             </ThemedText>
           )}
-          <ThemedText type="small" themeColor="textSecondary" className="text-center">
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            className="text-center"
+          >
             Optionnel — vous pouvez laisser vide
           </ThemedText>
         </View>

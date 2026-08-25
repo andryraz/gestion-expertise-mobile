@@ -1,87 +1,126 @@
-import { Ionicons } from "@expo/vector-icons";
-import { View } from "react-native";
-import { Pressable } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { useTheme } from "@/hooks/use-theme";
+import { ApiError } from "@/services/api-client";
+import { getMissionQuotes } from "@/services/quote-services";
 import type { Mission } from "@/types/mission";
+import type { Quote } from "@/types/quote";
+import { EmptyQuoteState } from "@/components/missions/quote-empty";
+import { AwaitingQuoteState } from "@/components/missions/quote-awaiting";
+import { AcceptedQuoteState } from "@/components/missions/quote-accepted";
+import { RefusedQuoteState } from "@/components/missions/quote-refused";
 
 type MissionDevisTabProps = {
   mission: Mission;
   isArchived: boolean;
 };
 
-export function MissionDevisTab({
-  mission,
-  isArchived,
-}: MissionDevisTabProps) {
+export function MissionDevisTab({ mission, isArchived }: MissionDevisTabProps) {
   const theme = useTheme();
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // For now, show a placeholder since the API doesn't expose devis data yet.
-  // The design expects: current amount + history link.
-  const hasDevis =
-    mission.status !== "BROUILLON" &&
-    mission.status !== "PRISE_DE_CONTACT";
+  const loadQuotes = useCallback(async () => {
+    setError(null);
+    try {
+      const result = await getMissionQuotes(mission.id);
+      setQuotes(result);
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : "Impossible de charger les devis";
+      setError(msg);
+    }
+  }, [mission.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      try {
+        await loadQuotes();
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadQuotes]);
+
+  const handleQuoteCreated = (created: Quote) => {
+    setQuotes((prev) => [...prev, created]);
+  };
+
+  const handleQuoteUpdated = (updated: Quote) => {
+    setQuotes((prev) => {
+      const idx = prev.findIndex((q) => q.id === updated.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = updated;
+        return next;
+      }
+      return [...prev, updated];
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <View className="py-four items-center">
+        <ActivityIndicator color={theme.accent} />
+        <ThemedText themeColor="textSecondary" className="mt-two">
+          Chargement des devis...
+        </ThemedText>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemedText themeColor="danger" className="text-center py-four">
+        {error}
+      </ThemedText>
+    );
+  }
+
+  const sorted = [...quotes].sort((a, b) => b.version - a.version);
+  const latest = sorted[0];
+
+  if (!latest) {
+    return (
+      <EmptyQuoteState
+        missionId={mission.id}
+        isArchived={isArchived}
+        onQuoteCreated={handleQuoteCreated}
+      />
+    );
+  }
+
+  if (latest.status === "ACCEPTE") {
+    return <AcceptedQuoteState quotes={quotes} />;
+  }
+
+  if (latest.status === "REFUSE") {
+    return (
+      <RefusedQuoteState
+        quotes={quotes}
+        missionId={mission.id}
+        isArchived={isArchived}
+        onQuoteCreated={handleQuoteCreated}
+      />
+    );
+  }
 
   return (
-    <View>
-      {hasDevis ? (
-        <ThemedView
-          type="backgroundElement"
-          className="rounded-three border border-border dark:border-border-dark p-three"
-        >
-          <View className="flex-row items-center gap-two mb-two">
-            <Ionicons name="document-text" color={theme.accent} size={16} />
-            <ThemedText type="eyebrow" themeColor="accent">
-              Devis actuel
-            </ThemedText>
-          </View>
-
-          <View className="items-center py-four">
-            <ThemedText
-              type="subtitle"
-              themeColor="accent"
-              className="text-[36px] leading-[40px]"
-            >
-              —
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary" className="mt-one">
-              Montant du devis en attente de synchronisation
-            </ThemedText>
-          </View>
-        </ThemedView>
-      ) : (
-        <View className="items-center py-six">
-          <Ionicons
-            name="document-outline"
-            color={theme.textSecondary}
-            size={32}
-          />
-          <ThemedText themeColor="textSecondary" className="mt-two text-center">
-            Aucun devis pour le moment
-          </ThemedText>
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            className="mt-one text-center"
-          >
-            Le devis sera disponible à partir du statut "Devis en préparation"
-          </ThemedText>
-        </View>
-      )}
-
-      {hasDevis && (
-        <Pressable
-          className="mt-three flex-row items-center justify-center gap-one rounded-three border border-border dark:border-border-dark py-two"
-          hitSlop={8}
-        >
-          <ThemedText type="small" themeColor="accent">
-            Voir l'historique
-          </ThemedText>
-          <Ionicons name="chevron-forward" color={theme.accent} size={14} />
-        </Pressable>
-      )}
-    </View>
+    <AwaitingQuoteState
+      quotes={quotes}
+      missionId={mission.id}
+      isArchived={isArchived}
+      onQuoteUpdated={handleQuoteUpdated}
+    />
   );
 }
