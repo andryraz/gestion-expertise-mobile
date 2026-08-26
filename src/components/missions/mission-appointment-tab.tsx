@@ -28,6 +28,7 @@ import {
   updateAppointment,
 } from "@/services/appointment-services";
 import { type Appointment, type AppointmentStatus } from "@/types/appointment";
+import { formatDate, formatTime } from "@/utils/calendar-date";
 import { logger } from "@/utils/logger";
 
 type MissionRdvTabProps = {
@@ -41,23 +42,6 @@ const TYPE_ICONS: Record<string, string> = {
   RENDEZ_VOUS_SITE: "location",
   AUTRE: "ellipsis-horizontal",
 };
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("fr-MG", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("fr-MG", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function StatusBadge({ status }: { status: AppointmentStatus }) {
   return (
@@ -82,7 +66,9 @@ function AppointmentRow({
 }) {
   const theme = useTheme();
   const canReschedule =
-    appointment.status !== "ANNULE" && appointment.status !== "REPORTE";
+    appointment.status !== "ANNULE" &&
+    appointment.status !== "REPORTE" &&
+    appointment.status !== "REALISE";
 
   const renderRightActions = () => {
     if (!canReschedule) return null;

@@ -35,6 +35,6 @@ export type CreatePartyPayload = {
 export type UpdatePartyPayload = {
   fullName?: string;
   role?: PartyRole;
-  email?: string;
-  phone?: string;
+  email?: string | null;
+  phone?: string | null;
 };

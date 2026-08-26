@@ -37,4 +37,5 @@ export type RespondQuotePayload = {
   action: RespondQuoteAction;
   amount?: number;
   description?: string;
+  proposedBy?: QuoteProposedBy;
 };

@@ -4,11 +4,11 @@ import { Alert, Pressable, TextInput, View } from "react-native";
 
 import { PrimaryButton } from "@/components/auth/primary-button";
 import { ThemedText } from "@/components/themed-text";
+import { DEFAULT_CURRENCY } from "@/constants/quote-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
 import { createQuote } from "@/services/quote-services";
-import { DEFAULT_CURRENCY } from "@/constants/quote-labels";
-import type { Quote } from "@/types/quote";
+import type { Quote, QuoteProposedBy, QuoteStatus } from "@/types/quote";
 
 type EmptyQuoteStateProps = {
   missionId: string;
@@ -27,6 +27,7 @@ export function EmptyQuoteState({
   const [description, setDescription] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [proposedBy, setProposedBy] = useState<QuoteProposedBy>("EXPERT");
 
   if (isArchived) {
     return (
@@ -43,7 +44,7 @@ export function EmptyQuoteState({
     );
   }
 
-  const handleCreate = async (proposedBy: "EXPERT" | "CLIENT") => {
+  const handleCreate = async (status: QuoteStatus) => {
     const num = Number(amount.replace(/\s/g, "").replace(",", "."));
     if (!num || num <= 0) {
       Alert.alert("Erreur", "Veuillez saisir un montant valide");
@@ -56,7 +57,7 @@ export function EmptyQuoteState({
         currency,
         ...(description.trim() ? { description: description.trim() } : {}),
         proposedBy,
-        status: "ENVOYE",
+        status,
       });
       onQuoteCreated(quote);
     } catch (err) {
@@ -70,6 +71,41 @@ export function EmptyQuoteState({
 
   return (
     <View className="gap-three">
+      <View>
+        <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
+          Proposé par
+        </ThemedText>
+        <View className="flex-row gap-two">
+          {(["EXPERT", "CLIENT"] as QuoteProposedBy[]).map((who) => {
+            const isActive = who === proposedBy;
+            return (
+              <Pressable
+                key={who}
+                onPress={() => setProposedBy(who)}
+                className={[
+                  "flex-1 flex-row items-center justify-center gap-two rounded-three border px-three py-two",
+                  isActive
+                    ? "border-accent bg-accent"
+                    : "border-border bg-background-element dark:border-border-dark dark:bg-background-element-dark",
+                ].join(" ")}
+              >
+                <Ionicons
+                  name={who === "EXPERT" ? "person" : "people"}
+                  size={14}
+                  color={isActive ? theme.background : theme.textSecondary}
+                />
+                <ThemedText
+                  type="smallBold"
+                  themeColor={isActive ? "background" : "textSecondary"}
+                >
+                  {who === "EXPERT" ? "Expert" : "Client"}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
       <View>
         <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
           Montant à proposer
@@ -132,14 +168,12 @@ export function EmptyQuoteState({
       {!isSubmitting && (
         <View className="gap-two">
           <PrimaryButton
-            label="Envoyer au client"
-            icon="send"
-            onPress={() => handleCreate("EXPERT")}
+            label="Soumettre"
+            onPress={() => handleCreate("ENVOYE")}
           />
           <PrimaryButton
             label="Accepté immédiatement"
-            icon="checkmark-circle"
-            onPress={() => handleCreate("EXPERT")}
+            onPress={() => handleCreate("ACCEPTE")}
           />
         </View>
       )}

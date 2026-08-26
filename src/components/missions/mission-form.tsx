@@ -5,14 +5,10 @@ import { Pressable, View } from "react-native";
 import { FormField, PrimaryButton } from "@/components/auth";
 import { ThemedText } from "@/components/themed-text";
 import { ChipSelect } from "@/components/ui/chip-select";
-import {
-  MISSION_TYPE_LABELS,
-  STATUS_LABELS,
-  STATUS_TRANSITIONS,
-} from "@/constants/mission-labels";
+import { MISSION_TYPE_LABELS } from "@/constants/mission-labels";
 import { useCurrentLocation } from "@/hooks/use-current-location";
 import { useTheme } from "@/hooks/use-theme";
-import { Mission, MissionStatus, MissionType } from "@/types/mission";
+import { Mission, MissionType } from "@/types/mission";
 
 const MISSION_TYPE_OPTIONS = (
   Object.keys(MISSION_TYPE_LABELS) as MissionType[]
@@ -29,29 +25,18 @@ export type MissionFormValues = {
   buildingGpsLat?: number;
   buildingGpsLng?: number;
   legalContext?: string;
-  status?: MissionStatus;
 };
 
 type MissionFormProps = {
   initialValues?: Partial<Mission>;
-  showStatusField?: boolean;
   submitLabel: string;
   isSubmitting?: boolean;
   error?: string | null;
   onSubmit: (values: MissionFormValues) => void;
 };
 
-function getStatusOptions(current: MissionStatus) {
-  const next = STATUS_TRANSITIONS[current] ?? [];
-  return [current, ...next].map((value) => ({
-    value,
-    label: STATUS_LABELS[value],
-  }));
-}
-
 export function MissionForm({
   initialValues,
-  showStatusField = false,
   submitLabel,
   isSubmitting = false,
   error,
@@ -87,9 +72,6 @@ export function MissionForm({
   const [legalContext, setLegalContext] = useState(
     initialValues?.legalContext ?? undefined,
   );
-  const [status, setStatus] = useState<MissionStatus>(
-    initialValues?.status ?? "BROUILLON",
-  );
 
   const handleCaptureLocation = async () => {
     const coords = await getCurrentLocation();
@@ -119,7 +101,6 @@ export function MissionForm({
       buildingGpsLat: lat !== undefined && !Number.isNaN(lat) ? lat : undefined,
       buildingGpsLng: lng !== undefined && !Number.isNaN(lng) ? lng : undefined,
       legalContext: legalContext?.trim() || undefined,
-      ...(showStatusField ? { status } : null),
     });
   };
 
@@ -217,19 +198,6 @@ export function MissionForm({
         multiline
         numberOfLines={3}
       />
-
-      {showStatusField && (
-        <View className="gap-one">
-          <ThemedText type="small" themeColor="textSecondary">
-            Statut
-          </ThemedText>
-          <ChipSelect
-            options={getStatusOptions(initialValues?.status ?? "BROUILLON")}
-            value={status}
-            onChange={setStatus}
-          />
-        </View>
-      )}
 
       {error && (
         <ThemedText themeColor="danger" type="small">

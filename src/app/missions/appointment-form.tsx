@@ -30,8 +30,8 @@ import {
   updateAppointment,
 } from "@/services/appointment-services";
 import { type Appointment, type AppointmentType } from "@/types/appointment";
-import { logger } from "@/utils/logger";
 import { formatDateLong } from "@/utils/calendar-date";
+import { logger } from "@/utils/logger";
 
 type Mode = "create" | "reschedule";
 
@@ -65,23 +65,46 @@ function TimePicker({
   onChange: (d: Date) => void;
   theme: any;
 }) {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const selectedHour = value.getHours();
-  const selectedMinute = value.getMinutes();
+  const [hourText, setHourText] = useState(
+    String(value.getHours()).padStart(2, "0"),
+  );
+  const [minuteText, setMinuteText] = useState(
+    String(value.getMinutes()).padStart(2, "0"),
+  );
 
-  const setHour = (h: number) => {
+  useEffect(() => {
+    setHourText(String(value.getHours()).padStart(2, "0"));
+    setMinuteText(String(value.getMinutes()).padStart(2, "0"));
+  }, [value.getHours(), value.getMinutes()]);
+
+  const clamp = (text: string, max: number) => {
+    const digits = text.replace(/\D/g, "");
+    if (!digits) return "";
+    const num = parseInt(digits, 10);
+    if (num > max) return String(max).padStart(2, "0");
+    return digits;
+  };
+
+  const commitHour = () => {
+    const num = parseInt(clamp(hourText, 23), 10);
+    const safe = isNaN(num) ? 0 : num;
     const d = new Date(value);
-    d.setHours(h);
+    d.setHours(safe);
     onChange(d);
   };
 
-  const setMinute = (m: number) => {
+  const commitMinute = () => {
+    const num = parseInt(clamp(minuteText, 59), 10);
+    const safe = isNaN(num) ? 0 : num;
     const d = new Date(value);
-    d.setMinutes(m);
+    d.setMinutes(safe);
     onChange(d);
   };
 
-  const minuteSteps = [0, 15, 30, 45];
+  const inputClass = [
+    "rounded-three border dark:border-border-dark px-three py-two text-center text-lg font-semibold",
+    "border-border bg-background dark:bg-background-dark text-text dark:text-text-dark",
+  ].join(" ");
 
   return (
     <View className="mb-three">
@@ -89,60 +112,30 @@ function TimePicker({
         Heure
       </ThemedText>
 
-      <ThemedText type="eyebrow" themeColor="textSecondary" className="mb-one">
-        Heure
-      </ThemedText>
-      <View className="flex-row flex-wrap gap-one mb-two">
-        {hours.map((h) => {
-          const isActive = h === selectedHour;
-          return (
-            <Pressable
-              key={h}
-              onPress={() => setHour(h)}
-              className={[
-                "h-9 w-12 items-center justify-center rounded-two",
-                isActive
-                  ? "bg-accent"
-                  : "border border-border dark:border-border-dark",
-              ].join(" ")}
-            >
-              <ThemedText
-                type="smallBold"
-                themeColor={isActive ? "background" : "text"}
-              >
-                {String(h).padStart(2, "0")}
-              </ThemedText>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <ThemedText type="eyebrow" themeColor="textSecondary" className="mb-one">
-        Minutes
-      </ThemedText>
-      <View className="flex-row gap-one">
-        {minuteSteps.map((m) => {
-          const isActive = m === selectedMinute;
-          return (
-            <Pressable
-              key={m}
-              onPress={() => setMinute(m)}
-              className={[
-                "h-9 flex-1 items-center justify-center rounded-two",
-                isActive
-                  ? "bg-accent"
-                  : "border border-border dark:border-border-dark",
-              ].join(" ")}
-            >
-              <ThemedText
-                type="smallBold"
-                themeColor={isActive ? "background" : "text"}
-              >
-                :{String(m).padStart(2, "0")}
-              </ThemedText>
-            </Pressable>
-          );
-        })}
+      <View className="flex-row items-center gap-two">
+        <TextInput
+          value={hourText}
+          onChangeText={(t) => setHourText(clamp(t, 23))}
+          onBlur={commitHour}
+          keyboardType="number-pad"
+          maxLength={2}
+          placeholder="09"
+          placeholderTextColor={theme.textSecondary}
+          className={[inputClass, "flex-1"].join(" ")}
+        />
+        <ThemedText type="subtitle" themeColor="textSecondary">
+          :
+        </ThemedText>
+        <TextInput
+          value={minuteText}
+          onChangeText={(t) => setMinuteText(clamp(t, 59))}
+          onBlur={commitMinute}
+          keyboardType="number-pad"
+          maxLength={2}
+          placeholder="00"
+          placeholderTextColor={theme.textSecondary}
+          className={[inputClass, "flex-1"].join(" ")}
+        />
       </View>
     </View>
   );
@@ -422,7 +415,6 @@ export default function AppointmentFormScreen() {
                     ? "Reporter le rendez-vous"
                     : "Créer le rendez-vous"
                 }
-                icon={isReschedule ? "time" : "add-circle"}
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 loading={isSubmitting}

@@ -25,11 +25,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import {
   MISSION_TYPE_LABELS,
-  STATUS_ACTION_ICON,
   STATUS_ACTION_LABEL,
   STATUS_ADVANCE,
   STATUS_LABELS,
-  STATUS_TONE,
+  STATUS_TONE
 } from "@/constants/mission-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
@@ -387,7 +386,6 @@ export default function MissionDetailScreen() {
                 <View className="border-t border-border px-four py-three dark:border-border-dark">
                   <PrimaryButton
                     label={STATUS_ACTION_LABEL[mission.status]}
-                    icon={STATUS_ACTION_ICON[mission.status] as any}
                     onPress={handlePrimaryAction}
                     disabled={isSubmitting}
                     loading={isSubmitting}

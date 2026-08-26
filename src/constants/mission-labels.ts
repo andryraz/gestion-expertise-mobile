@@ -85,25 +85,12 @@ export const STATUS_ACTION_LABEL: Record<MissionStatus, string> = {
   ENVOYEE: "Mission terminée",
 };
 
-export const STATUS_ACTION_ICON: Record<MissionStatus, string> = {
-  BROUILLON: "checkmark-circle",
-  PRISE_DE_CONTACT: "document-text",
-  DEVIS_EN_PREPARATION: "send",
-  DEVIS_ENVOYE: "eye",
-  ACCEPTEE: "play-circle",
-  REFUSEE: "eye",
-  EN_COURS: "checkmark-done-circle",
-  TERMINEE: "paper-plane",
-  ENVOYEE: "checkmark-done",
-};
-
 export const STATUS_ADVANCE: Partial<Record<MissionStatus, MissionStatus>> = {
   BROUILLON: "PRISE_DE_CONTACT",
   PRISE_DE_CONTACT: "DEVIS_EN_PREPARATION",
   DEVIS_EN_PREPARATION: "DEVIS_ENVOYE",
   DEVIS_ENVOYE: "ACCEPTEE",
   ACCEPTEE: "EN_COURS",
-  REFUSEE: "EN_COURS",
   EN_COURS: "TERMINEE",
   TERMINEE: "ENVOYEE",
   ENVOYEE: "ENVOYEE",

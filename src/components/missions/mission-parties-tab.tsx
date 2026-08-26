@@ -149,9 +149,9 @@ export function MissionPartiesTab({
         const payload: UpdatePartyPayload = {
           fullName: fullName.trim(),
           role,
+          email: email.trim() || null,
+          phone: phone.trim() || null,
         };
-        if (email.trim()) payload.email = email.trim();
-        if (phone.trim()) payload.phone = phone.trim();
         const updated = await updateParty(editingParty.id, payload);
         setParties((prev) =>
           prev.map((p) => (p.id === updated.id ? updated : p)),

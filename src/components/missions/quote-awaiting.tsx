@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, TextInput, View } from "react-native";
 
 import { PrimaryButton } from "@/components/auth/primary-button";
+import { QuoteCard } from "@/components/missions/quote-card";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import {
@@ -13,8 +14,7 @@ import {
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
 import { respondToQuote } from "@/services/quote-services";
-import type { Quote } from "@/types/quote";
-import { QuoteCard } from "@/components/missions/quote-card";
+import type { Quote, QuoteProposedBy } from "@/types/quote";
 
 type AwaitingQuoteStateProps = {
   quotes: Quote[];
@@ -35,6 +35,7 @@ export function AwaitingQuoteState({
 
   const [showCounter, setShowCounter] = useState(false);
   const [counterAmount, setCounterAmount] = useState("");
+  const [counterProposedBy, setCounterProposedBy] = useState<QuoteProposedBy>(active.proposedBy === "EXPERT" ? "CLIENT" : "EXPERT");
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export function AwaitingQuoteState({
     action: "ACCEPTE" | "REFUSE" | "CONTRE_PROPOSITION",
     amount?: number,
     description?: string,
+    proposedBy?: QuoteProposedBy,
   ) => {
     setIsUpdating(true);
     try {
@@ -73,6 +75,7 @@ export function AwaitingQuoteState({
         action,
         ...(amount !== undefined ? { amount } : {}),
         ...(description ? { description } : {}),
+        ...(proposedBy ? { proposedBy } : {}),
       });
       onQuoteUpdated(updated);
       setShowCounter(false);
@@ -93,7 +96,7 @@ export function AwaitingQuoteState({
       Alert.alert("Erreur", "Veuillez saisir un montant valide");
       return;
     }
-    doRespond("CONTRE_PROPOSITION", num);
+    doRespond("CONTRE_PROPOSITION", num, undefined, counterProposedBy);
   };
 
   const isExpertProposed = active.proposedBy === "EXPERT";
@@ -158,6 +161,41 @@ export function AwaitingQuoteState({
           type="backgroundElement"
           className="rounded-three border border-border dark:border-border-dark p-three gap-two"
         >
+          <View>
+            <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
+              Proposé par
+            </ThemedText>
+            <View className="flex-row gap-two">
+              {(["EXPERT", "CLIENT"] as QuoteProposedBy[]).map((who) => {
+                const isActive = who === counterProposedBy;
+                return (
+                  <Pressable
+                    key={who}
+                    onPress={() => setCounterProposedBy(who)}
+                    className={[
+                      "flex-1 flex-row items-center justify-center gap-two rounded-three border px-three py-two",
+                      isActive
+                        ? "border-accent bg-accent"
+                        : "border-border bg-background-element dark:border-border-dark dark:bg-background-element-dark",
+                    ].join(" ")}
+                  >
+                    <Ionicons
+                      name={who === "EXPERT" ? "person" : "people"}
+                      size={14}
+                      color={isActive ? theme.background : theme.textSecondary}
+                    />
+                    <ThemedText
+                      type="smallBold"
+                      themeColor={isActive ? "background" : "textSecondary"}
+                    >
+                      {who === "EXPERT" ? "Expert" : "Client"}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
           <ThemedText type="smallBold">Nouveau montant</ThemedText>
           <TextInput
             value={counterAmount}
@@ -199,7 +237,6 @@ export function AwaitingQuoteState({
             <>
               <PrimaryButton
                 label="Accepter"
-                icon="checkmark-circle"
                 onPress={() => handleAction("ACCEPTE")}
               />
               <PrimaryButton

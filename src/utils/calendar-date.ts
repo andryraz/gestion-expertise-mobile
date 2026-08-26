@@ -64,10 +64,27 @@ export function formatDayHeading(date: Date): string {
   );
 }
 
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-MG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatDateLong(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-MG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(
-    new Date(iso),
-  );
+  return new Date(iso).toLocaleTimeString("fr-MG", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 

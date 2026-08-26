@@ -166,6 +166,14 @@ function Connector({
   );
 }
 
+type BranchState = "pending" | "accepted" | "refused";
+
+function getBranchState(currentStatus: MissionStatus): BranchState {
+  if (currentStatus === "REFUSEE") return "refused";
+  if (currentStatus === "DEVIS_ENVOYE") return "pending";
+  return "accepted";
+}
+
 type StatusTimelineProps = {
   currentStatus: MissionStatus;
   isArchived?: boolean;
@@ -179,10 +187,9 @@ export function StatusTimeline({
   const scrollRef = useRef<ScrollView>(null);
 
   const mainNodes = TIMELINE_NODES.filter((n) => n.kind === "main");
-  const hasResolved =
-    currentStatus !== "BROUILLON" &&
-    STATUS_INDEX[currentStatus] >= STATUS_INDEX["EN_COURS"];
-  const acceptedBranch = hasResolved || currentStatus === "ACCEPTEE";
+  const showBranch =
+    STATUS_INDEX[currentStatus] >= STATUS_INDEX["DEVIS_ENVOYE"];
+  const branchState = getBranchState(currentStatus);
 
   return (
     <ScrollView
@@ -215,7 +222,7 @@ export function StatusTimeline({
           })}
         </View>
 
-        {STATUS_INDEX[currentStatus] >= STATUS_INDEX["DEVIS_ENVOYE"] && (
+        {showBranch && (
           <View
             className="flex-row items-center mt-one"
             style={{ marginLeft: 72 * 3 + 24 * 3 + 16 }}
@@ -224,13 +231,15 @@ export function StatusTimeline({
               <View
                 className="h-[32px] w-[32px] items-center justify-center rounded-full border-2"
                 style={{
-                  borderColor: acceptedBranch ? theme.success : theme.border,
-                  backgroundColor: acceptedBranch
-                    ? theme.success
-                    : theme.backgroundElement,
+                  borderColor:
+                    branchState === "accepted" ? theme.success : theme.border,
+                  backgroundColor:
+                    branchState === "accepted"
+                      ? theme.success
+                      : theme.backgroundElement,
                 }}
               >
-                {acceptedBranch && (
+                {branchState === "accepted" && (
                   <Ionicons
                     name="checkmark"
                     color={theme.background}
@@ -240,7 +249,9 @@ export function StatusTimeline({
               </View>
               <ThemedText
                 type="small"
-                themeColor={acceptedBranch ? "success" : "textSecondary"}
+                themeColor={
+                  branchState === "accepted" ? "success" : "textSecondary"
+                }
                 className="mt-1 text-center"
                 style={{ fontSize: 11, lineHeight: 14, height: 28 }}
               >
@@ -254,19 +265,23 @@ export function StatusTimeline({
               <View
                 className="h-[32px] w-[32px] items-center justify-center rounded-full border-2"
                 style={{
-                  borderColor: !acceptedBranch ? theme.danger : theme.border,
-                  backgroundColor: !acceptedBranch
-                    ? theme.danger
-                    : theme.backgroundElement,
+                  borderColor:
+                    branchState === "refused" ? theme.danger : theme.border,
+                  backgroundColor:
+                    branchState === "refused"
+                      ? theme.danger
+                      : theme.backgroundElement,
                 }}
               >
-                {!acceptedBranch && (
+                {branchState === "refused" && (
                   <Ionicons name="close" color={theme.background} size={15} />
                 )}
               </View>
               <ThemedText
                 type="small"
-                themeColor={!acceptedBranch ? "danger" : "textSecondary"}
+                themeColor={
+                  branchState === "refused" ? "danger" : "textSecondary"
+                }
                 className="mt-1 text-center"
                 style={{ fontSize: 11, lineHeight: 14 }}
               >
