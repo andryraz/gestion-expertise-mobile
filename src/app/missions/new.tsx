@@ -27,14 +27,25 @@ export default function NewMissionScreen() {
     setIsSubmitting(true);
     setError(null);
     try {
+      const hasBuildingInfo =
+        !!values.buildingAddress?.trim() ||
+        !!values.buildingType?.trim() ||
+        values.buildingGpsLat !== undefined ||
+        values.buildingGpsLng !== undefined;
+
       const mission = await createMission({
         title: values.title,
         missionType: values.missionType,
-        buildingAddress: values.buildingAddress,
-        buildingType: values.buildingType,
-        buildingGpsLat: values.buildingGpsLat,
-        buildingGpsLng: values.buildingGpsLng,
         legalContext: values.legalContext,
+        initialBuilding: hasBuildingInfo
+          ? {
+              name: "Bâtiment principal",
+              address: values.buildingAddress,
+              buildingType: values.buildingType,
+              gpsLat: values.buildingGpsLat,
+              gpsLng: values.buildingGpsLng,
+            }
+          : undefined,
       });
       logger.info("Missions", "Mission créée", { id: mission.id });
       router.back();

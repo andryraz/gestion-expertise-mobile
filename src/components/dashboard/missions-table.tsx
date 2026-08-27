@@ -3,6 +3,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { MISSION_TYPE_LABELS } from "@/constants/mission-labels";
 import { Mission } from "@/types/mission";
+import { formatBuildingSummary } from "@/utils/format-building-summary";
 
 type MissionsTableProps = {
   missions: Mission[];
@@ -13,7 +14,7 @@ const COLUMNS = [
   { key: "reference", label: "Référence", width: "w-[90px]" },
   { key: "title", label: "Titre", width: "w-[190px]" },
   { key: "missionType", label: "Type", width: "w-[160px]" },
-  { key: "buildingAddress", label: "Adresse", width: "w-[210px]" },
+  { key: "buildings", label: "Bâtiment(s)", width: "w-[210px]" },
 ] as const;
 
 export function MissionsTable({
@@ -88,7 +89,7 @@ export function MissionsTable({
               className={COLUMNS[3].width}
               numberOfLines={1}
             >
-              {mission.buildingAddress ?? "Lieu non renseigné"}
+              {formatBuildingSummary(mission.buildings ?? [], "long")}
             </ThemedText>
           </Pressable>
         ))}

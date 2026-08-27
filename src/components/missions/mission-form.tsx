@@ -28,7 +28,9 @@ export type MissionFormValues = {
 };
 
 type MissionFormProps = {
-  initialValues?: Partial<Mission>;
+  initialValues?: Partial<
+    Pick<Mission, "title" | "missionType" | "legalContext">
+  >;
   submitLabel: string;
   isSubmitting?: boolean;
   error?: string | null;
@@ -53,31 +55,23 @@ export function MissionForm({
   const [missionType, setMissionType] = useState<MissionType>(
     initialValues?.missionType ?? "AUTRE",
   );
-  const [buildingAddress, setBuildingAddress] = useState(
-    initialValues?.buildingAddress ?? "",
-  );
-  const [buildingType, setBuildingType] = useState(
-    initialValues?.buildingType ?? "",
-  );
-  const [buildingGpsLat, setBuildingGpsLat] = useState(
-    initialValues?.buildingGpsLat != null
-      ? String(initialValues.buildingGpsLat)
-      : "",
-  );
-  const [buildingGpsLng, setBuildingGpsLng] = useState(
-    initialValues?.buildingGpsLng != null
-      ? String(initialValues.buildingGpsLng)
-      : "",
-  );
+
+  const [buildingAddress, setBuildingAddress] = useState("");
+  const [buildingType, setBuildingType] = useState("");
+  const [buildingGpsLat, setBuildingGpsLat] = useState("");
+  const [buildingGpsLng, setBuildingGpsLng] = useState("");
   const [legalContext, setLegalContext] = useState(
     initialValues?.legalContext ?? undefined,
   );
 
   const handleCaptureLocation = async () => {
-    const coords = await getCurrentLocation();
-    if (coords) {
-      setBuildingGpsLat(String(coords.latitude));
-      setBuildingGpsLng(String(coords.longitude));
+    const result = await getCurrentLocation();
+    if (result) {
+      setBuildingGpsLat(String(result.latitude));
+      setBuildingGpsLng(String(result.longitude));
+      if (result.address && !buildingAddress.trim()) {
+        setBuildingAddress(result.address);
+      }
     }
   };
 
@@ -124,6 +118,12 @@ export function MissionForm({
           value={missionType}
           onChange={setMissionType}
         />
+      </View>
+
+      <View className="gap-one">
+        <ThemedText type="eyebrow" themeColor="accent">
+          Bâtiment principal
+        </ThemedText>
       </View>
 
       <FormField

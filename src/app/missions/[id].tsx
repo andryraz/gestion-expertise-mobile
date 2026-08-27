@@ -28,7 +28,7 @@ import {
   STATUS_ACTION_LABEL,
   STATUS_ADVANCE,
   STATUS_LABELS,
-  STATUS_TONE
+  STATUS_TONE,
 } from "@/constants/mission-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
@@ -202,6 +202,10 @@ export default function MissionDetailScreen() {
     logger.info("Missions", "Informations mises à jour", { id });
   };
 
+  const handleBuildingsChange = (buildings: Mission["buildings"]) => {
+    setMission((prev) => (prev ? { ...prev, buildings } : prev));
+  };
+
   return (
     <ThemedView className="flex-1">
       <SafeAreaView className="flex-1">
@@ -360,6 +364,7 @@ export default function MissionDetailScreen() {
                     mission={mission}
                     isArchived={isArchived}
                     onUpdate={isArchived ? undefined : handleUpdateInfo}
+                    onBuildingsChange={handleBuildingsChange}
                   />
                 )}
 

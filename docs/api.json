@@ -10,9 +10,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "App"
-        ]
+        "tags": ["App"]
       }
     },
     "/auth/register": {
@@ -45,9 +43,7 @@
           }
         },
         "summary": "Creation d'un compte utilisateur",
-        "tags": [
-          "Authentification"
-        ]
+        "tags": ["Authentification"]
       }
     },
     "/auth/login": {
@@ -80,9 +76,7 @@
           }
         },
         "summary": "Connexion d'un utilisateur",
-        "tags": [
-          "Authentification"
-        ]
+        "tags": ["Authentification"]
       }
     },
     "/auth/profile": {
@@ -110,9 +104,7 @@
           }
         ],
         "summary": "Obtenir le profil de l'utilisateur connecte",
-        "tags": [
-          "Authentification"
-        ]
+        "tags": ["Authentification"]
       },
       "patch": {
         "operationId": "AuthController_updateProfile",
@@ -151,9 +143,7 @@
           }
         ],
         "summary": "Mettre à jour le profil de l'utilisateur connecté",
-        "tags": [
-          "Authentification"
-        ]
+        "tags": ["Authentification"]
       }
     },
     "/auth/logout": {
@@ -183,9 +173,7 @@
           }
         ],
         "summary": "Deconnexion de l'utilisateur connecté",
-        "tags": [
-          "Authentification"
-        ]
+        "tags": ["Authentification"]
       }
     },
     "/missions": {
@@ -224,9 +212,7 @@
           }
         ],
         "summary": "Créer une mission",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       },
       "get": {
         "description": "Retourne les missions de l'expert authentifié. Un compte EXPERT ne peut jamais voir les missions d'un autre expert, quel que soit le paramètre expertId fourni. Un compte ADMIN peut voir toutes les missions, et filtrer optionnellement par expertId.",
@@ -300,12 +286,7 @@
             "schema": {
               "default": "createdAt",
               "type": "string",
-              "enum": [
-                "createdAt",
-                "updatedAt",
-                "reference",
-                "title"
-              ]
+              "enum": ["createdAt", "updatedAt", "reference", "title"]
             }
           },
           {
@@ -315,10 +296,7 @@
             "schema": {
               "default": "desc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -361,9 +339,7 @@
           }
         ],
         "summary": "Lister les missions",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       }
     },
     "/missions/stats": {
@@ -392,9 +368,7 @@
           }
         ],
         "summary": "Statistiques du tableau de bord",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       }
     },
     "/missions/{id}": {
@@ -432,9 +406,7 @@
           }
         ],
         "summary": "Voir les details d'une mission",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       },
       "patch": {
         "description": "Met à jour les champs d'une mission. Le statut ne peut pas être modifié via cet endpoint. Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
@@ -480,9 +452,7 @@
           }
         ],
         "summary": "Mettre à jour une mission",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       }
     },
     "/missions/{id}/status": {
@@ -530,9 +500,7 @@
           }
         ],
         "summary": "Transition de statut d'une mission",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       }
     },
     "/missions/{id}/archive": {
@@ -580,9 +548,7 @@
           }
         ],
         "summary": "Archiver une mission",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       }
     },
     "/missions/{id}/unarchive": {
@@ -620,9 +586,7 @@
           }
         ],
         "summary": "Désarchiver une mission",
-        "tags": [
-          "Missions"
-        ]
+        "tags": ["Missions"]
       }
     },
     "/missions/{missionId}/parties": {
@@ -670,9 +634,7 @@
           }
         ],
         "summary": "Ajouter une partie prenante à une mission",
-        "tags": [
-          "Parties prenantes"
-        ]
+        "tags": ["Parties prenantes"]
       },
       "get": {
         "description": "Retourne toutes les parties prenantes d'une mission, triées par date de création.",
@@ -711,9 +673,7 @@
           }
         ],
         "summary": "Lister les parties prenantes d'une mission",
-        "tags": [
-          "Parties prenantes"
-        ]
+        "tags": ["Parties prenantes"]
       }
     },
     "/parties/{id}": {
@@ -761,9 +721,7 @@
           }
         ],
         "summary": "Modifier une partie prenante",
-        "tags": [
-          "Parties prenantes"
-        ]
+        "tags": ["Parties prenantes"]
       },
       "delete": {
         "description": "Supprime définitivement une partie prenante. Impossible si la mission est archivée.",
@@ -792,9 +750,7 @@
           }
         ],
         "summary": "Supprimer une partie prenante",
-        "tags": [
-          "Parties prenantes"
-        ]
+        "tags": ["Parties prenantes"]
       }
     },
     "/missions/{missionId}/appointments": {
@@ -842,9 +798,7 @@
           }
         ],
         "summary": "Créer un rendez-vous pour une mission",
-        "tags": [
-          "Rendez-vous"
-        ]
+        "tags": ["Rendez-vous"]
       },
       "get": {
         "description": "Retourne tous les rendez-vous d'une mission, triés par date de rendez-vous (ordre croissant). Vérifie que la mission appartient à l'expert authentifié (sauf ADMIN).",
@@ -883,9 +837,7 @@
           }
         ],
         "summary": "Lister les rendez-vous d'une mission",
-        "tags": [
-          "Rendez-vous"
-        ]
+        "tags": ["Rendez-vous"]
       }
     },
     "/appointments": {
@@ -938,9 +890,7 @@
           }
         ],
         "summary": "Rechercher des rendez-vous par période",
-        "tags": [
-          "Rendez-vous"
-        ]
+        "tags": ["Rendez-vous"]
       }
     },
     "/appointments/{id}": {
@@ -988,9 +938,7 @@
           }
         ],
         "summary": "Modifier un rendez-vous",
-        "tags": [
-          "Rendez-vous"
-        ]
+        "tags": ["Rendez-vous"]
       },
       "delete": {
         "description": "Supprime un rendez-vous uniquement. Vérifie que la mission appartient à l'expert connecté.",
@@ -1019,9 +967,7 @@
           }
         ],
         "summary": "Supprimer un rendez-vous",
-        "tags": [
-          "Rendez-vous"
-        ]
+        "tags": ["Rendez-vous"]
       }
     },
     "/appointments/{id}/reschedule": {
@@ -1069,9 +1015,7 @@
           }
         ],
         "summary": "Reporter un rendez-vous",
-        "tags": [
-          "Rendez-vous"
-        ]
+        "tags": ["Rendez-vous"]
       }
     },
     "/missions/{missionId}/quotes": {
@@ -1119,9 +1063,7 @@
           }
         ],
         "summary": "Créer un devis pour une mission",
-        "tags": [
-          "Devis"
-        ]
+        "tags": ["Devis"]
       },
       "get": {
         "description": "Retourne tous les devis d'une mission, triés par version (ordre croissant).",
@@ -1160,9 +1102,7 @@
           }
         ],
         "summary": "Lister les devis d'une mission",
-        "tags": [
-          "Devis"
-        ]
+        "tags": ["Devis"]
       }
     },
     "/missions/{missionId}/quotes/latest": {
@@ -1200,9 +1140,7 @@
           }
         ],
         "summary": "Récupérer le dernier devis d'une mission",
-        "tags": [
-          "Devis"
-        ]
+        "tags": ["Devis"]
       }
     },
     "/missions/{missionId}/quotes/{quoteId}/respond": {
@@ -1258,9 +1196,7 @@
           }
         ],
         "summary": "Répondre à un devis",
-        "tags": [
-          "Devis"
-        ]
+        "tags": ["Devis"]
       }
     },
     "/quotes/{id}": {
@@ -1308,9 +1244,7 @@
           }
         ],
         "summary": "Modifier un devis",
-        "tags": [
-          "Devis"
-        ]
+        "tags": ["Devis"]
       },
       "delete": {
         "description": "Supprime un devis. Seuls les devis en statut BROUILLON peuvent être supprimés.",
@@ -1339,18 +1273,216 @@
           }
         ],
         "summary": "Supprimer un devis",
-        "tags": [
-          "Devis"
-        ]
+        "tags": ["Devis"]
       }
     },
-    "/missions/{missionId}/zones": {
+    "/missions/{missionId}/buildings": {
       "post": {
-        "description": "Crée une nouvelle zone de construction pour une mission. Le champ parentZoneId est optionnel. S'il est fourni, la zone parente doit appartenir à la même mission.",
-        "operationId": "BuildingZonesController_create",
+        "description": "Crée un nouveau bâtiment pour une mission. Une mission peut comporter plusieurs bâtiments. Vérifie que la mission appartient à l'expert authentifié.",
+        "operationId": "BuildingsController_create",
         "parameters": [
           {
             "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBuildingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bâtiment créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ajouter un bâtiment à une mission",
+        "tags": ["Bâtiments"]
+      },
+      "get": {
+        "description": "Retourne tous les bâtiments d'une mission, triés par date de création. Vérifie que la mission appartient à l'expert authentifié.",
+        "operationId": "BuildingsController_findAll",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des bâtiments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BuildingResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les bâtiments d'une mission",
+        "tags": ["Bâtiments"]
+      }
+    },
+    "/buildings/{id}": {
+      "get": {
+        "description": "Vérifie que le bâtiment appartient (via sa mission) à l'expert authentifié.",
+        "operationId": "BuildingsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Détail d'un bâtiment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Voir le détail d'un bâtiment",
+        "tags": ["Bâtiments"]
+      },
+      "patch": {
+        "description": "Met à jour les informations d'un bâtiment. Les champs sont optionnels. Impossible si la mission associée est archivée.",
+        "operationId": "BuildingsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBuildingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bâtiment mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier un bâtiment",
+        "tags": ["Bâtiments"]
+      },
+      "delete": {
+        "description": "Supprime définitivement un bâtiment ainsi que toutes ses zones et observations associées (suppression en cascade). Les photos et mesures liées sont conservées mais déclassées (zoneId repasse à null). Impossible si la mission associée est archivée.",
+        "operationId": "BuildingsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bâtiment supprimé avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer un bâtiment",
+        "tags": ["Bâtiments"]
+      }
+    },
+    "/buildings/{buildingId}/zones": {
+      "post": {
+        "description": "Crée une nouvelle zone de construction pour un bâtiment. Le champ parentZoneId est optionnel. S'il est fourni, la zone parente doit appartenir au même bâtiment.",
+        "operationId": "BuildingZonesController_create",
+        "parameters": [
+          {
+            "name": "buildingId",
             "required": true,
             "in": "path",
             "schema": {
@@ -1389,16 +1521,14 @@
           }
         ],
         "summary": "Créer une zone ou sous-zone",
-        "tags": [
-          "Zones de construction"
-        ]
+        "tags": ["Zones de construction"]
       },
       "get": {
-        "description": "Retourne toutes les zones d'une mission, triées par date de création croissante.",
-        "operationId": "BuildingZonesController_findAllByMission",
+        "description": "Retourne toutes les zones d'un bâtiment, triées par date de création croissante.",
+        "operationId": "BuildingZonesController_findAllByBuilding",
         "parameters": [
           {
-            "name": "missionId",
+            "name": "buildingId",
             "required": true,
             "in": "path",
             "schema": {
@@ -1429,19 +1559,17 @@
             "bearer": []
           }
         ],
-        "summary": "Lister les zones d'une mission (vue plate)",
-        "tags": [
-          "Zones de construction"
-        ]
+        "summary": "Lister les zones d'un bâtiment (vue plate)",
+        "tags": ["Zones de construction"]
       }
     },
-    "/missions/{missionId}/zones/tree": {
+    "/buildings/{buildingId}/zones/tree": {
       "get": {
-        "description": "Retourne toutes les zones d'une mission sous forme d'arborescence. Les racines sont les zones sans parent, chaque nœud contient un tableau children contenant ses sous-zones. Les données sont récupérées en une seule requête plate, puis l'arbre est reconstruit en mémoire côté serveur.",
-        "operationId": "BuildingZonesController_findTreeByMission",
+        "description": "Retourne toutes les zones d'un bâtiment sous forme d'arborescence. Les racines sont les zones sans parent, chaque nœud contient un tableau children contenant ses sous-zones. Les données sont récupérées en une seule requête plate, puis l'arbre est reconstruit en mémoire côté serveur.",
+        "operationId": "BuildingZonesController_findTreeByBuilding",
         "parameters": [
           {
-            "name": "missionId",
+            "name": "buildingId",
             "required": true,
             "in": "path",
             "schema": {
@@ -1472,15 +1600,13 @@
             "bearer": []
           }
         ],
-        "summary": "Afficher l'arbre des zones d'une mission",
-        "tags": [
-          "Zones de construction"
-        ]
+        "summary": "Afficher l'arbre des zones d'un bâtiment",
+        "tags": ["Zones de construction"]
       }
     },
     "/zones/{id}": {
       "patch": {
-        "description": "Modifie le nom, le type et/ou le parent d'une zone. Si parentZoneId est défini, la zone parente doit appartenir à la même mission et la zone ne peut pas devenir son propre ancêtre (vérification anti-cycle). Passer parentZoneId à null retire le rattachement (la zone devient une racine).",
+        "description": "Modifie le nom, le type et/ou le parent d'une zone. Si parentZoneId est défini, la zone parente doit appartenir au même bâtiment et la zone ne peut pas devenir son propre ancêtre (vérification anti-cycle). Passer parentZoneId à null retire le rattachement (la zone devient une racine).",
         "operationId": "BuildingZonesController_update",
         "parameters": [
           {
@@ -1523,9 +1649,7 @@
           }
         ],
         "summary": "Modifier une zone",
-        "tags": [
-          "Zones de construction"
-        ]
+        "tags": ["Zones de construction"]
       },
       "delete": {
         "description": "Supprime une zone ainsi que ses sous-zones et toutes les observations liées (cascade gérée par la base de données).",
@@ -1554,9 +1678,7 @@
           }
         ],
         "summary": "Supprimer une zone",
-        "tags": [
-          "Zones de construction"
-        ]
+        "tags": ["Zones de construction"]
       }
     },
     "/disorder-types": {
@@ -1595,9 +1717,7 @@
           }
         ],
         "summary": "Créer un type de désordre",
-        "tags": [
-          "Types de désordres"
-        ]
+        "tags": ["Types de désordres"]
       },
       "get": {
         "description": "Retourne tous les types de désordres, avec filtrage optionnel par catégorie et recherche texte insensible à la casse sur le nom et la description. Pas de pagination.",
@@ -1655,9 +1775,7 @@
           }
         ],
         "summary": "Lister les types de désordres",
-        "tags": [
-          "Types de désordres"
-        ]
+        "tags": ["Types de désordres"]
       }
     },
     "/disorder-types/{id}": {
@@ -1705,9 +1823,7 @@
           }
         ],
         "summary": "Modifier un type de désordre",
-        "tags": [
-          "Types de désordres"
-        ]
+        "tags": ["Types de désordres"]
       },
       "delete": {
         "description": "Supprime un type de désordre. La suppression est bloquée (409) si le type est déjà utilisé par une ou plusieurs observations.",
@@ -1736,9 +1852,7 @@
           }
         ],
         "summary": "Supprimer un type de désordre",
-        "tags": [
-          "Types de désordres"
-        ]
+        "tags": ["Types de désordres"]
       }
     },
     "/zones/{zoneId}/observations": {
@@ -1786,9 +1900,7 @@
           }
         ],
         "summary": "Créer une observation pour une zone",
-        "tags": [
-          "Observations"
-        ]
+        "tags": ["Observations"]
       },
       "get": {
         "description": "Retourne les observations d'une seule zone. Filtrage optionnel par sévérité. Tri par date de création croissante.",
@@ -1810,11 +1922,7 @@
             "schema": {
               "example": "URGENT",
               "type": "string",
-              "enum": [
-                "MINEUR",
-                "MODERE",
-                "URGENT"
-              ]
+              "enum": ["MINEUR", "MODERE", "URGENT"]
             }
           }
         ],
@@ -1842,9 +1950,7 @@
           }
         ],
         "summary": "Lister les observations d'une zone",
-        "tags": [
-          "Observations"
-        ]
+        "tags": ["Observations"]
       }
     },
     "/missions/{missionId}/observations": {
@@ -1868,11 +1974,7 @@
             "schema": {
               "example": "URGENT",
               "type": "string",
-              "enum": [
-                "MINEUR",
-                "MODERE",
-                "URGENT"
-              ]
+              "enum": ["MINEUR", "MODERE", "URGENT"]
             }
           }
         ],
@@ -1900,9 +2002,7 @@
           }
         ],
         "summary": "Lister les observations d'une mission",
-        "tags": [
-          "Observations"
-        ]
+        "tags": ["Observations"]
       }
     },
     "/observations/{id}": {
@@ -1940,9 +2040,7 @@
           }
         ],
         "summary": "Détail d'une observation",
-        "tags": [
-          "Observations"
-        ]
+        "tags": ["Observations"]
       },
       "patch": {
         "description": "Modifie la description, la sévérité, la cause probable et/ou le type de désordre d'une observation. Passer probableCause à null efface la cause actuelle.",
@@ -1988,9 +2086,7 @@
           }
         ],
         "summary": "Modifier une observation",
-        "tags": [
-          "Observations"
-        ]
+        "tags": ["Observations"]
       },
       "delete": {
         "description": "Supprime une observation. Les photos et mesures liées sont détachées (observationId mis à null) mais ne sont pas supprimées.",
@@ -2019,9 +2115,7 @@
           }
         ],
         "summary": "Supprimer une observation",
-        "tags": [
-          "Observations"
-        ]
+        "tags": ["Observations"]
       }
     },
     "/missions/{missionId}/photos": {
@@ -2044,9 +2138,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file"
-                ],
+                "required": ["file"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -2090,9 +2182,7 @@
           }
         ],
         "summary": "Uploader une photo pour une mission",
-        "tags": [
-          "Photos"
-        ]
+        "tags": ["Photos"]
       },
       "get": {
         "description": "Retourne toutes les photos d'une mission, de la plus récente à la plus ancienne.",
@@ -2131,9 +2221,7 @@
           }
         ],
         "summary": "Galerie complète d'une mission",
-        "tags": [
-          "Photos"
-        ]
+        "tags": ["Photos"]
       }
     },
     "/zones/{zoneId}/photos": {
@@ -2174,9 +2262,7 @@
           }
         ],
         "summary": "Galerie d'une zone",
-        "tags": [
-          "Photos"
-        ]
+        "tags": ["Photos"]
       }
     },
     "/observations/{observationId}/photos": {
@@ -2217,9 +2303,7 @@
           }
         ],
         "summary": "Galerie d'un désordre (observation)",
-        "tags": [
-          "Photos"
-        ]
+        "tags": ["Photos"]
       }
     },
     "/photos/{id}/attach": {
@@ -2267,9 +2351,7 @@
           }
         ],
         "summary": "Rattacher une photo à une zone ou une observation",
-        "tags": [
-          "Photos"
-        ]
+        "tags": ["Photos"]
       }
     },
     "/photos/{id}": {
@@ -2317,9 +2399,7 @@
           }
         ],
         "summary": "Modifier la légende d une photo",
-        "tags": [
-          "Photos"
-        ]
+        "tags": ["Photos"]
       },
       "delete": {
         "description": "Supprime une photo : l'enregistrement en base et le fichier stocké sur disque.",
@@ -2348,9 +2428,7 @@
           }
         ],
         "summary": "Supprimer une photo",
-        "tags": [
-          "Photos"
-        ]
+        "tags": ["Photos"]
       }
     }
   },
@@ -2358,9 +2436,7 @@
     "title": "Expertise Bâtiment API",
     "description": "API de gestion des expertises bâtiment",
     "version": "1.0",
-    "contact": {
-
-    }
+    "contact": {}
   },
   "tags": [],
   "servers": [],
@@ -2394,18 +2470,11 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "EXPERT",
-              "ADMIN"
-            ],
+            "enum": ["EXPERT", "ADMIN"],
             "default": "EXPERT"
           }
         },
-        "required": [
-          "name",
-          "email",
-          "password"
-        ]
+        "required": ["name", "email", "password"]
       },
       "UserResponseDto": {
         "type": "object",
@@ -2461,10 +2530,7 @@
             "$ref": "#/components/schemas/UserResponseDto"
           }
         },
-        "required": [
-          "accessToken",
-          "user"
-        ]
+        "required": ["accessToken", "user"]
       },
       "LoginDto": {
         "type": "object",
@@ -2478,10 +2544,7 @@
             "example": "motdepasse123"
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "UpdateProfileDto": {
         "type": "object",
@@ -2508,6 +2571,31 @@
           }
         }
       },
+      "InitialBuildingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bâtiment principal"
+          },
+          "address": {
+            "type": "string",
+            "example": "Lot IVK 45, Itaosy"
+          },
+          "buildingType": {
+            "type": "string",
+            "example": "Villa R+1"
+          },
+          "gpsLat": {
+            "type": "number",
+            "example": -18.9137
+          },
+          "gpsLng": {
+            "type": "number",
+            "example": 47.5361
+          }
+        }
+      },
       "CreateMissionDto": {
         "type": "object",
         "properties": {
@@ -2527,32 +2615,15 @@
             ],
             "example": "PATHOLOGIE"
           },
-          "buildingAddress": {
-            "type": "string",
-            "example": "Lot IVN 99, Ambondrona, Antananarivo",
-            "description": "Adresse du bâtiment (optionnelle pour brouillon)"
-          },
-          "buildingType": {
-            "type": "string",
-            "example": "Immeuble R+2"
-          },
-          "buildingGpsLat": {
-            "type": "number",
-            "example": -18.8792
-          },
-          "buildingGpsLng": {
-            "type": "number",
-            "example": 47.5079
-          },
           "legalContext": {
             "type": "string",
             "example": "Mission ordonnée par le tribunal de commerce"
+          },
+          "initialBuilding": {
+            "$ref": "#/components/schemas/InitialBuildingDto"
           }
         },
-        "required": [
-          "title",
-          "missionType"
-        ]
+        "required": ["title", "missionType"]
       },
       "ExpertBriefDto": {
         "type": "object",
@@ -2567,11 +2638,48 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "email"
-        ]
+        "required": ["id", "name", "email"]
+      },
+      "BuildingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bâtiment principal"
+          },
+          "address": {
+            "type": "object",
+            "example": "Lot IVK 45, Itaosy"
+          },
+          "buildingType": {
+            "type": "object",
+            "example": "Villa R+1"
+          },
+          "gpsLat": {
+            "type": "object",
+            "example": -18.9137
+          },
+          "gpsLng": {
+            "type": "object",
+            "example": 47.5361
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["id", "missionId", "name", "createdAt", "updatedAt"]
       },
       "MissionResponseDto": {
         "type": "object",
@@ -2596,22 +2704,6 @@
             "type": "string",
             "example": "BROUILLON"
           },
-          "buildingAddress": {
-            "type": "object",
-            "example": "Lot IVN 99, Ambondrona, Antananarivo"
-          },
-          "buildingType": {
-            "type": "object",
-            "example": "Immeuble R+2"
-          },
-          "buildingGpsLat": {
-            "type": "object",
-            "example": -18.8792
-          },
-          "buildingGpsLng": {
-            "type": "object",
-            "example": 47.5079
-          },
           "legalContext": {
             "type": "object",
             "example": "Mission ordonnée par le tribunal de commerce"
@@ -2621,6 +2713,12 @@
           },
           "expert": {
             "$ref": "#/components/schemas/ExpertBriefDto"
+          },
+          "buildings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildingResponseDto"
+            }
           },
           "archivedAt": {
             "type": "object"
@@ -2645,6 +2743,7 @@
           "status",
           "expertId",
           "expert",
+          "buildings",
           "createdAt",
           "updatedAt"
         ]
@@ -2668,10 +2767,7 @@
             }
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "StatusCountDto": {
         "type": "object",
@@ -2685,10 +2781,7 @@
             "example": 12
           }
         },
-        "required": [
-          "status",
-          "count"
-        ]
+        "required": ["status", "count"]
       },
       "MissionBriefDto": {
         "type": "object",
@@ -2705,11 +2798,7 @@
             "example": "Expertise bâtiment fissuré"
           }
         },
-        "required": [
-          "id",
-          "reference",
-          "title"
-        ]
+        "required": ["id", "reference", "title"]
       },
       "PendingClientResponseDto": {
         "type": "object",
@@ -2725,10 +2814,7 @@
             }
           }
         },
-        "required": [
-          "count",
-          "missions"
-        ]
+        "required": ["count", "missions"]
       },
       "OverdueMissionsDto": {
         "type": "object",
@@ -2744,10 +2830,7 @@
             }
           }
         },
-        "required": [
-          "count",
-          "missions"
-        ]
+        "required": ["count", "missions"]
       },
       "ArchivedStatsDto": {
         "type": "object",
@@ -2757,9 +2840,7 @@
             "example": 5
           }
         },
-        "required": [
-          "count"
-        ]
+        "required": ["count"]
       },
       "MissionsStatsDto": {
         "type": "object",
@@ -2811,23 +2892,6 @@
             ],
             "example": "PATHOLOGIE"
           },
-          "buildingAddress": {
-            "type": "string",
-            "example": "Lot IVN 99, Ambondrona, Antananarivo",
-            "description": "Adresse du bâtiment"
-          },
-          "buildingType": {
-            "type": "string",
-            "example": "Immeuble R+2"
-          },
-          "buildingGpsLat": {
-            "type": "number",
-            "example": -18.8792
-          },
-          "buildingGpsLng": {
-            "type": "number",
-            "example": 47.5079
-          },
           "legalContext": {
             "type": "string",
             "example": "Mission ordonnée par le tribunal de commerce"
@@ -2853,15 +2917,11 @@
             "example": "PRISE_DE_CONTACT"
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "ArchiveMissionDto": {
         "type": "object",
-        "properties": {
-
-        }
+        "properties": {}
       },
       "CreateMissionPartyDto": {
         "type": "object",
@@ -2891,10 +2951,7 @@
             "example": "+261 34 12 345 67"
           }
         },
-        "required": [
-          "fullName",
-          "role"
-        ]
+        "required": ["fullName", "role"]
       },
       "MissionPartyResponseDto": {
         "type": "object",
@@ -2934,13 +2991,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "missionId",
-          "fullName",
-          "role",
-          "createdAt"
-        ]
+        "required": ["id", "missionId", "fullName", "role", "createdAt"]
       },
       "UpdateMissionPartyDto": {
         "type": "object",
@@ -2997,10 +3048,7 @@
             "example": "Apporter les documents d'urbanisme"
           }
         },
-        "required": [
-          "type",
-          "scheduledAt"
-        ]
+        "required": ["type", "scheduledAt"]
       },
       "AppointmentResponseDto": {
         "type": "object",
@@ -3014,11 +3062,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "APPEL",
-              "RENDEZ_VOUS_SITE",
-              "AUTRE"
-            ]
+            "enum": ["APPEL", "RENDEZ_VOUS_SITE", "AUTRE"]
           },
           "scheduledAt": {
             "format": "date-time",
@@ -3030,13 +3074,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PLANIFIE",
-              "CONFIRME",
-              "REALISE",
-              "ANNULE",
-              "REPORTE"
-            ]
+            "enum": ["PLANIFIE", "CONFIRME", "REALISE", "ANNULE", "REPORTE"]
           },
           "notes": {
             "type": "object",
@@ -3074,13 +3112,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PLANIFIE",
-              "CONFIRME",
-              "REALISE",
-              "ANNULE",
-              "REPORTE"
-            ],
+            "enum": ["PLANIFIE", "CONFIRME", "REALISE", "ANNULE", "REPORTE"],
             "example": "CONFIRME"
           },
           "notes": {
@@ -3105,9 +3137,7 @@
             "example": "Nouveau rendez-vous suite au report"
           }
         },
-        "required": [
-          "scheduledAt"
-        ]
+        "required": ["scheduledAt"]
       },
       "CreateQuoteDto": {
         "type": "object",
@@ -3131,10 +3161,7 @@
           "proposedBy": {
             "type": "string",
             "description": "Proposé par (EXPERT ou CLIENT)",
-            "enum": [
-              "EXPERT",
-              "CLIENT"
-            ],
+            "enum": ["EXPERT", "CLIENT"],
             "example": "EXPERT"
           },
           "status": {
@@ -3156,10 +3183,7 @@
             "example": "2026-09-30T00:00:00.000Z"
           }
         },
-        "required": [
-          "amount",
-          "proposedBy"
-        ]
+        "required": ["amount", "proposedBy"]
       },
       "QuoteResponseDto": {
         "type": "object",
@@ -3189,10 +3213,7 @@
           },
           "proposedBy": {
             "type": "string",
-            "enum": [
-              "EXPERT",
-              "CLIENT"
-            ],
+            "enum": ["EXPERT", "CLIENT"],
             "example": "EXPERT"
           },
           "status": {
@@ -3242,17 +3263,19 @@
           "action": {
             "type": "string",
             "description": "Action à effectuer",
-            "enum": [
-              "ACCEPTE",
-              "REFUSE",
-              "CONTRE_PROPOSITION"
-            ],
+            "enum": ["ACCEPTE", "REFUSE", "CONTRE_PROPOSITION"],
             "example": "ACCEPTE"
           },
           "amount": {
             "type": "number",
             "description": "Nouveau montant (uniquement pour CONTRE_PROPOSITION)",
             "example": 1800000
+          },
+          "proposedBy": {
+            "type": "string",
+            "description": "Qui fait cette contre-proposition (obligatoire pour CONTRE_PROPOSITION). Sans ce champ, il serait impossible de savoir si c'est le client qui a renégocié ou l'expert qui a ajusté son offre — l'historique de négociation perdrait tout son sens.",
+            "enum": ["EXPERT", "CLIENT"],
+            "example": "CLIENT"
           },
           "description": {
             "type": "string",
@@ -3265,9 +3288,7 @@
             "example": "2026-10-15T00:00:00.000Z"
           }
         },
-        "required": [
-          "action"
-        ]
+        "required": ["action"]
       },
       "UpdateQuoteDto": {
         "type": "object",
@@ -3290,16 +3311,64 @@
           "proposedBy": {
             "type": "string",
             "description": "Proposé par (EXPERT ou CLIENT)",
-            "enum": [
-              "EXPERT",
-              "CLIENT"
-            ],
+            "enum": ["EXPERT", "CLIENT"],
             "example": "EXPERT"
           },
           "validUntil": {
             "type": "string",
             "description": "Date de validité du devis",
             "example": "2026-09-30T00:00:00.000Z"
+          }
+        }
+      },
+      "CreateBuildingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bâtiment principal"
+          },
+          "address": {
+            "type": "string",
+            "example": "Lot IVK 45, Itaosy"
+          },
+          "buildingType": {
+            "type": "string",
+            "example": "Villa R+1"
+          },
+          "gpsLat": {
+            "type": "number",
+            "example": -18.9137
+          },
+          "gpsLng": {
+            "type": "number",
+            "example": 47.5361
+          }
+        },
+        "required": ["name"]
+      },
+      "UpdateBuildingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bâtiment principal"
+          },
+          "address": {
+            "type": "string",
+            "example": "Lot IVK 45, Itaosy"
+          },
+          "buildingType": {
+            "type": "string",
+            "example": "Villa R+1"
+          },
+          "gpsLat": {
+            "type": "number",
+            "example": -18.9137
+          },
+          "gpsLng": {
+            "type": "number",
+            "example": 47.5361
           }
         }
       },
@@ -3332,10 +3401,7 @@
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
           }
         },
-        "required": [
-          "name",
-          "zoneType"
-        ]
+        "required": ["name", "zoneType"]
       },
       "BuildingZoneResponseDto": {
         "type": "object",
@@ -3344,7 +3410,7 @@
             "type": "string",
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
           },
-          "missionId": {
+          "buildingId": {
             "type": "string"
           },
           "parentZoneId": {
@@ -3381,7 +3447,7 @@
         },
         "required": [
           "id",
-          "missionId",
+          "buildingId",
           "name",
           "zoneType",
           "createdAt",
@@ -3395,7 +3461,7 @@
             "type": "string",
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
           },
-          "missionId": {
+          "buildingId": {
             "type": "string"
           },
           "parentZoneId": {
@@ -3439,7 +3505,7 @@
         },
         "required": [
           "id",
-          "missionId",
+          "buildingId",
           "name",
           "zoneType",
           "createdAt",
@@ -3503,10 +3569,7 @@
             "example": "Fissures de retrait apparaissant sur les murs porteurs"
           }
         },
-        "required": [
-          "name",
-          "category"
-        ]
+        "required": ["name", "category"]
       },
       "DisorderTypeResponseDto": {
         "type": "object",
@@ -3540,12 +3603,7 @@
             "example": "2026-08-01T09:00:00.000Z"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "category",
-          "createdAt"
-        ]
+        "required": ["id", "name", "category", "createdAt"]
       },
       "UpdateDisorderTypeDto": {
         "type": "object",
@@ -3590,11 +3648,7 @@
           "severity": {
             "type": "string",
             "description": "Sévérité du désordre",
-            "enum": [
-              "MINEUR",
-              "MODERE",
-              "URGENT"
-            ],
+            "enum": ["MINEUR", "MODERE", "URGENT"],
             "example": "MODERE"
           },
           "probableCause": {
@@ -3603,11 +3657,7 @@
             "example": "Retrait du béton après séchage"
           }
         },
-        "required": [
-          "disorderTypeId",
-          "description",
-          "severity"
-        ]
+        "required": ["disorderTypeId", "description", "severity"]
       },
       "ObservationResponseDto": {
         "type": "object",
@@ -3628,11 +3678,7 @@
           },
           "severity": {
             "type": "string",
-            "enum": [
-              "MINEUR",
-              "MODERE",
-              "URGENT"
-            ],
+            "enum": ["MINEUR", "MODERE", "URGENT"],
             "example": "MODERE"
           },
           "probableCause": {
@@ -3676,11 +3722,7 @@
           "severity": {
             "type": "string",
             "description": "Sévérité du désordre",
-            "enum": [
-              "MINEUR",
-              "MODERE",
-              "URGENT"
-            ],
+            "enum": ["MINEUR", "MODERE", "URGENT"],
             "example": "MODERE"
           },
           "probableCause": {

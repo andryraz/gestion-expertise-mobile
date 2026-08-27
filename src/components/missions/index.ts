@@ -1,5 +1,6 @@
 export { ChipSelect } from "../ui/chip-select";
 export { MissionRdvTab } from "./mission-appointment-tab";
+export { MissionBuildingsSection } from "./mission-buildings-section";
 export { MissionCard } from "./mission-card";
 export { MissionForm, type MissionFormValues } from "./mission-form";
 export { MissionInfoTab } from "./mission-info-tab";

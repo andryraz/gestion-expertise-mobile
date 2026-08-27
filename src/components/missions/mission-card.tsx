@@ -10,6 +10,7 @@ import {
 } from "@/constants/mission-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { Mission } from "@/types/mission";
+import { formatBuildingSummary } from "@/utils/format-building-summary";
 import { formatRelativeTime } from "@/utils/format-relative-time";
 
 const TONE_CLASSES = {
@@ -38,7 +39,11 @@ export function MissionCard({ mission, onPress }: MissionCardProps) {
   const tone = STATUS_TONE[mission.status];
 
   return (
-    <Pressable onPress={onPress} disabled={!onPress} className={onPress ? "active:opacity-70" : undefined}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      className={onPress ? "active:opacity-70" : undefined}
+    >
       <ThemedView
         type="backgroundElement"
         className="gap-two rounded-three border border-border p-three dark:border-border-dark"
@@ -59,14 +64,23 @@ export function MissionCard({ mission, onPress }: MissionCardProps) {
           </View>
         </View>
 
-        <ThemedText type="smallBold" className="text-base leading-6" numberOfLines={2}>
+        <ThemedText
+          type="smallBold"
+          className="text-base leading-6"
+          numberOfLines={2}
+        >
           {mission.title}
         </ThemedText>
 
         <View className="flex-row items-center gap-one">
           <Ionicons name="location" color={theme.textSecondary} size={15} />
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} className="flex-1">
-            {mission.buildingAddress ?? "Lieu non renseigné"}
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            numberOfLines={1}
+            className="flex-1"
+          >
+            {formatBuildingSummary(mission.buildings ?? [], "short")}
           </ThemedText>
         </View>
 

@@ -1,3 +1,5 @@
+import type { Building } from "./building";
+
 export type MissionStatus =
   | "BROUILLON"
   | "PRISE_DE_CONTACT"
@@ -35,10 +37,7 @@ export type Mission = {
   title: string;
   missionType: MissionType;
   status: MissionStatus;
-  buildingAddress?: string | null;
-  buildingType?: string | null;
-  buildingGpsLat?: number | null;
-  buildingGpsLng?: number | null;
+  buildings: Building[];
   legalContext?: string | null;
   expertId: string;
   expert: ExpertBrief;
@@ -56,20 +55,19 @@ export type PaginatedMissions = {
 export type CreateMissionPayload = {
   title: string;
   missionType: MissionType;
-  buildingAddress?: string;
-  buildingType?: string;
-  buildingGpsLat?: number;
-  buildingGpsLng?: number;
   legalContext?: string;
+  initialBuilding?: {
+    name: string;
+    address?: string;
+    buildingType?: string;
+    gpsLat?: number;
+    gpsLng?: number;
+  };
 };
 
 export type UpdateMissionPayload = {
   title?: string;
   missionType?: MissionType;
-  buildingAddress?: string;
-  buildingType?: string;
-  buildingGpsLat?: number;
-  buildingGpsLng?: number;
   legalContext?: string;
 };
 
