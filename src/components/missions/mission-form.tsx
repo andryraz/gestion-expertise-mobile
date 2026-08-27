@@ -127,6 +127,15 @@ export function MissionForm({
       </View>
 
       <FormField
+        label="Type de bâtiment"
+        icon="business"
+        placeholder="Villa, immeuble, entrepôt..."
+        value={buildingType}
+        onChangeText={setBuildingType}
+        autoCapitalize="sentences"
+      />
+
+      <FormField
         label="Adresse du bâtiment"
         icon="location"
         placeholder="Lot II M 12, Antananarivo"
@@ -135,14 +144,6 @@ export function MissionForm({
         autoCapitalize="sentences"
       />
 
-      <FormField
-        label="Type de bâtiment"
-        icon="business"
-        placeholder="Villa, immeuble, entrepôt..."
-        value={buildingType}
-        onChangeText={setBuildingType}
-        autoCapitalize="sentences"
-      />
       <View className="gap-one">
         <ThemedText type="small" themeColor="textSecondary">
           Position GPS (optionnel)

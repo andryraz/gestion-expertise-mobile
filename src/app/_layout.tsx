@@ -31,6 +31,8 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, segments]);
 
+  if (isLoading) return null;
+
   return <>{children}</>;
 }
 
@@ -54,6 +56,7 @@ export default function RootLayout() {
             <Stack.Screen
               name="register"
               options={{
+                presentation: "modal",
                 animation: "slide_from_bottom",
                 gestureEnabled: false,
               }}
