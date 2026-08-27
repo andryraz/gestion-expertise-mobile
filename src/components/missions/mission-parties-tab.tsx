@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -138,9 +139,25 @@ export function MissionPartiesTab({
     setEditingParty(null);
   };
 
+  const handleCall = async (phoneNumber: string) => {
+    const url = `tel:${phoneNumber.replace(/\s+/g, "")}`;
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(
+        "Impossible d'appeler",
+        "Aucune application d'appel disponible sur cet appareil.",
+      );
+    }
+  };
+
   const handleSave = async () => {
     if (!fullName.trim()) {
       Alert.alert("Erreur", "Le nom est obligatoire");
+      return;
+    }
+    if (!phone.trim()) {
+      Alert.alert("Erreur", "Le numéro de téléphone est obligatoire");
       return;
     }
     setIsSaving(true);
@@ -149,8 +166,8 @@ export function MissionPartiesTab({
         const payload: UpdatePartyPayload = {
           fullName: fullName.trim(),
           role,
+          phone: phone.trim(),
           email: email.trim() || null,
-          phone: phone.trim() || null,
         };
         const updated = await updateParty(editingParty.id, payload);
         setParties((prev) =>
@@ -160,9 +177,9 @@ export function MissionPartiesTab({
         const payload: CreatePartyPayload = {
           fullName: fullName.trim(),
           role,
+          phone: phone.trim(),
         };
         if (email.trim()) payload.email = email.trim();
-        if (phone.trim()) payload.phone = phone.trim();
         const created = await createParty(missionId, payload);
         setParties((prev) => [...prev, created]);
       }
@@ -255,14 +272,15 @@ export function MissionPartiesTab({
         <ScrollView showsVerticalScrollIndicator={false}>
           <View className="gap-two">
             {parties.map((party) => (
-              <Pressable
+              <ThemedView
                 key={party.id}
-                onPress={() => !isArchived && openEditModal(party)}
-                disabled={isArchived}
+                type="backgroundElement"
+                className="flex-row items-center gap-three rounded-three border border-border dark:border-border-dark px-three py-three"
               >
-                <ThemedView
-                  type="backgroundElement"
-                  className="flex-row items-center gap-three rounded-three border border-border dark:border-border-dark px-three py-three"
+                <Pressable
+                  onPress={() => !isArchived && openEditModal(party)}
+                  disabled={isArchived}
+                  className="flex-1 flex-row items-center gap-three"
                 >
                   <View className="h-10 w-10 items-center justify-center rounded-full bg-background-selected dark:bg-background-selected-dark">
                     <ThemedText type="smallBold" themeColor="accent">
@@ -277,32 +295,42 @@ export function MissionPartiesTab({
 
                   <View className="flex-1">
                     <ThemedText type="smallBold">{party.fullName}</ThemedText>
-                    {party.email && (
+                    {(party.phone || party.email) && (
                       <ThemedText
                         type="small"
                         themeColor="textSecondary"
                         numberOfLines={1}
                       >
-                        {party.email}
+                        {party.phone || party.email}
                       </ThemedText>
                     )}
                   </View>
+                </Pressable>
 
-                  <View
-                    className={[
-                      "rounded-five border border-transparent px-two py-half",
-                      ROLE_BADGE_CLASSES[party.role],
-                    ].join(" ")}
+                <View
+                  className={[
+                    "rounded-five border border-transparent px-two py-half",
+                    ROLE_BADGE_CLASSES[party.role],
+                  ].join(" ")}
+                >
+                  <ThemedText
+                    type="eyebrow"
+                    themeColor={ROLE_BADGE_TEXT[party.role] as any}
                   >
-                    <ThemedText
-                      type="eyebrow"
-                      themeColor={ROLE_BADGE_TEXT[party.role] as any}
-                    >
-                      {PARTY_ROLE_LABELS[party.role]}
-                    </ThemedText>
-                  </View>
-                </ThemedView>
-              </Pressable>
+                    {PARTY_ROLE_LABELS[party.role]}
+                  </ThemedText>
+                </View>
+
+                {party.phone && (
+                  <Pressable
+                    onPress={() => handleCall(party.phone!)}
+                    hitSlop={8}
+                    className="h-8 w-8 items-center justify-center rounded-full bg-success dark:bg-success-dark"
+                  >
+                    <Ionicons name="call" color={theme.background} size={16} />
+                  </Pressable>
+                )}
+              </ThemedView>
             ))}
           </View>
 
@@ -416,15 +444,14 @@ export function MissionPartiesTab({
                   themeColor="textSecondary"
                   className="mb-one"
                 >
-                  Email
+                  Téléphone *
                 </ThemedText>
                 <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="jean@email.com"
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="+261 34 12 345 67"
                   placeholderTextColor={theme.textSecondary}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
+                  keyboardType="phone-pad"
                   className="rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark text-text dark:text-text-dark px-three py-three text-base font-medium"
                 />
               </View>
@@ -435,14 +462,15 @@ export function MissionPartiesTab({
                   themeColor="textSecondary"
                   className="mb-one"
                 >
-                  Téléphone
+                  Email
                 </ThemedText>
                 <TextInput
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="+261 34 12 345 67"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="jean@email.com"
                   placeholderTextColor={theme.textSecondary}
-                  keyboardType="phone-pad"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
                   className="rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark text-text dark:text-text-dark px-three py-three text-base font-medium"
                 />
               </View>

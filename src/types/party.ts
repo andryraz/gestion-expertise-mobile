@@ -28,13 +28,13 @@ export const PARTY_ROLE_LABELS: Record<PartyRole, string> = {
 export type CreatePartyPayload = {
   fullName: string;
   role: PartyRole;
+  phone: string;
   email?: string;
-  phone?: string;
 };
 
 export type UpdatePartyPayload = {
   fullName?: string;
   role?: PartyRole;
+  phone?: string;
   email?: string | null;
-  phone?: string | null;
 };
