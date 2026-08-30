@@ -42,7 +42,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "L'application utilise votre position pour localiser automatiquement le bâtiment expertisé."
         }
-      ]
+      ],
+      "expo-mail-composer"
     ],
     "experiments": {
       "typedRoutes": true,

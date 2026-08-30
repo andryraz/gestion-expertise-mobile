@@ -171,15 +171,23 @@ export default function MissionDetailScreen() {
     const next = STATUS_ADVANCE[mission.status];
     if (!next || next === mission.status) return;
 
+    const currentStatus = mission.status;
+
     setIsSubmitting(true);
     try {
       const updated = await updateMissionStatus(id, next);
       setMission(updated);
       logger.info("Missions", "Statut avancé", {
         id,
-        from: mission.status,
+        from: currentStatus,
         to: next,
       });
+
+      if (currentStatus === "BROUILLON") {
+        setActiveTab("parties");
+      } else if (currentStatus === "PRISE_DE_CONTACT") {
+        setActiveTab("devis");
+      }
     } catch (err) {
       const message =
         err instanceof ApiError
