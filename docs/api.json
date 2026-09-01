@@ -1020,7 +1020,7 @@
     },
     "/missions/{missionId}/quotes": {
       "post": {
-        "description": "Crée un nouveau devis pour une mission. La version est automatiquement incrémentée en fonction des devis existants.",
+        "description": "Crée un nouveau devis (montant + document PDF/Word optionnel). La version est automatiquement incrémentée. Si un devis précédent était encore actif (BROUILLON ou ENVOYE), il passe automatiquement à REMPLACE — jamais deux devis actifs en même temps sur une même mission. Impossible si le dernier devis est déjà ACCEPTE.",
         "operationId": "QuotesController_create",
         "parameters": [
           {
@@ -1035,9 +1035,25 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreateQuoteDto"
+                "type": "object",
+                "required": ["amount"],
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
               }
             }
           }
@@ -1062,11 +1078,11 @@
             "bearer": []
           }
         ],
-        "summary": "Créer un devis pour une mission",
+        "summary": "Créer une nouvelle version de devis",
         "tags": ["Devis"]
       },
       "get": {
-        "description": "Retourne tous les devis d'une mission, triés par version (ordre croissant).",
+        "description": "Retourne tous les devis d'une mission, triés par version croissante (historique complet, y compris les versions REMPLACE).",
         "operationId": "QuotesController_findAllByMission",
         "parameters": [
           {
@@ -1107,7 +1123,7 @@
     },
     "/missions/{missionId}/quotes/latest": {
       "get": {
-        "description": "Retourne le devis le plus récent (version la plus élevée) d'une mission.",
+        "description": "Retourne le devis le plus récent (version la plus élevée).",
         "operationId": "QuotesController_findLatestByMission",
         "parameters": [
           {
@@ -1139,25 +1155,48 @@
             "bearer": []
           }
         ],
-        "summary": "Récupérer le dernier devis d'une mission",
+        "summary": "Récupérer le devis actif d'une mission",
         "tags": ["Devis"]
       }
     },
-    "/missions/{missionId}/quotes/{quoteId}/respond": {
-      "post": {
-        "description": "Permet de répondre à un devis (accepter / refuser / contre-proposition) ",
-        "operationId": "QuotesController_respond",
+    "/quotes/{id}/document": {
+      "get": {
+        "description": "Sert le fichier PDF/Word importé pour ce devis, utilisé notamment par l'app pour le télécharger localement avant de l'attacher à l'app mail native au moment de l'envoi.",
+        "operationId": "QuotesController_downloadDocument",
         "parameters": [
           {
-            "name": "missionId",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
               "type": "string"
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
           },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
           {
-            "name": "quoteId",
+            "bearer": []
+          }
+        ],
+        "summary": "Télécharger le document d'un devis",
+        "tags": ["Devis"]
+      }
+    },
+    "/quotes/{id}/mark-sent": {
+      "patch": {
+        "description": "À appeler après que l'expert a utilisé l'app mail native (Gmail...) pour transmettre le document. Purement déclaratif : le backend n'a aucun moyen de confirmer que l'email a réellement été envoyé.",
+        "operationId": "QuotesController_markAsSent",
+        "parameters": [
+          {
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
@@ -1166,18 +1205,18 @@
           }
         ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RespondQuoteDto"
+                "$ref": "#/components/schemas/MarkQuoteSentDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Réponse enregistrée",
+            "description": "Devis marqué comme envoyé",
             "content": {
               "application/json": {
                 "schema": {
@@ -1195,7 +1234,83 @@
             "bearer": []
           }
         ],
-        "summary": "Répondre à un devis",
+        "summary": "Marquer un devis comme envoyé",
+        "tags": ["Devis"]
+      }
+    },
+    "/quotes/{id}/accept": {
+      "patch": {
+        "description": "Marque le devis comme accepté par le client (négociation menée hors app, l'expert confirme ici le résultat). Déclenche automatiquement le passage de la mission au statut ACCEPTEE.",
+        "operationId": "QuotesController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devis accepté, mission mise à jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accepter un devis",
+        "tags": ["Devis"]
+      }
+    },
+    "/quotes/{id}/refuse": {
+      "patch": {
+        "description": "Marque le devis comme explicitement refusé par le client. Déclenche automatiquement le passage de la mission au statut REFUSEE.",
+        "operationId": "QuotesController_refuse",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devis refusé, mission mise à jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Refuser un devis",
         "tags": ["Devis"]
       }
     },
@@ -1247,7 +1362,7 @@
         "tags": ["Devis"]
       },
       "delete": {
-        "description": "Supprime un devis. Seuls les devis en statut BROUILLON peuvent être supprimés.",
+        "description": "Supprime un devis et son document associé. Seuls les devis en statut BROUILLON peuvent être supprimés.",
         "operationId": "QuotesController_remove",
         "parameters": [
           {
@@ -2571,7 +2686,7 @@
           }
         }
       },
-      "InitialBuildingDto": {
+      "CreateBuildingDto": {
         "type": "object",
         "properties": {
           "name": {
@@ -2594,7 +2709,8 @@
             "type": "number",
             "example": 47.5361
           }
-        }
+        },
+        "required": ["name"]
       },
       "CreateMissionDto": {
         "type": "object",
@@ -2615,30 +2731,20 @@
             ],
             "example": "PATHOLOGIE"
           },
+          "initialBuilding": {
+            "description": "Premier bâtiment de la mission, créé en même temps si fourni. Optionnel : une mission peut être créée en BROUILLON sans bâtiment connu pour l'instant.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateBuildingDto"
+              }
+            ]
+          },
           "legalContext": {
             "type": "string",
             "example": "Mission ordonnée par le tribunal de commerce"
-          },
-          "initialBuilding": {
-            "$ref": "#/components/schemas/InitialBuildingDto"
           }
         },
         "required": ["title", "missionType"]
-      },
-      "ExpertBriefDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "name", "email"]
       },
       "BuildingResponseDto": {
         "type": "object",
@@ -2681,6 +2787,21 @@
         },
         "required": ["id", "missionId", "name", "createdAt", "updatedAt"]
       },
+      "ExpertBriefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "email"]
+      },
       "MissionResponseDto": {
         "type": "object",
         "properties": {
@@ -2704,6 +2825,13 @@
             "type": "string",
             "example": "BROUILLON"
           },
+          "buildings": {
+            "description": "Bâtiments de la mission (un ou plusieurs).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildingResponseDto"
+            }
+          },
           "legalContext": {
             "type": "object",
             "example": "Mission ordonnée par le tribunal de commerce"
@@ -2713,12 +2841,6 @@
           },
           "expert": {
             "$ref": "#/components/schemas/ExpertBriefDto"
-          },
-          "buildings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BuildingResponseDto"
-            }
           },
           "archivedAt": {
             "type": "object"
@@ -2741,9 +2863,9 @@
           "title",
           "missionType",
           "status",
+          "buildings",
           "expertId",
           "expert",
-          "buildings",
           "createdAt",
           "updatedAt"
         ]
@@ -3139,52 +3261,6 @@
         },
         "required": ["scheduledAt"]
       },
-      "CreateQuoteDto": {
-        "type": "object",
-        "properties": {
-          "amount": {
-            "type": "number",
-            "description": "Montant du devis",
-            "example": 1500000
-          },
-          "currency": {
-            "type": "string",
-            "description": "Devise (défaut: MGA)",
-            "example": "MGA",
-            "default": "MGA"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description / objet du devis",
-            "example": "Devis pour expertise de fissuration du bâtiment"
-          },
-          "proposedBy": {
-            "type": "string",
-            "description": "Proposé par (EXPERT ou CLIENT)",
-            "enum": ["EXPERT", "CLIENT"],
-            "example": "EXPERT"
-          },
-          "status": {
-            "type": "string",
-            "description": "Statut du devis (défaut: BROUILLON)",
-            "enum": [
-              "BROUILLON",
-              "ENVOYE",
-              "CONTRE_PROPOSITION",
-              "ACCEPTE",
-              "REFUSE",
-              "EXPIRE"
-            ],
-            "default": "BROUILLON"
-          },
-          "validUntil": {
-            "type": "string",
-            "description": "Date de validité du devis",
-            "example": "2026-09-30T00:00:00.000Z"
-          }
-        },
-        "required": ["amount", "proposedBy"]
-      },
       "QuoteResponseDto": {
         "type": "object",
         "properties": {
@@ -3211,39 +3287,36 @@
             "type": "object",
             "example": "Devis pour expertise de fissuration"
           },
-          "proposedBy": {
-            "type": "string",
-            "enum": ["EXPERT", "CLIENT"],
-            "example": "EXPERT"
+          "documentPath": {
+            "type": "object",
+            "example": "/uploads/quotes/f47ac10b.pdf"
+          },
+          "documentFileName": {
+            "type": "object",
+            "example": "Devis_v1.pdf"
+          },
+          "documentMimeType": {
+            "type": "object",
+            "example": "application/pdf"
           },
           "status": {
             "type": "string",
-            "enum": [
-              "BROUILLON",
-              "ENVOYE",
-              "CONTRE_PROPOSITION",
-              "ACCEPTE",
-              "REFUSE",
-              "EXPIRE"
-            ],
+            "enum": ["BROUILLON", "ENVOYE", "ACCEPTE", "REFUSE", "REMPLACE"],
             "example": "BROUILLON"
-          },
-          "validUntil": {
-            "type": "object",
-            "example": "2026-09-30T00:00:00.000Z"
-          },
-          "sentAt": {
-            "type": "object",
-            "example": "2026-08-01T10:00:00.000Z"
-          },
-          "respondedAt": {
-            "type": "object",
-            "example": "2026-08-15T14:30:00.000Z"
           },
           "createdAt": {
             "format": "date-time",
             "type": "string",
             "example": "2026-08-01T09:00:00.000Z"
+          },
+          "sentAt": {
+            "type": "object",
+            "example": "2026-08-01T10:00:00.000Z",
+            "description": "Renseigné quand l'expert confirme avoir envoyé le document via son app mail (pas une confirmation de livraison, un déclaratif)."
+          },
+          "acceptedAt": {
+            "type": "object",
+            "example": "2026-08-15T14:30:00.000Z"
           }
         },
         "required": [
@@ -3252,100 +3325,36 @@
           "version",
           "amount",
           "currency",
-          "proposedBy",
           "status",
           "createdAt"
         ]
       },
-      "RespondQuoteDto": {
+      "MarkQuoteSentDto": {
         "type": "object",
         "properties": {
-          "action": {
+          "recipientEmail": {
             "type": "string",
-            "description": "Action à effectuer",
-            "enum": ["ACCEPTE", "REFUSE", "CONTRE_PROPOSITION"],
-            "example": "ACCEPTE"
-          },
-          "amount": {
-            "type": "number",
-            "description": "Nouveau montant (uniquement pour CONTRE_PROPOSITION)",
-            "example": 1800000
-          },
-          "proposedBy": {
-            "type": "string",
-            "description": "Qui fait cette contre-proposition (obligatoire pour CONTRE_PROPOSITION). Sans ce champ, il serait impossible de savoir si c'est le client qui a renégocié ou l'expert qui a ajusté son offre — l'historique de négociation perdrait tout son sens.",
-            "enum": ["EXPERT", "CLIENT"],
-            "example": "CLIENT"
-          },
-          "description": {
-            "type": "string",
-            "description": "Nouvelle description (uniquement pour CONTRE_PROPOSITION)",
-            "example": "Contre-proposition : réduction suite au devis initial"
-          },
-          "validUntil": {
-            "type": "string",
-            "description": "Nouvelle date de validité (uniquement pour CONTRE_PROPOSITION)",
-            "example": "2026-10-15T00:00:00.000Z"
+            "description": "Email du destinataire, à titre purement informatif (pré-rempli dans l'app mail au moment du partage). Le backend n'envoie rien lui-même et ne peut pas confirmer la livraison.",
+            "example": "client@email.com"
           }
-        },
-        "required": ["action"]
+        }
       },
       "UpdateQuoteDto": {
         "type": "object",
         "properties": {
           "amount": {
             "type": "number",
-            "description": "Montant du devis",
-            "example": 1500000
+            "example": 500000
           },
           "currency": {
             "type": "string",
-            "description": "Devise",
             "example": "MGA"
           },
           "description": {
             "type": "string",
-            "description": "Description / objet du devis",
-            "example": "Devis pour expertise de fissuration du bâtiment"
-          },
-          "proposedBy": {
-            "type": "string",
-            "description": "Proposé par (EXPERT ou CLIENT)",
-            "enum": ["EXPERT", "CLIENT"],
-            "example": "EXPERT"
-          },
-          "validUntil": {
-            "type": "string",
-            "description": "Date de validité du devis",
-            "example": "2026-09-30T00:00:00.000Z"
+            "example": "Diagnostic complet façade + toiture"
           }
         }
-      },
-      "CreateBuildingDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "Bâtiment principal"
-          },
-          "address": {
-            "type": "string",
-            "example": "Lot IVK 45, Itaosy"
-          },
-          "buildingType": {
-            "type": "string",
-            "example": "Villa R+1"
-          },
-          "gpsLat": {
-            "type": "number",
-            "example": -18.9137
-          },
-          "gpsLng": {
-            "type": "number",
-            "example": 47.5361
-          }
-        },
-        "required": ["name"]
       },
       "UpdateBuildingDto": {
         "type": "object",

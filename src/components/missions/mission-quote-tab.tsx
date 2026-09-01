@@ -1,23 +1,27 @@
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
+import { AcceptedQuoteState } from "@/components/missions/quote-accepted";
+import { AwaitingQuoteState } from "@/components/missions/quote-awaiting";
+import { EmptyQuoteState } from "@/components/missions/quote-empty";
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
 import { getMissionQuotes } from "@/services/quote-services";
 import type { Mission } from "@/types/mission";
 import type { Quote } from "@/types/quote";
-import { EmptyQuoteState } from "@/components/missions/quote-empty";
-import { AwaitingQuoteState } from "@/components/missions/quote-awaiting";
-import { AcceptedQuoteState } from "@/components/missions/quote-accepted";
-import { RefusedQuoteState } from "@/components/missions/quote-refused";
 
 type MissionDevisTabProps = {
   mission: Mission;
   isArchived: boolean;
+  onMissionChanged?: () => void;
 };
 
-export function MissionDevisTab({ mission, isArchived }: MissionDevisTabProps) {
+export function MissionDevisTab({
+  mission,
+  isArchived,
+  onMissionChanged,
+}: MissionDevisTabProps) {
   const theme = useTheme();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,21 +56,9 @@ export function MissionDevisTab({ mission, isArchived }: MissionDevisTabProps) {
     };
   }, [loadQuotes]);
 
-  const handleQuoteCreated = (created: Quote) => {
-    setQuotes((prev) => [...prev, created]);
-  };
-
-  const handleQuoteUpdated = (updated: Quote) => {
-    setQuotes((prev) => {
-      const idx = prev.findIndex((q) => q.id === updated.id);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = updated;
-        return next;
-      }
-      return [...prev, updated];
-    });
-  };
+  const handleQuoteRefresh = useCallback(() => {
+    loadQuotes();
+  }, [loadQuotes]);
 
   if (isLoading) {
     return (
@@ -87,40 +79,43 @@ export function MissionDevisTab({ mission, isArchived }: MissionDevisTabProps) {
     );
   }
 
-  const sorted = [...quotes].sort((a, b) => b.version - a.version);
-  const latest = sorted[0];
+  const activeQuote = quotes.find(
+    (q) =>
+      q.status === "BROUILLON" ||
+      q.status === "ENVOYE" ||
+      q.status === "ACCEPTE",
+  );
+  const historyQuotes = quotes.filter(
+    (q) => q.status === "REMPLACE" || q.status === "REFUSE",
+  );
 
-  if (!latest) {
+  if (!activeQuote) {
     return (
       <EmptyQuoteState
         missionId={mission.id}
         isArchived={isArchived}
-        onQuoteCreated={handleQuoteCreated}
+        onQuoteCreated={handleQuoteRefresh}
       />
     );
   }
 
-  if (latest.status === "ACCEPTE") {
-    return <AcceptedQuoteState quotes={quotes} />;
-  }
-
-  if (latest.status === "REFUSE") {
+  if (activeQuote.status === "ACCEPTE") {
     return (
-      <RefusedQuoteState
-        quotes={quotes}
-        missionId={mission.id}
-        isArchived={isArchived}
-        onQuoteCreated={handleQuoteCreated}
+      <AcceptedQuoteState
+        activeQuote={activeQuote}
+        historyQuotes={historyQuotes}
       />
     );
   }
 
   return (
     <AwaitingQuoteState
-      quotes={quotes}
+      activeQuote={activeQuote}
+      historyQuotes={historyQuotes}
       missionId={mission.id}
       isArchived={isArchived}
-      onQuoteUpdated={handleQuoteUpdated}
+      onRefresh={handleQuoteRefresh}
+      onMissionChanged={onMissionChanged ?? (() => {})}
     />
   );
 }

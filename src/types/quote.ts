@@ -1,12 +1,9 @@
 export type QuoteStatus =
   | "BROUILLON"
   | "ENVOYE"
-  | "CONTRE_PROPOSITION"
   | "ACCEPTE"
   | "REFUSE"
-  | "EXPIRE";
-
-export type QuoteProposedBy = "EXPERT" | "CLIENT";
+  | "REMPLACE";
 
 export type Quote = {
   id: string;
@@ -15,27 +12,32 @@ export type Quote = {
   amount: number;
   currency: string;
   description?: string | null;
-  proposedBy: QuoteProposedBy;
+  documentPath?: string | null;
+  documentFileName?: string | null;
+  documentMimeType?: string | null;
   status: QuoteStatus;
-  validUntil?: string | null;
-  sentAt?: string | null;
-  respondedAt?: string | null;
   createdAt: string;
+  sentAt?: string | null;
+  acceptedAt?: string | null;
 };
 
 export type CreateQuotePayload = {
   amount: number;
   currency?: string;
   description?: string;
-  proposedBy: QuoteProposedBy;
-  status?: QuoteStatus;
+  document?: {
+    uri: string;
+    name: string;
+    mimeType: string;
+  };
 };
 
-export type RespondQuoteAction = "ACCEPTE" | "REFUSE" | "CONTRE_PROPOSITION";
-
-export type RespondQuotePayload = {
-  action: RespondQuoteAction;
+export type UpdateQuotePayload = {
   amount?: number;
+  currency?: string;
   description?: string;
-  proposedBy?: QuoteProposedBy;
+};
+
+export type MarkQuoteSentPayload = {
+  recipientEmail?: string;
 };

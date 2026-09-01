@@ -190,7 +190,6 @@ export default function AppointmentFormScreen() {
     };
   }, [isReschedule, appointmentId]);
 
-  // In reschedule mode, the type is inherited
   useEffect(() => {
     if (isReschedule && appointment) {
       setType(appointment.type);
@@ -200,7 +199,6 @@ export default function AppointmentFormScreen() {
   const isLocationRequired = type !== "APPEL";
 
   const handleSubmit = async () => {
-    // Validate future date
     if (!isDateInFuture(scheduledAt)) {
       Alert.alert(
         "Date invalide",
@@ -209,7 +207,6 @@ export default function AppointmentFormScreen() {
       return;
     }
 
-    // Validate location
     if (isLocationRequired && !location.trim()) {
       Alert.alert(
         "Erreur",

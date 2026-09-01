@@ -391,7 +391,11 @@ export default function MissionDetailScreen() {
                 )}
 
                 {activeTab === "devis" && (
-                  <MissionDevisTab mission={mission} isArchived={isArchived} />
+                  <MissionDevisTab
+                    mission={mission}
+                    isArchived={isArchived}
+                    onMissionChanged={loadMission}
+                  />
                 )}
               </ScrollView>
 

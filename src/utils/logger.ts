@@ -12,19 +12,17 @@ function timestamp() {
 }
 
 function log(level: LogLevel, scope: string, message: string, data?: unknown) {
-  if (!__DEV__ && level === "debug") return; // skip debug logs in production
+  if (!__DEV__ && level === "debug") return;
 
   const prefix = `[${timestamp()}] [${scope}]`;
 
   if (__DEV__) {
-    // %c works in the Metro / Chrome DevTools console
     console.log(
       `%c${prefix} ${message}`,
       `color: ${COLORS[level]}`,
       data ?? "",
     );
   } else {
-    // In production: no colors, and a remote service (Sentry, etc.) could be hooked here
     console.log(`${prefix} ${message}`, data ?? "");
   }
 }

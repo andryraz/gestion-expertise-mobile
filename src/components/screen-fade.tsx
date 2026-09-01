@@ -5,10 +5,6 @@ type ScreenFadeProps = PropsWithChildren<{
   className?: string;
 }>;
 
-/**
- * Wraps screen content with a gentle fade + slide-up entrance animation.
- * Complements the native stack transition with a softer content reveal.
- */
 export function ScreenFade({ children, className }: ScreenFadeProps) {
   return (
     <Animated.View

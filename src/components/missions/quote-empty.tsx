@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
 import { Alert, Pressable, TextInput, View } from "react-native";
 
@@ -7,27 +8,57 @@ import { ThemedText } from "@/components/themed-text";
 import { DEFAULT_CURRENCY } from "@/constants/quote-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
-import { createQuote } from "@/services/quote-services";
-import type { Quote, QuoteProposedBy, QuoteStatus } from "@/types/quote";
+import { createQuote, updateQuote } from "@/services/quote-services";
+import type { Quote } from "@/types/quote";
+import { logger } from "@/utils/logger";
 
-type EmptyQuoteStateProps = {
+function guessMimeTypeFromName(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "doc":
+      return "application/msword";
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "pdf":
+    default:
+      return "application/pdf";
+  }
+}
+
+type QuoteCreateFormProps = {
   missionId: string;
   isArchived: boolean;
   onQuoteCreated: (quote: Quote) => void;
+  editingQuote?: Quote | null;
+  onEditDone?: () => void;
 };
 
 export function EmptyQuoteState({
   missionId,
   isArchived,
   onQuoteCreated,
-}: EmptyQuoteStateProps) {
+  editingQuote,
+  onEditDone,
+}: QuoteCreateFormProps) {
   const theme = useTheme();
-  const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
-  const [description, setDescription] = useState("");
-  const [showDetails, setShowDetails] = useState(false);
+  const isEditing = !!editingQuote;
+
+  const [amount, setAmount] = useState(
+    editingQuote ? String(editingQuote.amount) : "",
+  );
+  const [currency, setCurrency] = useState(
+    editingQuote?.currency ?? DEFAULT_CURRENCY,
+  );
+  const [description, setDescription] = useState(
+    editingQuote?.description ?? "",
+  );
+  const [pickedFile, setPickedFile] = useState<{
+    uri: string;
+    name: string;
+    mimeType: string;
+  } | null>(null);
+  const [showDetails, setShowDetails] = useState(!!editingQuote?.description);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [proposedBy, setProposedBy] = useState<QuoteProposedBy>("EXPERT");
 
   if (isArchived) {
     return (
@@ -44,25 +75,74 @@ export function EmptyQuoteState({
     );
   }
 
-  const handleCreate = async (status: QuoteStatus) => {
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        setPickedFile({
+          uri: asset.uri,
+          name: asset.name,
+          mimeType: asset.mimeType ?? guessMimeTypeFromName(asset.name),
+        });
+      }
+    } catch (err) {
+      logger.error("QuoteCreate", "Échec sélection document", err);
+      const msg =
+        err instanceof Error && err.message
+          ? `Impossible de sélectionner le document (${err.message})`
+          : "Impossible de sélectionner le document";
+      Alert.alert("Erreur", msg);
+    }
+  };
+
+  const handleSubmit = async () => {
     const num = Number(amount.replace(/\s/g, "").replace(",", "."));
     if (!num || num <= 0) {
       Alert.alert("Erreur", "Veuillez saisir un montant valide");
       return;
     }
+
     setIsSubmitting(true);
     try {
-      const quote = await createQuote(missionId, {
-        amount: num,
-        currency,
-        ...(description.trim() ? { description: description.trim() } : {}),
-        proposedBy,
-        status,
-      });
-      onQuoteCreated(quote);
+      if (isEditing && editingQuote) {
+        const updated = await updateQuote(editingQuote.id, {
+          amount: num,
+          currency: currency.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+        onQuoteCreated(updated);
+        onEditDone?.();
+      } else {
+        const quote = await createQuote(missionId, {
+          amount: num,
+          currency: currency.trim() || undefined,
+          ...(description.trim() ? { description: description.trim() } : {}),
+          ...(pickedFile ? { document: pickedFile } : {}),
+        });
+        onQuoteCreated(quote);
+      }
     } catch (err) {
+      logger.error(
+        "QuoteCreate",
+        isEditing ? "Échec modification devis" : "Échec création devis",
+        err,
+      );
       const msg =
-        err instanceof ApiError ? err.message : "Impossible de créer le devis";
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error && err.message
+            ? err.message
+            : isEditing
+              ? "Impossible de modifier le devis"
+              : "Impossible de créer le devis";
       Alert.alert("Erreur", msg);
     } finally {
       setIsSubmitting(false);
@@ -71,44 +151,54 @@ export function EmptyQuoteState({
 
   return (
     <View className="gap-three">
-      <View>
+      {isEditing && (
         <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
-          Proposé par
+          Modifier le devis v{editingQuote.version}
         </ThemedText>
-        <View className="flex-row gap-two">
-          {(["EXPERT", "CLIENT"] as QuoteProposedBy[]).map((who) => {
-            const isActive = who === proposedBy;
-            return (
-              <Pressable
-                key={who}
-                onPress={() => setProposedBy(who)}
-                className={[
-                  "flex-1 flex-row items-center justify-center gap-two rounded-three border px-three py-two",
-                  isActive
-                    ? "border-accent bg-accent"
-                    : "border-border bg-background-element dark:border-border-dark dark:bg-background-element-dark",
-                ].join(" ")}
-              >
-                <Ionicons
-                  name={who === "EXPERT" ? "person" : "people"}
-                  size={14}
-                  color={isActive ? theme.background : theme.textSecondary}
-                />
-                <ThemedText
-                  type="smallBold"
-                  themeColor={isActive ? "background" : "textSecondary"}
-                >
-                  {who === "EXPERT" ? "Expert" : "Client"}
+      )}
+
+      {!isEditing && (
+        <View>
+          <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
+            Document
+          </ThemedText>
+          <Pressable
+            onPress={handlePickDocument}
+            disabled={isSubmitting}
+            className="flex-row items-center gap-two rounded-three border border-border dark:border-border-dark bg-background dark:bg-background-dark px-three py-three"
+          >
+            <Ionicons
+              name={pickedFile ? "document" : "document-outline"}
+              color={pickedFile ? theme.accent : theme.textSecondary}
+              size={20}
+            />
+            <View className="flex-1">
+              {pickedFile ? (
+                <ThemedText type="smallBold" numberOfLines={1}>
+                  {pickedFile.name}
                 </ThemedText>
+              ) : (
+                <ThemedText type="small" themeColor="textSecondary">
+                  Importer un document (PDF, Word)
+                </ThemedText>
+              )}
+            </View>
+            {pickedFile && (
+              <Pressable onPress={() => setPickedFile(null)} hitSlop={8}>
+                <Ionicons
+                  name="close-circle"
+                  color={theme.textSecondary}
+                  size={18}
+                />
               </Pressable>
-            );
-          })}
+            )}
+          </Pressable>
         </View>
-      </View>
+      )}
 
       <View>
         <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
-          Montant à proposer
+          Montant
         </ThemedText>
         <View className="flex-row gap-two">
           <View className="flex-[3]">
@@ -147,7 +237,7 @@ export function EmptyQuoteState({
           size={14}
         />
         <ThemedText type="small" themeColor="textSecondary">
-          Ajouter un détail
+          {description ? "Modifier la description" : "Ajouter une description"}
         </ThemedText>
       </Pressable>
 
@@ -165,18 +255,24 @@ export function EmptyQuoteState({
         />
       )}
 
-      {!isSubmitting && (
-        <View className="gap-two">
+      <View className="flex-row gap-two">
+        {isEditing && onEditDone && (
+          <View className="flex-1">
+            <PrimaryButton label="Annuler" onPress={onEditDone} />
+          </View>
+        )}
+        <View
+          className={isEditing ? "flex-[2]" : undefined}
+          style={!isEditing ? { flex: 1 } : undefined}
+        >
           <PrimaryButton
-            label="Soumettre"
-            onPress={() => handleCreate("ENVOYE")}
-          />
-          <PrimaryButton
-            label="Accepté immédiatement"
-            onPress={() => handleCreate("ACCEPTE")}
+            label={isEditing ? "Enregistrer" : "Créer le devis"}
+            onPress={handleSubmit}
+            loading={isSubmitting}
+            loadingLabel={isEditing ? "Enregistrement..." : "Création..."}
           />
         </View>
-      )}
+      </View>
     </View>
   );
 }

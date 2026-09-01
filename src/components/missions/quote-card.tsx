@@ -9,29 +9,21 @@ import {
   QUOTE_STATUS_FG,
   QUOTE_STATUS_LABELS,
 } from "@/constants/quote-labels";
-import { useTheme } from "@/hooks/use-theme";
-import { formatQuoteDateTime } from "@/utils/format-quote-date";
 import type { Quote } from "@/types/quote";
 
 type QuoteCardProps = {
   quote: Quote;
-  isExpert: boolean;
+  onViewDocument?: (quote: Quote) => void;
 };
 
-export function QuoteCard({ quote, isExpert }: QuoteCardProps) {
-  const theme = useTheme();
-
+export function QuoteCard({ quote, onViewDocument }: QuoteCardProps) {
   return (
     <ThemedView
       type="backgroundElement"
       className="flex-row items-center gap-three rounded-three border border-border dark:border-border-dark px-three py-three"
     >
       <View className="h-10 w-10 items-center justify-center rounded-full bg-background-selected dark:bg-background-selected-dark">
-        <Ionicons
-          name={isExpert ? "person" : "people"}
-          color={theme.accent}
-          size={18}
-        />
+        <Ionicons name="document-text" color={undefined} size={18} />
       </View>
 
       <View className="flex-1">
@@ -40,32 +32,19 @@ export function QuoteCard({ quote, isExpert }: QuoteCardProps) {
             {formatAmount(quote.amount, quote.currency)}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            V{quote.version}
+            v{quote.version}
           </ThemedText>
         </View>
-        <View className="flex-row items-center gap-one mt-half">
-          <ThemedText type="small" themeColor="textSecondary">
-            {isExpert ? "Expert" : "Client"}
-          </ThemedText>
-          {quote.sentAt && (
-            <>
-              <ThemedText type="small" themeColor="textSecondary">·</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {formatQuoteDateTime(quote.sentAt)}
-              </ThemedText>
-            </>
-          )}
-        </View>
-        {quote.description ? (
+        {quote.documentFileName && (
           <ThemedText
             type="small"
             themeColor="textSecondary"
             numberOfLines={1}
             className="mt-half"
           >
-            {quote.description}
+            {quote.documentFileName}
           </ThemedText>
-        ) : null}
+        )}
       </View>
 
       <View
@@ -78,6 +57,14 @@ export function QuoteCard({ quote, isExpert }: QuoteCardProps) {
           {QUOTE_STATUS_LABELS[quote.status]}
         </ThemedText>
       </View>
+
+      {onViewDocument && quote.documentPath && (
+        <Ionicons
+          name="eye-outline"
+          size={16}
+          onPress={() => onViewDocument(quote)}
+        />
+      )}
     </ThemedView>
   );
 }
