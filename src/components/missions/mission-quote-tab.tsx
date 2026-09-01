@@ -10,6 +10,7 @@ import { ApiError } from "@/services/api-client";
 import { getMissionQuotes } from "@/services/quote-services";
 import type { Mission } from "@/types/mission";
 import type { Quote } from "@/types/quote";
+import { viewQuoteDocument } from "@/utils/view-quote-document";
 
 type MissionDevisTabProps = {
   mission: Mission;
@@ -104,6 +105,7 @@ export function MissionDevisTab({
       <AcceptedQuoteState
         activeQuote={activeQuote}
         historyQuotes={historyQuotes}
+        onViewDocument={viewQuoteDocument}
       />
     );
   }

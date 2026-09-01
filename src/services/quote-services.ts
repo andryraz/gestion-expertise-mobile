@@ -43,12 +43,6 @@ export async function createQuote(
   });
 }
 
-// Bug connu React Native 0.85 sur Android : fetch() + FormData contenant un
-// fichier lève systématiquement "Network request failed", même quand la
-// requête n'atteint jamais le serveur (https://github.com/facebook/react-native/issues/56404,
-// non corrigé à ce jour). On contourne le pont JS cassé en passant par
-// l'upload multipart NATIF d'expo-file-system, qui ne dépend pas de
-// fetch/FormData.
 async function createQuoteWithDocument(
   missionId: string,
   payload: CreateQuotePayload,
@@ -61,10 +55,6 @@ async function createQuoteWithDocument(
 
   logger.debug("API", `→ POST /missions/${missionId}/quotes (native upload)`);
 
-  // Upload direct depuis l'URI renvoyée par le picker (avec
-  // copyToCacheDirectory: true, c'est déjà un fichier local lisible — pas
-  // besoin de le copier nous-mêmes, ce qui posait des soucis de permission
-  // READ sur certains URI content:// Android).
   const file = new File(uri);
 
   let result: { status: number; body: string; headers: Record<string, string> };

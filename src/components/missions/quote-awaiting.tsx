@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { File, Paths } from "expo-file-system";
 import * as MailComposer from "expo-mail-composer";
-import * as Sharing from "expo-sharing";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 
@@ -29,6 +28,7 @@ import { getToken } from "@/services/token-storage";
 import type { Quote } from "@/types/quote";
 import { formatQuoteDateTime } from "@/utils/format-quote-date";
 import { logger } from "@/utils/logger";
+import { viewQuoteDocument } from "@/utils/view-quote-document";
 
 type AwaitingQuoteStateProps = {
   activeQuote: Quote;
@@ -224,49 +224,6 @@ export function AwaitingQuoteState({
     ]);
   };
 
-  /* ── View document ── */
-  const handleViewDocument = async (quote: Quote) => {
-    if (!quote.documentPath) return;
-    try {
-      const token = await getToken();
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const url = await getDocumentDownloadUrl(quote.id);
-      const destFile = new File(
-        Paths.cache,
-        quote.documentFileName ?? "devis.pdf",
-      );
-      const task = File.createDownloadTask(url, destFile, { headers });
-      const downloaded = await task.downloadAsync();
-      if (!downloaded) return;
-
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (!isAvailable) {
-        Alert.alert(
-          "Consultation indisponible",
-          "Aucune application capable d'ouvrir ce document n'est installée sur cet appareil.",
-        );
-        return;
-      }
-
-      await Sharing.shareAsync(downloaded.uri, {
-        mimeType: quote.documentMimeType ?? undefined,
-        dialogTitle: quote.documentFileName ?? `Devis v${quote.version}`,
-        UTI: quote.documentMimeType?.includes("pdf")
-          ? "com.adobe.pdf"
-          : undefined,
-      });
-    } catch (err) {
-      logger.error(
-        "QuoteView",
-        "Échec ouverture document",
-        err instanceof Error ? `${err.name}: ${err.message}` : err,
-      );
-      Alert.alert("Erreur", "Impossible d'ouvrir le document.");
-    }
-  };
-
   /* ── Create form (new version) ── */
   if (showCreateForm) {
     return (
@@ -281,7 +238,7 @@ export function AwaitingQuoteState({
         />
         <QuoteHistory
           quotes={historyQuotes}
-          onViewDocument={handleViewDocument}
+          onViewDocument={viewQuoteDocument}
         />
       </View>
     );
@@ -303,7 +260,7 @@ export function AwaitingQuoteState({
         />
         <QuoteHistory
           quotes={historyQuotes}
-          onViewDocument={handleViewDocument}
+          onViewDocument={viewQuoteDocument}
         />
       </View>
     );
@@ -352,31 +309,7 @@ export function AwaitingQuoteState({
           </ThemedText>
         </View>
 
-        {activeQuote.documentFileName && (
-          <Pressable
-            onPress={() => handleViewDocument(activeQuote)}
-            className="flex-row items-center gap-one mt-one justify-center"
-          >
-            <Ionicons
-              name="document-attach"
-              color={theme.textSecondary}
-              size={14}
-            />
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              numberOfLines={1}
-              className="underline"
-            >
-              {activeQuote.documentFileName}
-            </ThemedText>
-            <Ionicons
-              name="eye-outline"
-              color={theme.textSecondary}
-              size={14}
-            />
-          </Pressable>
-        )}
+
 
         <View className="items-center mt-two">
           <ThemedText type="small" themeColor="textSecondary">
@@ -405,11 +338,18 @@ export function AwaitingQuoteState({
               {isBrouillon && (
                 <>
                   {hasDocument && (
-                    <PrimaryButton
-                      label="Envoyer par email"
-                      icon="mail"
-                      onPress={handleSendEmail}
-                    />
+                    <>
+                      <PrimaryButton
+                        label="Consulter le document"
+                        icon="document-text"
+                        onPress={() => viewQuoteDocument(activeQuote)}
+                      />
+                      <PrimaryButton
+                        label="Envoyer par email"
+                        icon="mail"
+                        onPress={handleSendEmail}
+                      />
+                    </>
                   )}
                   <PrimaryButton
                     label="Modifier"
@@ -429,6 +369,13 @@ export function AwaitingQuoteState({
 
               {isEnvoye && (
                 <>
+                  {hasDocument && (
+                    <PrimaryButton
+                      label="Consulter le document"
+                      icon="document-text"
+                      onPress={() => viewQuoteDocument(activeQuote)}
+                    />
+                  )}
                   <PrimaryButton label="Accepter" onPress={handleAccept} />
                   <PrimaryButton label="Refuser" onPress={handleRefuse} />
                   <PrimaryButton
@@ -445,7 +392,7 @@ export function AwaitingQuoteState({
       {/* ── History ── */}
       <QuoteHistory
         quotes={historyQuotes}
-        onViewDocument={handleViewDocument}
+        onViewDocument={viewQuoteDocument}
       />
     </View>
   );

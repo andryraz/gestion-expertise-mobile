@@ -11,11 +11,13 @@ import type { Quote } from "@/types/quote";
 type AcceptedQuoteStateProps = {
   activeQuote: Quote;
   historyQuotes: Quote[];
+  onViewDocument?: (quote: Quote) => void;
 };
 
 export function AcceptedQuoteState({
   activeQuote,
   historyQuotes,
+  onViewDocument,
 }: AcceptedQuoteStateProps) {
   return (
     <View className="gap-three">
@@ -36,18 +38,34 @@ export function AcceptedQuoteState({
         >
           {formatAmount(activeQuote.amount, activeQuote.currency)}
         </ThemedText>
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          className="mt-one"
+        >
+          Créé le {formatQuoteDateTime(activeQuote.createdAt)}
+        </ThemedText>
+        {activeQuote.sentAt && (
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            className="mt-half"
+          >
+            Envoyé le {formatQuoteDateTime(activeQuote.sentAt)}
+          </ThemedText>
+        )}
         {activeQuote.acceptedAt && (
           <ThemedText
             type="small"
             themeColor="textSecondary"
-            className="mt-one"
+            className="mt-half"
           >
             Accepté le {formatQuoteDateTime(activeQuote.acceptedAt)}
           </ThemedText>
         )}
       </ThemedView>
 
-      <QuoteHistory quotes={historyQuotes} />
+      <QuoteHistory quotes={historyQuotes} onViewDocument={onViewDocument} />
     </View>
   );
 }

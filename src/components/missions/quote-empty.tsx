@@ -12,6 +12,25 @@ import { createQuote, updateQuote } from "@/services/quote-services";
 import type { Quote } from "@/types/quote";
 import { logger } from "@/utils/logger";
 
+/**
+ * Formate un montant saisi avec des séparateurs de milliers (espaces)
+ * pour faciliter la lecture. Ex: "1000000" → "1 000 000".
+ */
+function formatAmountInput(raw: string): string {
+  // Garder uniquement chiffres et un seul séparateur décimal
+  const cleaned = raw.replace(/[^\d.,]/g, "");
+  if (!cleaned) return "";
+
+  // Gérer le séparateur décimal (virgule ou point)
+  const decimalMatch = cleaned.match(/^(\d+)[.,](\d*)$/);
+  if (decimalMatch) {
+    const intPart = decimalMatch[1].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return `${intPart},${decimalMatch[2]}`;
+  }
+
+  return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
 function guessMimeTypeFromName(name: string): string {
   const ext = name.split(".").pop()?.toLowerCase();
   switch (ext) {
@@ -44,7 +63,7 @@ export function EmptyQuoteState({
   const isEditing = !!editingQuote;
 
   const [amount, setAmount] = useState(
-    editingQuote ? String(editingQuote.amount) : "",
+    editingQuote ? formatAmountInput(String(editingQuote.amount)) : "",
   );
   const [currency, setCurrency] = useState(
     editingQuote?.currency ?? DEFAULT_CURRENCY,
@@ -204,7 +223,7 @@ export function EmptyQuoteState({
           <View className="flex-[3]">
             <TextInput
               value={amount}
-              onChangeText={setAmount}
+              onChangeText={(text) => setAmount(formatAmountInput(text))}
               placeholder="0"
               keyboardType="decimal-pad"
               placeholderTextColor={theme.textSecondary}
