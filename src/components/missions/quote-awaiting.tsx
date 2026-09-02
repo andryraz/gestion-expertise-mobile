@@ -37,6 +37,7 @@ type AwaitingQuoteStateProps = {
   isArchived: boolean;
   onRefresh: () => void;
   onMissionChanged: () => void;
+  clientEmails?: string[];
 };
 
 export function AwaitingQuoteState({
@@ -46,6 +47,7 @@ export function AwaitingQuoteState({
   isArchived,
   onRefresh,
   onMissionChanged,
+  clientEmails,
 }: AwaitingQuoteStateProps) {
   const theme = useTheme();
   const [isWorking, setIsWorking] = useState(false);
@@ -99,6 +101,7 @@ export function AwaitingQuoteState({
       }
 
       await MailComposer.composeAsync({
+        recipients: clientEmails ?? [],
         subject: `Devis v${activeQuote.version} — ${formatAmount(activeQuote.amount, activeQuote.currency)}`,
         body: "",
         attachments: [uri],
@@ -114,7 +117,7 @@ export function AwaitingQuoteState({
             text: "Oui, envoyé",
             onPress: async () => {
               try {
-                await markQuoteSent(activeQuote.id);
+                await markQuoteSent(activeQuote.id, { recipientEmail: clientEmails?.[0] });
                 onRefresh();
               } catch (err) {
                 const msg =

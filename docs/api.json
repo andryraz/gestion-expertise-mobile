@@ -1316,7 +1316,7 @@
     },
     "/quotes/{id}": {
       "patch": {
-        "description": "Modifie un devis. Seuls les devis en statut BROUILLON peuvent être modifiés.",
+        "description": "Modifie un devis, y compris son document (le nouveau fichier remplace l'ancien, qui est supprimé du disque). Seuls les devis en statut BROUILLON peuvent être modifiés — au-delà, créez une nouvelle version.",
         "operationId": "QuotesController_update",
         "parameters": [
           {
@@ -1331,9 +1331,24 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateQuoteDto"
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
               }
             }
           }
@@ -3336,23 +3351,6 @@
             "type": "string",
             "description": "Email du destinataire, à titre purement informatif (pré-rempli dans l'app mail au moment du partage). Le backend n'envoie rien lui-même et ne peut pas confirmer la livraison.",
             "example": "client@email.com"
-          }
-        }
-      },
-      "UpdateQuoteDto": {
-        "type": "object",
-        "properties": {
-          "amount": {
-            "type": "number",
-            "example": 500000
-          },
-          "currency": {
-            "type": "string",
-            "example": "MGA"
-          },
-          "description": {
-            "type": "string",
-            "example": "Diagnostic complet façade + toiture"
           }
         }
       },

@@ -29,6 +29,7 @@ import {
   getAppointment,
   updateAppointment,
 } from "@/services/appointment-services";
+import { scheduleAppointmentReminder } from "@/services/notification-services";
 import { type Appointment, type AppointmentType } from "@/types/appointment";
 import { formatDateLong } from "@/utils/calendar-date";
 import { logger } from "@/utils/logger";
@@ -190,6 +191,7 @@ export default function AppointmentFormScreen() {
     };
   }, [isReschedule, appointmentId]);
 
+  // In reschedule mode, the type is inherited
   useEffect(() => {
     if (isReschedule && appointment) {
       setType(appointment.type);
@@ -199,6 +201,7 @@ export default function AppointmentFormScreen() {
   const isLocationRequired = type !== "APPEL";
 
   const handleSubmit = async () => {
+    // Validate future date
     if (!isDateInFuture(scheduledAt)) {
       Alert.alert(
         "Date invalide",
@@ -207,6 +210,7 @@ export default function AppointmentFormScreen() {
       return;
     }
 
+    // Validate location
     if (isLocationRequired && !location.trim()) {
       Alert.alert(
         "Erreur",
@@ -218,11 +222,12 @@ export default function AppointmentFormScreen() {
     setIsSubmitting(true);
     try {
       if (isReschedule && appointmentId) {
-        await updateAppointment(appointmentId, {
+        const updated = await updateAppointment(appointmentId, {
           scheduledAt: scheduledAt.toISOString(),
           location: location.trim() || undefined,
           notes: notes.trim() || undefined,
         });
+        await scheduleAppointmentReminder(updated);
         logger.info("RDV", "Rendez-vous reporté", { id: appointmentId });
         router.back();
       } else {
@@ -232,6 +237,7 @@ export default function AppointmentFormScreen() {
           location: isLocationRequired ? location.trim() : undefined,
           notes: notes.trim() || undefined,
         });
+        await scheduleAppointmentReminder(created);
         logger.info("RDV", "Rendez-vous créé", { id: created.id });
         router.back();
       }

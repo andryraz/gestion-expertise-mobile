@@ -27,6 +27,7 @@ import {
   getMissionAppointments,
   updateAppointment,
 } from "@/services/appointment-services";
+import { scheduleAppointmentReminder } from "@/services/notification-services";
 import { type Appointment, type AppointmentStatus } from "@/types/appointment";
 import { formatDate, formatTime } from "@/utils/calendar-date";
 import { logger } from "@/utils/logger";
@@ -158,6 +159,7 @@ function StatusEditModal({
       const updated = await updateAppointment(appointment.id, {
         status: newStatus,
       });
+      await scheduleAppointmentReminder(updated);
       onStatusUpdated(updated);
       logger.info("RDV", "Statut rendez-vous mis à jour", {
         id: appointment.id,

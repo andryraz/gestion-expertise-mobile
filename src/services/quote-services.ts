@@ -105,12 +105,78 @@ async function createQuoteWithDocument(
   return data as Quote;
 }
 
-export function updateQuote(quoteId: string, payload: UpdateQuotePayload) {
+export async function updateQuote(quoteId: string, payload: UpdateQuotePayload) {
+  if (payload.document) {
+    return updateQuoteWithDocument(quoteId, payload);
+  }
+
   return apiRequest<Quote>(`/quotes/${quoteId}`, {
     method: "PATCH",
     body: payload,
     auth: true,
   });
+}
+
+async function updateQuoteWithDocument(
+  quoteId: string,
+  payload: UpdateQuotePayload,
+): Promise<Quote> {
+  const { uri, mimeType } = payload.document!;
+
+  const token = await getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  logger.debug("API", `→ PATCH /quotes/${quoteId} (native upload)`);
+
+  const file = new File(uri);
+
+  let result: { status: number; body: string; headers: Record<string, string> };
+  try {
+    result = await file.upload(`${API_URL}/quotes/${quoteId}`, {
+      fieldName: "document",
+      httpMethod: "PATCH",
+      mimeType,
+      headers,
+      uploadType: UploadType.MULTIPART,
+      parameters: {
+        ...(payload.amount != null ? { amount: String(payload.amount) } : {}),
+        ...(payload.currency ? { currency: payload.currency } : {}),
+        ...(payload.description ? { description: payload.description } : {}),
+      },
+    });
+  } catch (err) {
+    logger.error(
+      "API",
+      `← Échec upload natif ${quoteId}`,
+      err instanceof Error ? `${err.name}: ${err.message}` : err,
+    );
+    throw new ApiError(
+      0,
+      "Impossible de joindre le serveur. Vérifie ta connexion.",
+    );
+  }
+
+  const data = result.body ? JSON.parse(result.body) : null;
+
+  if (result.status < 200 || result.status >= 300) {
+    const message = Array.isArray(data?.message)
+      ? data.message[0]
+      : data?.message;
+    logger.error(
+      "API",
+      `← ${result.status} PATCH /quotes/${quoteId} (native upload)`,
+      message,
+    );
+    throw new ApiError(result.status, message ?? "Une erreur est survenue");
+  }
+
+  logger.debug(
+    "API",
+    `← ${result.status} PATCH /quotes/${quoteId} (native upload)`,
+    "OK",
+  );
+  return data as Quote;
 }
 
 export function deleteQuote(quoteId: string) {

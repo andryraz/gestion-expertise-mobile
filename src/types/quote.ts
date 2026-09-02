@@ -36,6 +36,11 @@ export type UpdateQuotePayload = {
   amount?: number;
   currency?: string;
   description?: string;
+  document?: {
+    uri: string;
+    name: string;
+    mimeType: string;
+  };
 };
 
 export type MarkQuoteSentPayload = {

@@ -7,6 +7,7 @@ import { EmptyQuoteState } from "@/components/missions/quote-empty";
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
+import { getMissionParties } from "@/services/party-services";
 import { getMissionQuotes } from "@/services/quote-services";
 import type { Mission } from "@/types/mission";
 import type { Quote } from "@/types/quote";
@@ -25,6 +26,7 @@ export function MissionDevisTab({
 }: MissionDevisTabProps) {
   const theme = useTheme();
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [clientEmails, setClientEmails] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +42,25 @@ export function MissionDevisTab({
           : "Impossible de charger les devis";
       setError(msg);
     }
+  }, [mission.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const parties = await getMissionParties(mission.id);
+        if (cancelled) return;
+        const emails = parties
+          .filter((p) => p.role === "CLIENT" && p.email)
+          .map((p) => p.email as string);
+        setClientEmails(emails);
+      } catch {
+        // Silently ignore — client email is a nice-to-have
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [mission.id]);
 
   useEffect(() => {
@@ -108,16 +129,15 @@ export function MissionDevisTab({
         onViewDocument={viewQuoteDocument}
       />
     );
-  }
-
-  return (
-    <AwaitingQuoteState
-      activeQuote={activeQuote}
-      historyQuotes={historyQuotes}
-      missionId={mission.id}
-      isArchived={isArchived}
-      onRefresh={handleQuoteRefresh}
-      onMissionChanged={onMissionChanged ?? (() => {})}
-    />
-  );
+  }    return (
+      <AwaitingQuoteState
+        activeQuote={activeQuote}
+        historyQuotes={historyQuotes}
+        missionId={mission.id}
+        isArchived={isArchived}
+        onRefresh={handleQuoteRefresh}
+        onMissionChanged={onMissionChanged ?? (() => {})}
+        clientEmails={clientEmails}
+      />
+    );
 }

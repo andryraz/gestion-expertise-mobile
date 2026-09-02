@@ -12,6 +12,12 @@ import { useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { AuthProvider, useAuth } from "@/context/auth-context";
+import { getAppointments } from "@/services/appointment-services";
+import {
+  ensureNotificationSetup,
+  syncAppointmentReminders,
+} from "@/services/notification-services";
+import { logger } from "@/utils/logger";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +36,31 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
       router.replace("/(tabs)/dashboard" as any);
     }
   }, [user, isLoading, segments]);
+
+  // une fois par session, une fois l'utilisateur connecté.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const granted = await ensureNotificationSetup();
+      if (!granted || cancelled) return;
+      try {
+        const from = new Date().toISOString();
+        const to = new Date(
+          Date.now() + 60 * 24 * 60 * 60 * 1000,
+        ).toISOString();
+        const upcoming = await getAppointments(from, to);
+        if (!cancelled) await syncAppointmentReminders(upcoming);
+      } catch (err) {
+        logger.error("Notifications", "Échec resynchronisation des rappels", {
+          err: err instanceof Error ? err.message : err,
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   if (isLoading) return null;
 
