@@ -6,7 +6,7 @@ import {
   apiMultipartRequest,
   apiRequest,
 } from "@/services/api-client";
-import { getToken } from "@/services/token-storage";
+import { getToken } from "@/storage/token-storage";
 import type {
   CreateQuotePayload,
   MarkQuoteSentPayload,
@@ -105,7 +105,10 @@ async function createQuoteWithDocument(
   return data as Quote;
 }
 
-export async function updateQuote(quoteId: string, payload: UpdateQuotePayload) {
+export async function updateQuote(
+  quoteId: string,
+  payload: UpdateQuotePayload,
+) {
   if (payload.document) {
     return updateQuoteWithDocument(quoteId, payload);
   }

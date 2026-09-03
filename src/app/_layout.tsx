@@ -108,6 +108,21 @@ export default function RootLayout() {
                 animation: "slide_from_bottom",
               }}
             />
+            <Stack.Screen name="buildings/[buildingId]/zones" />
+            <Stack.Screen
+              name="zones/zone-form"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
+            />
+            <Stack.Screen
+              name="zones/zone-move"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
+            />
           </Stack>
         </RouteGuard>
       </ThemeProvider>

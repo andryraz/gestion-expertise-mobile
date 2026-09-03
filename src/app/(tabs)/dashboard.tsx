@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { LogoMark } from "@/components/auth";
 import {
   MissionsTable,
   PendingQuoteRow,
@@ -16,6 +15,7 @@ import {
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { STATUS_LABELS } from "@/constants/mission-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";

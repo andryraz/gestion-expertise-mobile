@@ -8,15 +8,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import {
-  AuthFooter,
-  FormField,
-  LogoMark,
-  PrimaryButton,
-} from "@/components/auth";
+import { AuthFooter } from "@/components/auth";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { FormField } from "@/components/ui/form-field";
+import { LogoMark } from "@/components/ui/logo-mark";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { useAuth } from "@/context/auth-context";
 import { ApiError } from "@/services/api-client";
 
@@ -49,10 +47,7 @@ export default function LoginScreen() {
     <ThemedView className="flex-1">
       <SafeAreaView className="flex-1">
         <ScreenFade>
-          <KeyboardAvoidingView
-            className="flex-1"
-            behavior="padding"
-          >
+          <KeyboardAvoidingView className="flex-1" behavior="padding">
             <ScrollView
               contentContainerClassName="grow justify-center self-center w-full max-w-content px-four pb-six"
               keyboardShouldPersistTaps="handled"

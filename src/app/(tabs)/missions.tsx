@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FlatList, Pressable, RefreshControl, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { LogoMark } from "@/components/auth";
 import { EmptyState } from "@/components/dashboard";
 import {
   MissionCard,
@@ -15,6 +14,7 @@ import {
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";

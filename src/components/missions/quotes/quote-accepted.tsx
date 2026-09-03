@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { View } from "react-native";
 
-import { QuoteHistory } from "@/components/missions/quote-history";
+import { QuoteHistory } from "@/components/missions/quotes/quote-history";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { formatAmount } from "@/constants/quote-labels";
-import { formatQuoteDateTime } from "@/utils/format-quote-date";
 import type { Quote } from "@/types/quote";
+import { formatQuoteDateTime } from "@/utils/format-quote-date";
 
 type AcceptedQuoteStateProps = {
   activeQuote: Quote;
@@ -38,11 +38,7 @@ export function AcceptedQuoteState({
         >
           {formatAmount(activeQuote.amount, activeQuote.currency)}
         </ThemedText>
-        <ThemedText
-          type="small"
-          themeColor="textSecondary"
-          className="mt-one"
-        >
+        <ThemedText type="small" themeColor="textSecondary" className="mt-one">
           Créé le {formatQuoteDateTime(activeQuote.createdAt)}
         </ThemedText>
         {activeQuote.sentAt && (

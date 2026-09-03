@@ -2,9 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 
-import { FormField, PrimaryButton } from "@/components/auth";
 import { ThemedText } from "@/components/themed-text";
 import { ChipSelect } from "@/components/ui/chip-select";
+import { FormField } from "@/components/ui/form-field";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { MISSION_TYPE_LABELS } from "@/constants/mission-labels";
 import { useCurrentLocation } from "@/hooks/use-current-location";
 import { useTheme } from "@/hooks/use-theme";

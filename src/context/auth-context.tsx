@@ -1,20 +1,20 @@
 import {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
+    ReactNode,
+    createContext,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
 
 import { setUnauthorizedHandler } from "@/services/api-client";
 import {
-  User,
-  getProfileRequest,
-  loginRequest,
-  logoutRequest,
-  registerRequest,
+    User,
+    getProfileRequest,
+    loginRequest,
+    logoutRequest,
+    registerRequest,
 } from "@/services/auth-service";
-import { clearToken, getToken, saveToken } from "@/services/token-storage";
+import { clearToken, getToken, saveToken } from "@/storage/token-storage";
 import { logger, maskToken } from "@/utils/logger";
 
 type AuthContextValue = {

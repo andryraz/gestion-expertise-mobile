@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,12 +12,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { PrimaryButton } from "@/components/auth/primary-button";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ChipSelect } from "@/components/ui/chip-select";
 import { InlineCalendar } from "@/components/ui/inline-calendar";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import {
   APPOINTMENT_STATUS_LABELS,
   APPOINTMENT_TYPE_LABELS,
@@ -66,6 +66,9 @@ function TimePicker({
   onChange: (d: Date) => void;
   theme: any;
 }) {
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
   const [hourText, setHourText] = useState(
     String(value.getHours()).padStart(2, "0"),
   );
@@ -78,6 +81,21 @@ function TimePicker({
     setMinuteText(String(value.getMinutes()).padStart(2, "0"));
   }, [value.getHours(), value.getMinutes()]);
 
+  useEffect(() => {
+    const hour = parseInt(hourText, 10);
+    const minute = parseInt(minuteText, 10);
+    if (!isNaN(hour) && !isNaN(minute)) {
+      if (
+        hour !== valueRef.current.getHours() ||
+        minute !== valueRef.current.getMinutes()
+      ) {
+        const d = new Date(valueRef.current);
+        d.setHours(hour, minute);
+        onChange(d);
+      }
+    }
+  }, [hourText, minuteText]);
+
   const clamp = (text: string, max: number) => {
     const digits = text.replace(/\D/g, "");
     if (!digits) return "";
@@ -89,7 +107,7 @@ function TimePicker({
   const commitHour = () => {
     const num = parseInt(clamp(hourText, 23), 10);
     const safe = isNaN(num) ? 0 : num;
-    const d = new Date(value);
+    const d = new Date(valueRef.current);
     d.setHours(safe);
     onChange(d);
   };
@@ -97,7 +115,7 @@ function TimePicker({
   const commitMinute = () => {
     const num = parseInt(clamp(minuteText, 59), 10);
     const safe = isNaN(num) ? 0 : num;
-    const d = new Date(value);
+    const d = new Date(valueRef.current);
     d.setMinutes(safe);
     onChange(d);
   };

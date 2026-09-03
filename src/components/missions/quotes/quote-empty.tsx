@@ -3,8 +3,8 @@ import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
 import { Alert, Pressable, TextInput, View } from "react-native";
 
-import { PrimaryButton } from "@/components/auth/primary-button";
 import { ThemedText } from "@/components/themed-text";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { DEFAULT_CURRENCY } from "@/constants/quote-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
@@ -178,60 +178,68 @@ export function EmptyQuoteState({
       )}
 
       <View>
-          <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
-            Document
-          </ThemedText>
-          <Pressable
-            onPress={handlePickDocument}
-            disabled={isSubmitting}
-            className="flex-row items-center gap-two rounded-three border border-border dark:border-border-dark bg-background dark:bg-background-dark px-three py-three"
-          >
-            <Ionicons
-              name={pickedFile || (isEditing && editingQuote.documentFileName) ? "document" : "document-outline"}
-              color={pickedFile || (isEditing && editingQuote.documentFileName) ? theme.accent : theme.textSecondary}
-              size={20}
-            />
-            <View className="flex-1">
-              {pickedFile ? (
+        <ThemedText type="eyebrow" themeColor="accent" className="mb-one">
+          Document
+        </ThemedText>
+        <Pressable
+          onPress={handlePickDocument}
+          disabled={isSubmitting}
+          className="flex-row items-center gap-two rounded-three border border-border dark:border-border-dark bg-background dark:bg-background-dark px-three py-three"
+        >
+          <Ionicons
+            name={
+              pickedFile || (isEditing && editingQuote.documentFileName)
+                ? "document"
+                : "document-outline"
+            }
+            color={
+              pickedFile || (isEditing && editingQuote.documentFileName)
+                ? theme.accent
+                : theme.textSecondary
+            }
+            size={20}
+          />
+          <View className="flex-1">
+            {pickedFile ? (
+              <ThemedText type="smallBold" numberOfLines={1}>
+                {pickedFile.name}
+              </ThemedText>
+            ) : isEditing && editingQuote.documentFileName ? (
+              <View>
                 <ThemedText type="smallBold" numberOfLines={1}>
-                  {pickedFile.name}
+                  {editingQuote.documentFileName}
                 </ThemedText>
-              ) : isEditing && editingQuote.documentFileName ? (
-                <View>
-                  <ThemedText type="smallBold" numberOfLines={1}>
-                    {editingQuote.documentFileName}
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Document actuel — appuyez pour remplacer
-                  </ThemedText>
-                </View>
-              ) : (
                 <ThemedText type="small" themeColor="textSecondary">
-                  Importer un document (PDF, Word)
+                  Document actuel — appuyez pour remplacer
                 </ThemedText>
-              )}
-            </View>
-            {(pickedFile || (isEditing && editingQuote.documentFileName)) && (
-              <Pressable
-                onPress={() => {
-                  if (isEditing && !pickedFile && editingQuote.documentFileName) {
-                    // In edit mode with current file shown: open picker on press
-                    handlePickDocument();
-                  } else {
-                    setPickedFile(null);
-                  }
-                }}
-                hitSlop={8}
-              >
-                <Ionicons
-                  name="close-circle"
-                  color={theme.textSecondary}
-                  size={18}
-                />
-              </Pressable>
+              </View>
+            ) : (
+              <ThemedText type="small" themeColor="textSecondary">
+                Importer un document (PDF, Word)
+              </ThemedText>
             )}
-          </Pressable>
-        </View>
+          </View>
+          {(pickedFile || (isEditing && editingQuote.documentFileName)) && (
+            <Pressable
+              onPress={() => {
+                if (isEditing && !pickedFile && editingQuote.documentFileName) {
+                  // In edit mode with current file shown: open picker on press
+                  handlePickDocument();
+                } else {
+                  setPickedFile(null);
+                }
+              }}
+              hitSlop={8}
+            >
+              <Ionicons
+                name="close-circle"
+                color={theme.textSecondary}
+                size={18}
+              />
+            </Pressable>
+          )}
+        </Pressable>
+      </View>
 
       <View>
         <ThemedText type="eyebrow" themeColor="accent" className="mb-one">

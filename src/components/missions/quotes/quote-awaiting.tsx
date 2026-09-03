@@ -4,27 +4,27 @@ import * as MailComposer from "expo-mail-composer";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 
-import { PrimaryButton } from "@/components/auth/primary-button";
-import { EmptyQuoteState } from "@/components/missions/quote-empty";
-import { QuoteHistory } from "@/components/missions/quote-history";
+import { EmptyQuoteState } from "@/components/missions/quotes/quote-empty";
+import { QuoteHistory } from "@/components/missions/quotes/quote-history";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import {
-  formatAmount,
-  QUOTE_STATUS_BG,
-  QUOTE_STATUS_FG,
-  QUOTE_STATUS_LABELS,
+    formatAmount,
+    QUOTE_STATUS_BG,
+    QUOTE_STATUS_FG,
+    QUOTE_STATUS_LABELS,
 } from "@/constants/quote-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
 import {
-  acceptQuote,
-  deleteQuote,
-  getDocumentDownloadUrl,
-  markQuoteSent,
-  refuseQuote,
+    acceptQuote,
+    deleteQuote,
+    getDocumentDownloadUrl,
+    markQuoteSent,
+    refuseQuote,
 } from "@/services/quote-services";
-import { getToken } from "@/services/token-storage";
+import { getToken } from "@/storage/token-storage";
 import type { Quote } from "@/types/quote";
 import { formatQuoteDateTime } from "@/utils/format-quote-date";
 import { logger } from "@/utils/logger";
@@ -117,7 +117,9 @@ export function AwaitingQuoteState({
             text: "Oui, envoyé",
             onPress: async () => {
               try {
-                await markQuoteSent(activeQuote.id, { recipientEmail: clientEmails?.[0] });
+                await markQuoteSent(activeQuote.id, {
+                  recipientEmail: clientEmails?.[0],
+                });
                 onRefresh();
               } catch (err) {
                 const msg =
@@ -312,8 +314,6 @@ export function AwaitingQuoteState({
           </ThemedText>
         </View>
 
-
-
         <View className="items-center mt-two">
           <ThemedText type="small" themeColor="textSecondary">
             Créé le {formatQuoteDateTime(activeQuote.createdAt)}
@@ -393,10 +393,7 @@ export function AwaitingQuoteState({
       )}
 
       {/* ── History ── */}
-      <QuoteHistory
-        quotes={historyQuotes}
-        onViewDocument={viewQuoteDocument}
-      />
+      <QuoteHistory quotes={historyQuotes} onViewDocument={viewQuoteDocument} />
     </View>
   );
 }

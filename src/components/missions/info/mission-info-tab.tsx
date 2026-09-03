@@ -2,11 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 
-import { FormField } from "@/components/auth/form-field";
-import { PrimaryButton } from "@/components/auth/primary-button";
-import { MissionBuildingsSection } from "@/components/missions/mission-buildings-section";
+import { MissionBuildingsSection } from "@/components/missions/info/mission-buildings-section";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { FormField } from "@/components/ui/form-field";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { useTheme } from "@/hooks/use-theme";
 import type { Building } from "@/types/building";
 import type { Mission, UpdateMissionPayload } from "@/types/mission";

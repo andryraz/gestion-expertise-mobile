@@ -1,5 +1,5 @@
 import { API_URL } from "@/constants/api";
-import { getToken } from "@/services/token-storage";
+import { getToken } from "@/storage/token-storage";
 import { logger } from "@/utils/logger";
 
 export class ApiError extends Error {

@@ -11,18 +11,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { PrimaryButton } from "@/components/auth/primary-button";
 import {
-  MissionDevisTab,
+  MissionAppointmentTab,
   MissionInfoTab,
   MissionPartiesTab,
-  MissionRdvTab,
+  MissionQuoteTab,
   SegmentedControl,
   StatusTimeline,
 } from "@/components/missions";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import {
   MISSION_TYPE_LABELS,
   STATUS_ACTION_LABEL,
@@ -384,14 +384,14 @@ export default function MissionDetailScreen() {
                 )}
 
                 {activeTab === "rdv" && (
-                  <MissionRdvTab
+                  <MissionAppointmentTab
                     missionId={mission.id}
                     isArchived={isArchived}
                   />
                 )}
 
                 {activeTab === "devis" && (
-                  <MissionDevisTab
+                  <MissionQuoteTab
                     mission={mission}
                     isArchived={isArchived}
                     onMissionChanged={loadMission}

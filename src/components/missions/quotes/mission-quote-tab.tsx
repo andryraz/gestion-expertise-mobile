@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
-import { AcceptedQuoteState } from "@/components/missions/quote-accepted";
-import { AwaitingQuoteState } from "@/components/missions/quote-awaiting";
-import { EmptyQuoteState } from "@/components/missions/quote-empty";
+import { AcceptedQuoteState } from "@/components/missions/quotes/quote-accepted";
+import { AwaitingQuoteState } from "@/components/missions/quotes/quote-awaiting";
+import { EmptyQuoteState } from "@/components/missions/quotes/quote-empty";
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
@@ -13,17 +13,17 @@ import type { Mission } from "@/types/mission";
 import type { Quote } from "@/types/quote";
 import { viewQuoteDocument } from "@/utils/view-quote-document";
 
-type MissionDevisTabProps = {
+type MissionQuoteTabProps = {
   mission: Mission;
   isArchived: boolean;
   onMissionChanged?: () => void;
 };
 
-export function MissionDevisTab({
+export function MissionQuoteTab({
   mission,
   isArchived,
   onMissionChanged,
-}: MissionDevisTabProps) {
+}: MissionQuoteTabProps) {
   const theme = useTheme();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [clientEmails, setClientEmails] = useState<string[]>([]);
@@ -54,9 +54,7 @@ export function MissionDevisTab({
           .filter((p) => p.role === "CLIENT" && p.email)
           .map((p) => p.email as string);
         setClientEmails(emails);
-      } catch {
-        // Silently ignore — client email is a nice-to-have
-      }
+      } catch {}
     })();
     return () => {
       cancelled = true;
@@ -129,15 +127,16 @@ export function MissionDevisTab({
         onViewDocument={viewQuoteDocument}
       />
     );
-  }    return (
-      <AwaitingQuoteState
-        activeQuote={activeQuote}
-        historyQuotes={historyQuotes}
-        missionId={mission.id}
-        isArchived={isArchived}
-        onRefresh={handleQuoteRefresh}
-        onMissionChanged={onMissionChanged ?? (() => {})}
-        clientEmails={clientEmails}
-      />
-    );
+  }
+  return (
+    <AwaitingQuoteState
+      activeQuote={activeQuote}
+      historyQuotes={historyQuotes}
+      missionId={mission.id}
+      isArchived={isArchived}
+      onRefresh={handleQuoteRefresh}
+      onMissionChanged={onMissionChanged ?? (() => {})}
+      clientEmails={clientEmails}
+    />
+  );
 }

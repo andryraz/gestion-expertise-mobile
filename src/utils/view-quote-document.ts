@@ -3,7 +3,7 @@ import * as Sharing from "expo-sharing";
 import { Alert } from "react-native";
 
 import { getDocumentDownloadUrl } from "@/services/quote-services";
-import { getToken } from "@/services/token-storage";
+import { getToken } from "@/storage/token-storage";
 import type { Quote } from "@/types/quote";
 import { logger } from "@/utils/logger";
 

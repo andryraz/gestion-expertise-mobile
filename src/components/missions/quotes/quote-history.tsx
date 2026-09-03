@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 
-import { QuoteCard } from "@/components/missions/quote-card";
+import { QuoteCard } from "@/components/missions/quotes/quote-card";
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
 import type { Quote } from "@/types/quote";
@@ -38,11 +38,7 @@ export function QuoteHistory({ quotes, onViewDocument }: QuoteHistoryProps) {
       {expanded && (
         <View className="mt-two gap-two">
           {quotes.map((q) => (
-            <QuoteCard
-              key={q.id}
-              quote={q}
-              onViewDocument={onViewDocument}
-            />
+            <QuoteCard key={q.id} quote={q} onViewDocument={onViewDocument} />
           ))}
         </View>
       )}

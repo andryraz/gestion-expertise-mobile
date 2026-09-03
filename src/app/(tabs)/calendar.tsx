@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { LogoMark } from "@/components/auth";
 import { AppointmentCard } from "@/components/calendar/appointment-card";
 import { MonthGrid } from "@/components/calendar/month-grid";
 import { EmptyState } from "@/components/dashboard";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
 import { getAppointments } from "@/services/appointment-services";
