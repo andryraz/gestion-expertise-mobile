@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -11,8 +11,8 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 import { ZONE_TYPE_ICONS } from "@/constants/zone-labels";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
-import { getBuildingZonesTree, updateZone } from "@/services/zone-services";
-import type { ZoneTreeNode } from "@/types/zone";
+import { updateZone } from "@/services/zone-services";
+import { useZonesStore } from "@/store/zones-store";
 import { logger } from "@/utils/logger";
 import {
   collectDescendantIds,
@@ -30,44 +30,45 @@ export default function MoveZoneScreen() {
   const { buildingId, zoneId, zoneName } = useLocalSearchParams<MoveParams>();
   const theme = useTheme();
 
-  const [tree, setTree] = useState<ZoneTreeNode[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentParent, setCurrentParent] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const tree = useZonesStore(
+    (state) => state.treesByBuilding[buildingId] ?? [],
+  );
+  const isLoading = useZonesStore(
+    (state) => state.loadingByBuilding[buildingId] ?? true,
+  );
+  const storeError = useZonesStore(
+    (state) => state.errorByBuilding[buildingId] ?? null,
+  );
+  const fetchTree = useZonesStore((state) => state.fetchTree);
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setIsLoading(true);
-      try {
-        const result = await getBuildingZonesTree(buildingId);
-        if (cancelled) return;
-        const node = findZoneNode(result, zoneId);
-        if (!node) {
-          setError("Zone introuvable dans ce bâtiment");
-          return;
-        }
-        setTree(result);
-        setCurrentParent(node.parentZoneId);
-        setSelected(node.parentZoneId);
-      } catch (err) {
-        if (!cancelled) {
-          const message =
-            err instanceof ApiError
-              ? err.message
-              : "Impossible de charger les zones";
-          setError(message);
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    fetchTree(buildingId);
+  }, [buildingId, fetchTree]);
+
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    initializedRef.current = false;
   }, [buildingId, zoneId]);
+
+  useEffect(() => {
+    if (isLoading || initializedRef.current) return;
+    initializedRef.current = true;
+
+    const node = findZoneNode(tree, zoneId);
+    if (!node) {
+      setError("Zone introuvable dans ce bâtiment");
+      return;
+    }
+    setCurrentParent(node.parentZoneId);
+    setSelected(node.parentZoneId);
+  }, [isLoading, tree, zoneId]);
+
+  const displayError = storeError ?? error;
 
   const disabledIds = useMemo(() => {
     const node = findZoneNode(tree, zoneId);
@@ -178,13 +179,13 @@ export default function MoveZoneScreen() {
             </ThemedText>
           )}
 
-          {error && !isLoading && (
+          {displayError && !isLoading && (
             <ThemedText themeColor="danger" className="px-four py-four">
-              {error}
+              {displayError}
             </ThemedText>
           )}
 
-          {!isLoading && !error && (
+          {!isLoading && !displayError && (
             <>
               <ThemedText
                 type="small"

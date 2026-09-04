@@ -1,10 +1,4 @@
-import {
-    ReactNode,
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-} from "react";
+import { create } from "zustand";
 
 import { setUnauthorizedHandler } from "@/services/api-client";
 import {
@@ -17,9 +11,10 @@ import {
 import { clearToken, getToken, saveToken } from "@/storage/token-storage";
 import { logger, maskToken } from "@/utils/logger";
 
-type AuthContextValue = {
+type AuthState = {
   user: User | null;
   isLoading: boolean;
+  init: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (
     name: string,
@@ -30,49 +25,42 @@ type AuthContextValue = {
   logout: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  isLoading: true,
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const token = await getToken();
-        if (!token) {
-          logger.debug("Auth", "No token on startup");
-          return;
-        }
-        const profile = await getProfileRequest();
-        setUser(profile);
-        logger.info("Auth", "Session restaurée", { userId: profile.id });
-      } catch (err) {
-        await clearToken();
-        logger.warn("Auth", "Session invalide au démarrage, jeton effacé", {
-          error: err instanceof Error ? err.message : err,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
+  init: async () => {
     setUnauthorizedHandler(() => {
       logger.info("Auth", "Déconnexion automatique (401)");
       clearToken();
-      setUser(null);
+      set({ user: null });
     });
-    return () => setUnauthorizedHandler(null);
-  }, []);
 
-  async function login(email: string, password: string) {
+    try {
+      const token = await getToken();
+      if (!token) {
+        logger.debug("Auth", "No token on startup");
+        return;
+      }
+      const profile = await getProfileRequest();
+      set({ user: profile });
+      logger.info("Auth", "Session restaurée", { userId: profile.id });
+    } catch (err) {
+      await clearToken();
+      logger.warn("Auth", "Session invalide au démarrage, jeton effacé", {
+        error: err instanceof Error ? err.message : err,
+      });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  login: async (email, password) => {
     logger.info("Auth", "Login attempt", { email });
     try {
       const { accessToken, user } = await loginRequest({ email, password });
       await saveToken(accessToken);
-      setUser(user);
+      set({ user });
       logger.info("Auth", "Login successful", {
         userId: user.id,
         token: maskToken(accessToken),
@@ -82,16 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         error: err instanceof Error ? err.message : err,
       });
-      throw err; // rethrow so the screen can display the error
+      throw err;
     }
-  }
+  },
 
-  async function register(
-    name: string,
-    email: string,
-    password: string,
-    phone?: string,
-  ) {
+  register: async (name, email, password, phone) => {
     logger.info("Auth", "Registration attempt", { email });
     try {
       const { accessToken, user } = await registerRequest({
@@ -101,36 +84,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         phone,
       });
       await saveToken(accessToken);
-      setUser(user);
+      set({ user });
       logger.info("Auth", "Registration successful", { userId: user.id });
     } catch (err) {
       logger.warn("Auth", "Registration failed", {
         email,
         error: err instanceof Error ? err.message : err,
       });
-      throw err; // rethrow so the screen can display the error
+      throw err;
     }
-  }
-  async function logout() {
+  },
+
+  logout: async () => {
+    const { user } = get();
     logger.info("Auth", "Logout", { userId: user?.id });
     try {
       await logoutRequest();
     } finally {
       await clearToken();
-      setUser(null);
+      set({ user: null });
       logger.info("Auth", "Logout complete");
     }
-  }
-
-  return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
-  return ctx;
-}
+  },
+}));

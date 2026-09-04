@@ -11,18 +11,18 @@ import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
-import { AuthProvider, useAuth } from "@/context/auth-context";
 import { getAppointments } from "@/services/appointment-services";
 import {
   ensureNotificationSetup,
   syncAppointmentReminders,
 } from "@/services/notification-services";
+import { useAuthStore } from "@/store/auth-store";
 import { logger } from "@/utils/logger";
 
 SplashScreen.preventAutoHideAsync();
 
 function RouteGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useAuthStore();
   const segments = useSegments();
 
   useEffect(() => {
@@ -69,63 +69,66 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    useAuthStore.getState().init();
+  }, []);
+
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <AnimatedSplashOverlay />
-        <RouteGuard>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: "slide_from_right",
-              animationDuration: 350,
-              gestureEnabled: true,
-              fullScreenGestureEnabled: true,
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <AnimatedSplashOverlay />
+      <RouteGuard>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+            animationDuration: 350,
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen
+            name="register"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+              gestureEnabled: false,
             }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen
-              name="register"
-              options={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
-                gestureEnabled: false,
-              }}
-            />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen
-              name="missions/new"
-              options={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
-              }}
-            />
-            <Stack.Screen name="missions/[id]" />
-            <Stack.Screen
-              name="missions/appointment-form"
-              options={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
-              }}
-            />
-            <Stack.Screen name="buildings/[buildingId]/zones" />
-            <Stack.Screen
-              name="zones/zone-form"
-              options={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
-              }}
-            />
-            <Stack.Screen
-              name="zones/zone-move"
-              options={{
-                presentation: "modal",
-                animation: "slide_from_bottom",
-              }}
-            />
-          </Stack>
-        </RouteGuard>
-      </ThemeProvider>
-    </AuthProvider>
+          />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="missions/new"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen name="missions/[id]" />
+          <Stack.Screen
+            name="missions/appointment-form"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen name="buildings/[buildingId]/zones" />
+          <Stack.Screen
+            name="zones/zone-form"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen
+            name="zones/zone-move"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+        </Stack>
+      </RouteGuard>
+    </ThemeProvider>
   );
 }

@@ -13,7 +13,8 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 import { useTheme } from "@/hooks/use-theme";
 import { ApiError } from "@/services/api-client";
 import { getBuilding } from "@/services/building-services";
-import { deleteZone, getBuildingZonesTree } from "@/services/zone-services";
+import { deleteZone } from "@/services/zone-services";
+import { EMPTY_ZONE_TREE, useZonesStore } from "@/store/zones-store";
 import type { Building } from "@/types/building";
 import type { ZoneTreeNode } from "@/types/zone";
 import { logger } from "@/utils/logger";
@@ -30,10 +31,18 @@ export default function ZonesTreeScreen() {
   const theme = useTheme();
 
   const [building, setBuilding] = useState<Building | null>(null);
-  const [tree, setTree] = useState<ZoneTreeNode[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [menuZone, setMenuZone] = useState<ZoneTreeNode | null>(null);
+
+  const tree = useZonesStore(
+    (state) => state.treesByBuilding[buildingId] ?? EMPTY_ZONE_TREE,
+  );
+  const isLoading = useZonesStore(
+    (state) => state.loadingByBuilding[buildingId] ?? true,
+  );
+  const error = useZonesStore(
+    (state) => state.errorByBuilding[buildingId] ?? null,
+  );
+  const fetchTree = useZonesStore((state) => state.fetchTree);
 
   const loadBuilding = useCallback(async () => {
     if (!buildingId) return;
@@ -48,30 +57,11 @@ export default function ZonesTreeScreen() {
     }
   }, [buildingId]);
 
-  const loadTree = useCallback(async () => {
-    if (!buildingId) return;
-    try {
-      const result = await getBuildingZonesTree(buildingId);
-      setTree(result);
-      setError(null);
-    } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : "Impossible de charger les zones";
-      setError(message);
-      logger.error("Zones", "Échec du chargement de l'arbre des zones", {
-        buildingId,
-        message,
-      });
-    }
-  }, [buildingId]);
-
   useFocusEffect(
     useCallback(() => {
       loadBuilding();
-      loadTree().finally(() => setIsLoading(false));
-    }, [loadBuilding, loadTree]),
+      fetchTree(buildingId);
+    }, [loadBuilding, fetchTree, buildingId]),
   );
 
   const handleAddRoot = () => {
@@ -152,7 +142,7 @@ export default function ZonesTreeScreen() {
                 id: zone.id,
                 subzones,
               });
-              loadTree();
+              fetchTree(buildingId);
             } catch (err) {
               const msg =
                 err instanceof ApiError
@@ -168,7 +158,7 @@ export default function ZonesTreeScreen() {
         },
       ]);
     },
-    [loadTree],
+    [buildingId, fetchTree],
   );
 
   return (

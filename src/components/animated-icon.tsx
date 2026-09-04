@@ -5,13 +5,13 @@ import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, { Easing, Keyframe } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { useAuth } from "@/context/auth-context";
+import { useAuthStore } from "@/store/auth-store";
 
 const INITIAL_SCALE_FACTOR = Dimensions.get("screen").height / 90;
 const DURATION = 600;
 
 export function AnimatedSplashOverlay() {
-  const { isLoading } = useAuth();
+  const { isLoading } = useAuthStore();
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
   const [laidOut, setLaidOut] = useState(false);

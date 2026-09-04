@@ -5,10 +5,10 @@ import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { useAuth } from "@/context/auth-context";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function SettingsScreen() {
-  const { logout, user } = useAuth();
+  const { logout, user } = useAuthStore();
 
   return (
     <ThemedView className="flex-1">

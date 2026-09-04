@@ -15,15 +15,15 @@ import { ThemedView } from "@/components/themed-view";
 import { FormField } from "@/components/ui/form-field";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { useAuth } from "@/context/auth-context";
 import { ApiError } from "@/services/api-client";
+import { useAuthStore } from "@/store/auth-store";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
