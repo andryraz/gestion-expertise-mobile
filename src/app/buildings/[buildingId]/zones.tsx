@@ -11,10 +11,9 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { useTheme } from "@/hooks/use-theme";
+import { useDeleteZone, useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
 import { getBuilding } from "@/services/building-services";
-import { deleteZone } from "@/services/zone-services";
-import { EMPTY_ZONE_TREE, useZonesStore } from "@/store/zones-store";
 import type { Building } from "@/types/building";
 import type { ZoneTreeNode } from "@/types/zone";
 import { logger } from "@/utils/logger";
@@ -33,16 +32,19 @@ export default function ZonesTreeScreen() {
   const [building, setBuilding] = useState<Building | null>(null);
   const [menuZone, setMenuZone] = useState<ZoneTreeNode | null>(null);
 
-  const tree = useZonesStore(
-    (state) => state.treesByBuilding[buildingId] ?? EMPTY_ZONE_TREE,
-  );
-  const isLoading = useZonesStore(
-    (state) => state.loadingByBuilding[buildingId] ?? true,
-  );
-  const error = useZonesStore(
-    (state) => state.errorByBuilding[buildingId] ?? null,
-  );
-  const fetchTree = useZonesStore((state) => state.fetchTree);
+  const {
+    data: tree = [],
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useZonesTree(buildingId);
+  const deleteZoneMutation = useDeleteZone(buildingId);
+
+  const error = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger les zones"
+    : null;
 
   const loadBuilding = useCallback(async () => {
     if (!buildingId) return;
@@ -57,11 +59,14 @@ export default function ZonesTreeScreen() {
     }
   }, [buildingId]);
 
+  // On garde le rafraîchissement systématique au focus (comportement
+  // d'origine) : React Query sert le cache instantanément si dispo, puis
+  // ce refetch() vérifie la fraîcheur en arrière-plan.
   useFocusEffect(
     useCallback(() => {
       loadBuilding();
-      fetchTree(buildingId);
-    }, [loadBuilding, fetchTree, buildingId]),
+      refetch();
+    }, [loadBuilding, refetch]),
   );
 
   const handleAddRoot = () => {
@@ -137,12 +142,11 @@ export default function ZonesTreeScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteZone(zone.id);
+              await deleteZoneMutation.mutateAsync(zone.id);
               logger.info("Zones", "Zone supprimée", {
                 id: zone.id,
                 subzones,
               });
-              fetchTree(buildingId);
             } catch (err) {
               const msg =
                 err instanceof ApiError
@@ -158,7 +162,7 @@ export default function ZonesTreeScreen() {
         },
       ]);
     },
-    [buildingId, fetchTree],
+    [deleteZoneMutation],
   );
 
   return (

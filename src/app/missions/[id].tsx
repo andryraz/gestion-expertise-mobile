@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -31,14 +31,16 @@ import {
   STATUS_TONE,
 } from "@/constants/mission-labels";
 import { useTheme } from "@/hooks/use-theme";
-import { ApiError } from "@/services/api-client";
+import { queryClient } from "@/lib/query-client";
 import {
-  archiveMission,
-  getMission,
-  unarchiveMission,
-  updateMission,
-  updateMissionStatus,
-} from "@/services/mission-services";
+  missionsKeys,
+  useMissionDetail,
+  useRefreshMissionAfterExternalChange,
+  useToggleMissionArchive,
+  useUpdateMission,
+  useUpdateMissionStatus,
+} from "@/queries/missions";
+import { ApiError } from "@/services/api-client";
 import { Mission, UpdateMissionPayload } from "@/types/mission";
 import { formatRelativeTime } from "@/utils/format-relative-time";
 import { logger } from "@/utils/logger";
@@ -68,47 +70,20 @@ export default function MissionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
 
-  const [mission, setMission] = useState<Mission | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("infos");
   const [showMenu, setShowMenu] = useState(false);
 
-  const requestId = useRef(0);
+  const { data: mission, isLoading, error: queryError } = useMissionDetail(id);
+  const loadError = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger la mission"
+    : null;
 
-  const loadMission = useCallback(async () => {
-    if (!id) return;
-    const req = ++requestId.current;
-    setLoadError(null);
-    try {
-      const result = await getMission(id);
-      if (req === requestId.current) setMission(result);
-    } catch (err) {
-      if (req !== requestId.current) return;
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : "Impossible de charger la mission";
-      setLoadError(message);
-      logger.error("Missions", "Échec du chargement de la mission", {
-        id,
-        message,
-      });
-    }
-  }, [id]);
-
-  useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      try {
-        await loadMission();
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [loadMission]);
+  const updateMissionMutation = useUpdateMission(id);
+  const updateStatusMutation = useUpdateMissionStatus(id);
+  const toggleArchiveMutation = useToggleMissionArchive(id);
+  const refreshAfterExternalChange = useRefreshMissionAfterExternalChange(id);
 
   const isArchived = !!mission?.archivedAt;
 
@@ -126,12 +101,8 @@ export default function MissionDetailScreen() {
           text: isArchived ? "Désarchiver" : "Archiver",
           style: isArchived ? "default" : "destructive",
           onPress: async () => {
-            setIsArchiving(true);
             try {
-              const updated = isArchived
-                ? await unarchiveMission(id)
-                : await archiveMission(id);
-              setMission(updated);
+              await toggleArchiveMutation.mutateAsync(isArchived);
               logger.info(
                 "Missions",
                 isArchived ? "Mission désarchivée" : "Mission archivée",
@@ -149,7 +120,6 @@ export default function MissionDetailScreen() {
                 message,
               });
             } finally {
-              setIsArchiving(false);
               setShowMenu(false);
             }
           },
@@ -173,10 +143,8 @@ export default function MissionDetailScreen() {
 
     const currentStatus = mission.status;
 
-    setIsSubmitting(true);
     try {
-      const updated = await updateMissionStatus(id, next);
-      setMission(updated);
+      await updateStatusMutation.mutateAsync(next);
       logger.info("Missions", "Statut avancé", {
         id,
         from: currentStatus,
@@ -198,21 +166,35 @@ export default function MissionDetailScreen() {
         id,
         message,
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleUpdateInfo = async (payload: UpdateMissionPayload) => {
     if (!id) return;
-    const updated = await updateMission(id, payload);
-    setMission(updated);
+    await updateMissionMutation.mutateAsync(payload);
     logger.info("Missions", "Informations mises à jour", { id });
   };
 
   const handleBuildingsChange = (buildings: Mission["buildings"]) => {
-    setMission((prev) => (prev ? { ...prev, buildings } : prev));
+    // Patch optimiste directement dans le cache React Query — remplace
+    // l'ancien setMission local. building-form-modal.tsx gère lui-même
+    // l'appel réseau (createBuilding/updateBuilding/deleteBuilding), donc
+    // on écrit juste le résultat déjà connu dans le cache.
+    queryClient.setQueryData<Mission>(missionsKeys.detail(id), (prev) =>
+      prev ? { ...prev, buildings } : prev,
+    );
   };
+
+  const handleMissionChangedFromQuoteTab = useCallback(() => {
+    // Un devis accepté/refusé peut faire évoluer le statut global de la
+    // mission (ex: DEVIS_ENVOYE -> ACCEPTEE) : on invalide la mission ET
+    // les listes (dashboard.tsx / missions.tsx) pour qu'elles se
+    // resynchronisent.
+    refreshAfterExternalChange();
+  }, [refreshAfterExternalChange]);
+
+  const isSubmitting =
+    updateStatusMutation.isPending || updateMissionMutation.isPending;
 
   return (
     <ThemedView className="flex-1">
@@ -276,7 +258,7 @@ export default function MissionDetailScreen() {
                     >
                       <Pressable
                         onPress={handleToggleArchive}
-                        disabled={isArchiving}
+                        disabled={toggleArchiveMutation.isPending}
                         className="flex-row items-center gap-two px-three py-two"
                       >
                         <Ionicons
@@ -394,7 +376,7 @@ export default function MissionDetailScreen() {
                   <MissionQuoteTab
                     mission={mission}
                     isArchived={isArchived}
-                    onMissionChanged={loadMission}
+                    onMissionChanged={handleMissionChangedFromQuoteTab}
                   />
                 )}
               </ScrollView>

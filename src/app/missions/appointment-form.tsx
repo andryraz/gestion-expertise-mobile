@@ -23,14 +23,13 @@ import {
   APPOINTMENT_TYPE_LABELS,
 } from "@/constants/appointment-labels";
 import { useTheme } from "@/hooks/use-theme";
-import { ApiError } from "@/services/api-client";
 import {
-  createAppointment,
-  getAppointment,
-  updateAppointment,
-} from "@/services/appointment-services";
-import { scheduleAppointmentReminder } from "@/services/notification-services";
-import { type Appointment, type AppointmentType } from "@/types/appointment";
+  useAppointment,
+  useCreateAppointment,
+  useUpdateAppointment,
+} from "@/queries/appointments";
+import { ApiError } from "@/services/api-client";
+import { type AppointmentType } from "@/types/appointment";
 import { formatDateLong } from "@/utils/calendar-date";
 import { logger } from "@/utils/logger";
 
@@ -166,10 +165,11 @@ export default function AppointmentFormScreen() {
 
   const isReschedule = mode === "reschedule";
 
-  const [appointment, setAppointment] = useState<Appointment | null>(null);
-  const [isLoadingAppointment, setIsLoadingAppointment] = useState(
-    isReschedule && !!appointmentId,
-  );
+  const {
+    data: appointment,
+    isLoading: isLoadingAppointment,
+    error: appointmentError,
+  } = useAppointment(isReschedule ? (appointmentId ?? "") : "");
 
   const [type, setType] = useState<AppointmentType>("APPEL");
   const [scheduledAt, setScheduledAt] = useState<Date>(() => {
@@ -180,38 +180,27 @@ export default function AppointmentFormScreen() {
   });
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCalendar, setShowCalendar] = useState(true);
 
-  useEffect(() => {
-    if (!isReschedule || !appointmentId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await getAppointment(appointmentId);
-        if (!cancelled) {
-          setAppointment(result);
-          setScheduledAt(new Date(result.scheduledAt));
-          setLocation(result.location ?? "");
-          setNotes(result.notes ?? "");
-        }
-      } catch (err) {
-        if (!cancelled) {
-          Alert.alert("Erreur", "Impossible de charger le rendez-vous");
-          router.back();
-        }
-      } finally {
-        if (!cancelled) setIsLoadingAppointment(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isReschedule, appointmentId]);
+  const createAppointmentMutation = useCreateAppointment(missionId!);
+  const updateAppointmentMutation = useUpdateAppointment();
+  const isSubmitting =
+    createAppointmentMutation.isPending || updateAppointmentMutation.isPending;
 
-  // In reschedule mode, the type is inherited
+  // Redirige si le RDV à reporter n'a pas pu être chargé.
+  useEffect(() => {
+    if (isReschedule && appointmentId && appointmentError) {
+      Alert.alert("Erreur", "Impossible de charger le rendez-vous");
+      router.back();
+    }
+  }, [isReschedule, appointmentId, appointmentError]);
+
+  // Pré-remplit le formulaire une fois le RDV existant chargé (mode report).
   useEffect(() => {
     if (isReschedule && appointment) {
+      setScheduledAt(new Date(appointment.scheduledAt));
+      setLocation(appointment.location ?? "");
+      setNotes(appointment.notes ?? "");
       setType(appointment.type);
     }
   }, [isReschedule, appointment]);
@@ -237,25 +226,25 @@ export default function AppointmentFormScreen() {
       return;
     }
 
-    setIsSubmitting(true);
     try {
       if (isReschedule && appointmentId) {
-        const updated = await updateAppointment(appointmentId, {
-          scheduledAt: scheduledAt.toISOString(),
-          location: location.trim() || undefined,
-          notes: notes.trim() || undefined,
+        await updateAppointmentMutation.mutateAsync({
+          appointmentId,
+          payload: {
+            scheduledAt: scheduledAt.toISOString(),
+            location: location.trim() || undefined,
+            notes: notes.trim() || undefined,
+          },
         });
-        await scheduleAppointmentReminder(updated);
         logger.info("RDV", "Rendez-vous reporté", { id: appointmentId });
         router.back();
       } else {
-        const created = await createAppointment(missionId!, {
+        const created = await createAppointmentMutation.mutateAsync({
           type,
           scheduledAt: scheduledAt.toISOString(),
           location: isLocationRequired ? location.trim() : undefined,
           notes: notes.trim() || undefined,
         });
-        await scheduleAppointmentReminder(created);
         logger.info("RDV", "Rendez-vous créé", { id: created.id });
         router.back();
       }
@@ -270,8 +259,6 @@ export default function AppointmentFormScreen() {
       logger.error("RDV", `Échec de ${isReschedule ? "report" : "création"}`, {
         message,
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

@@ -1,3 +1,4 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import {
   DarkTheme,
   DefaultTheme,
@@ -11,6 +12,7 @@ import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { queryClient } from "@/lib/query-client";
 import { getAppointments } from "@/services/appointment-services";
 import {
   ensureNotificationSetup,
@@ -37,7 +39,6 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, segments]);
 
-  // une fois par session, une fois l'utilisateur connecté.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -75,60 +76,62 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <RouteGuard>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: "slide_from_right",
-            animationDuration: 350,
-            gestureEnabled: true,
-            fullScreenGestureEnabled: true,
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen
-            name="register"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-              gestureEnabled: false,
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <AnimatedSplashOverlay />
+        <RouteGuard>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: "slide_from_right",
+              animationDuration: 350,
+              gestureEnabled: true,
+              fullScreenGestureEnabled: true,
             }}
-          />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="missions/new"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <Stack.Screen name="missions/[id]" />
-          <Stack.Screen
-            name="missions/appointment-form"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <Stack.Screen name="buildings/[buildingId]/zones" />
-          <Stack.Screen
-            name="zones/zone-form"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-          <Stack.Screen
-            name="zones/zone-move"
-            options={{
-              presentation: "modal",
-              animation: "slide_from_bottom",
-            }}
-          />
-        </Stack>
-      </RouteGuard>
-    </ThemeProvider>
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen
+              name="register"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+                gestureEnabled: false,
+              }}
+            />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="missions/new"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
+            />
+            <Stack.Screen name="missions/[id]" />
+            <Stack.Screen
+              name="missions/appointment-form"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
+            />
+            <Stack.Screen name="buildings/[buildingId]/zones" />
+            <Stack.Screen
+              name="zones/zone-form"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
+            />
+            <Stack.Screen
+              name="zones/zone-move"
+              options={{
+                presentation: "modal",
+                animation: "slide_from_bottom",
+              }}
+            />
+          </Stack>
+        </RouteGuard>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

@@ -1,16 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
 import { Alert, Pressable, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import {
-  APPOINTMENT_TYPE_LABELS,
-} from "@/constants/appointment-labels";
+import { APPOINTMENT_TYPE_LABELS } from "@/constants/appointment-labels";
 import { useTheme } from "@/hooks/use-theme";
+import { useUpdateAppointment } from "@/queries/appointments";
 import { ApiError } from "@/services/api-client";
-import { updateAppointment } from "@/services/appointment-services";
-import { scheduleAppointmentReminder } from "@/services/notification-services";
 import type { Appointment, AppointmentStatus } from "@/types/appointment";
 import { formatDate, formatTime } from "@/utils/calendar-date";
 import { logger } from "@/utils/logger";
@@ -39,16 +35,15 @@ export function StatusEditModal({
   onStatusUpdated,
 }: StatusEditModalProps) {
   const theme = useTheme();
-  const [isUpdating, setIsUpdating] = useState(false);
+  const updateAppointmentMutation = useUpdateAppointment();
 
   const handleUpdateStatus = async (newStatus: AppointmentStatus) => {
     if (!appointment) return;
-    setIsUpdating(true);
     try {
-      const updated = await updateAppointment(appointment.id, {
-        status: newStatus,
+      const updated = await updateAppointmentMutation.mutateAsync({
+        appointmentId: appointment.id,
+        payload: { status: newStatus },
       });
-      await scheduleAppointmentReminder(updated);
       onStatusUpdated(updated);
       logger.info("RDV", "Statut rendez-vous mis à jour", {
         id: appointment.id,
@@ -65,8 +60,6 @@ export function StatusEditModal({
         id: appointment.id,
         message,
       });
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -98,7 +91,9 @@ export function StatusEditModal({
             <Pressable
               key={s}
               onPress={() => handleUpdateStatus(s)}
-              disabled={isUpdating || s === appointment.status}
+              disabled={
+                updateAppointmentMutation.isPending || s === appointment.status
+              }
               className={`flex-row items-center gap-two rounded-two px-three py-two ${
                 s === appointment.status
                   ? "bg-background-selected dark:bg-background-selected-dark"

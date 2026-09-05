@@ -10,9 +10,8 @@ import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { ZONE_TYPE_ICONS } from "@/constants/zone-labels";
 import { useTheme } from "@/hooks/use-theme";
+import { useUpdateZone, useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
-import { updateZone } from "@/services/zone-services";
-import { useZonesStore } from "@/store/zones-store";
 import { logger } from "@/utils/logger";
 import {
   collectDescendantIds,
@@ -30,26 +29,32 @@ export default function MoveZoneScreen() {
   const { buildingId, zoneId, zoneName } = useLocalSearchParams<MoveParams>();
   const theme = useTheme();
 
-  const [error, setError] = useState<string | null>(null);
+  const [notFoundError, setNotFoundError] = useState<string | null>(null);
   const [currentParent, setCurrentParent] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const tree = useZonesStore(
-    (state) => state.treesByBuilding[buildingId] ?? [],
-  );
-  const isLoading = useZonesStore(
-    (state) => state.loadingByBuilding[buildingId] ?? true,
-  );
-  const storeError = useZonesStore(
-    (state) => state.errorByBuilding[buildingId] ?? null,
-  );
-  const fetchTree = useZonesStore((state) => state.fetchTree);
+  // Même clé de requête ["zones", buildingId] que zones.tsx : si l'écran
+  // précédent a déjà chargé l'arbre, il est disponible ici immédiatement
+  // (React Query partage le cache), pendant qu'un refetch de fraîcheur
+  // tourne en arrière-plan.
+  const {
+    data: tree = [],
+    isLoading,
+    error: queryError,
+  } = useZonesTree(buildingId);
+  const updateZoneMutation = useUpdateZone(buildingId);
 
-  useEffect(() => {
-    fetchTree(buildingId);
-  }, [buildingId, fetchTree]);
+  const storeError = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger les zones"
+    : null;
 
+  // Dérive la sélection initiale (parent actuel de la zone) une seule fois,
+  // dès que le premier chargement est terminé. `initializedRef` évite que
+  // ce calcul se refasse si `tree` change ensuite pour une autre raison
+  // (ex: refetch de fraîcheur) et écrase la sélection en cours de
+  // l'utilisateur.
   const initializedRef = useRef(false);
   useEffect(() => {
     initializedRef.current = false;
@@ -61,14 +66,14 @@ export default function MoveZoneScreen() {
 
     const node = findZoneNode(tree, zoneId);
     if (!node) {
-      setError("Zone introuvable dans ce bâtiment");
+      setNotFoundError("Zone introuvable dans ce bâtiment");
       return;
     }
     setCurrentParent(node.parentZoneId);
     setSelected(node.parentZoneId);
   }, [isLoading, tree, zoneId]);
 
-  const displayError = storeError ?? error;
+  const displayError = storeError ?? notFoundError;
 
   const disabledIds = useMemo(() => {
     const node = findZoneNode(tree, zoneId);
@@ -80,9 +85,11 @@ export default function MoveZoneScreen() {
 
   const handleConfirm = async () => {
     if (selected === currentParent) return;
-    setIsSubmitting(true);
     try {
-      await updateZone(zoneId, { parentZoneId: selected });
+      await updateZoneMutation.mutateAsync({
+        zoneId,
+        payload: { parentZoneId: selected },
+      });
       logger.info("Zones", "Zone déplacée", {
         id: zoneId,
         parentZoneId: selected,
@@ -98,8 +105,6 @@ export default function MoveZoneScreen() {
         id: zoneId,
         message,
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -226,8 +231,10 @@ export default function MoveZoneScreen() {
                 <PrimaryButton
                   label="Déplacer ici"
                   onPress={handleConfirm}
-                  disabled={isSubmitting || selected === currentParent}
-                  loading={isSubmitting}
+                  disabled={
+                    updateZoneMutation.isPending || selected === currentParent
+                  }
+                  loading={updateZoneMutation.isPending}
                   loadingLabel="Déplacement..."
                 />
               </View>

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,59 +18,48 @@ import { ThemedView } from "@/components/themed-view";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { STATUS_LABELS } from "@/constants/mission-labels";
 import { useTheme } from "@/hooks/use-theme";
+import { useDashboardMissions } from "@/queries/missions";
 import { ApiError } from "@/services/api-client";
-import { getMissions, getMissionsStats } from "@/services/mission-services";
-import { Mission, MissionsStats } from "@/types/mission";
 import { logger } from "@/utils/logger";
 
 export default function DashboardScreen() {
   const theme = useTheme();
-  const [stats, setStats] = useState<MissionsStats | null>(null);
-  const [missions, setMissions] = useState<Mission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadDashboard = useCallback(async () => {
-    setError(null);
-    try {
-      const [statsResult, missionsResult] = await Promise.all([
-        getMissionsStats(),
-        getMissions({
-          archived: false,
-          sortBy: "updatedAt",
-          sortOrder: "desc",
-          limit: 5,
-        }),
-      ]);
-      setStats(statsResult);
-      setMissions(missionsResult.data);
-      logger.info("Dashboard", "Load successful", { total: statsResult.total });
-    } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : "Impossible de charger le tableau de bord";
-      setError(message);
-      logger.error("Dashboard", "Load failed", message);
-    }
-  }, []);
+  const {
+    data,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useDashboardMissions();
 
-  useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      try {
-        await loadDashboard();
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [loadDashboard]);
+  // Même raison que dans missions.tsx : isolé de isRefetching pour ne pas
+  // faire réapparaître le spinner de pull-to-refresh lors d'une
+  // resynchronisation silencieuse déclenchée ailleurs.
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await loadDashboard();
-    setIsRefreshing(false);
+    setIsPullRefreshing(true);
+    await refetch();
+    setIsPullRefreshing(false);
   };
+
+  const stats = data?.stats ?? null;
+  const missions = data?.missions ?? [];
+  const error = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger le tableau de bord"
+    : null;
+
+  // React Query v5 n'a plus de callbacks onSuccess/onError sur useQuery :
+  // on journalise via un effet, déclenché à chaque changement de data/error.
+  useEffect(() => {
+    if (data) {
+      logger.info("Dashboard", "Load successful", { total: data.stats.total });
+    }
+  }, [data]);
+  useEffect(() => {
+    if (error) logger.error("Dashboard", "Load failed", error);
+  }, [error]);
 
   return (
     <ThemedView className="flex-1">
@@ -87,7 +76,7 @@ export default function DashboardScreen() {
             contentContainerClassName="gap-three self-center w-full max-w-content px-four pb-six"
             refreshControl={
               <RefreshControl
-                refreshing={isRefreshing}
+                refreshing={isPullRefreshing}
                 onRefresh={handleRefresh}
               />
             }

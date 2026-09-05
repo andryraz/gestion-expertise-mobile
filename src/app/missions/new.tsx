@@ -14,17 +14,16 @@ import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useTheme } from "@/hooks/use-theme";
+import { useCreateMission } from "@/queries/missions";
 import { ApiError } from "@/services/api-client";
-import { createMission } from "@/services/mission-services";
 import { logger } from "@/utils/logger";
 
 export default function NewMissionScreen() {
   const theme = useTheme();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const createMissionMutation = useCreateMission();
 
   const handleSubmit = async (values: MissionFormValues) => {
-    setIsSubmitting(true);
     setError(null);
     try {
       const hasBuildingInfo =
@@ -33,7 +32,7 @@ export default function NewMissionScreen() {
         values.buildingGpsLat !== undefined ||
         values.buildingGpsLng !== undefined;
 
-      const mission = await createMission({
+      const mission = await createMissionMutation.mutateAsync({
         title: values.title,
         missionType: values.missionType,
         legalContext: values.legalContext,
@@ -59,8 +58,6 @@ export default function NewMissionScreen() {
           : "Impossible de créer la mission";
       setError(message);
       logger.error("Missions", "Échec de la création", message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -93,7 +90,7 @@ export default function NewMissionScreen() {
             >
               <MissionForm
                 submitLabel="Créer la mission"
-                isSubmitting={isSubmitting}
+                isSubmitting={createMissionMutation.isPending}
                 error={error}
                 onSubmit={handleSubmit}
               />

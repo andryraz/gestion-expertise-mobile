@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 import { AcceptedQuoteState } from "@/components/missions/quotes/quote-accepted";
@@ -6,8 +6,8 @@ import { AwaitingQuoteState } from "@/components/missions/quotes/quote-awaiting"
 import { EmptyQuoteState } from "@/components/missions/quotes/quote-empty";
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
+import { useMissionParties } from "@/queries/parties";
 import { ApiError } from "@/services/api-client";
-import { getMissionParties } from "@/services/party-services";
 import { getMissionQuotes } from "@/services/quote-services";
 import type { Mission } from "@/types/mission";
 import type { Quote } from "@/types/quote";
@@ -26,7 +26,6 @@ export function MissionQuoteTab({
 }: MissionQuoteTabProps) {
   const theme = useTheme();
   const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [clientEmails, setClientEmails] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,22 +43,20 @@ export function MissionQuoteTab({
     }
   }, [mission.id]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const parties = await getMissionParties(mission.id);
-        if (cancelled) return;
-        const emails = parties
-          .filter((p) => p.role === "CLIENT" && p.email)
-          .map((p) => p.email as string);
-        setClientEmails(emails);
-      } catch {}
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [mission.id]);
+  // Même clé de requête ["parties", missionId] que mission-parties-tab.tsx :
+  // partage le cache au lieu de refaire un getMissionParties dédié à
+  // chaque fois que l'utilisateur ouvre l'onglet Devis. Si l'onglet
+  // Parties a déjà chargé la liste, elle est disponible ici
+  // immédiatement — et si un email client est modifié dans l'onglet
+  // Parties, il est à jour ici sans refetch.
+  const { data: parties = [] } = useMissionParties(mission.id);
+  const clientEmails = useMemo(
+    () =>
+      parties
+        .filter((p) => p.role === "CLIENT" && p.email)
+        .map((p) => p.email as string),
+    [parties],
+  );
 
   useEffect(() => {
     let cancelled = false;

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, Pressable, RefreshControl, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,12 +17,9 @@ import { ThemedView } from "@/components/themed-view";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useTheme } from "@/hooks/use-theme";
+import { useMissionsList } from "@/queries/missions";
 import { ApiError } from "@/services/api-client";
-import { getMissions } from "@/services/mission-services";
-import { Mission } from "@/types/mission";
 import { logger } from "@/utils/logger";
-
-const PAGE_SIZE = 20;
 
 export default function MissionsScreen() {
   const theme = useTheme();
@@ -31,78 +28,55 @@ export default function MissionsScreen() {
   const debouncedSearch = useDebouncedValue(searchInput, 400);
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("ALL");
 
-  const [missions, setMissions] = useState<Mission[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+    error: queryError,
+  } = useMissionsList({
+    search: debouncedSearch.trim(),
+    status: statusFilter,
+  });
 
-  const requestId = useRef(0);
-
-  const fetchMissions = useCallback(
-    async (targetPage: number, mode: "replace" | "append") => {
-      const currentRequest = ++requestId.current;
-      setError(null);
-
-      try {
-        const result = await getMissions({
-          search: debouncedSearch.trim() || undefined,
-          status: statusFilter === "ALL" ? undefined : statusFilter,
-          archived: false,
-          sortBy: "updatedAt",
-          sortOrder: "desc",
-          page: targetPage,
-          limit: PAGE_SIZE,
-        });
-
-        if (currentRequest !== requestId.current) return;
-
-        setMissions((prev) =>
-          mode === "append" ? [...prev, ...result.data] : result.data,
-        );
-        setPage(result.meta.page);
-        setTotalPages(result.meta.totalPages);
-        logger.info("Missions", "Chargement réussi", {
-          page: result.meta.page,
-          total: result.meta.total,
-        });
-      } catch (err) {
-        if (currentRequest !== requestId.current) return;
-        const message =
-          err instanceof ApiError
-            ? err.message
-            : "Impossible de charger les missions";
-        setError(message);
-        logger.error("Missions", "Échec du chargement", message);
-      }
-    },
-    [debouncedSearch, statusFilter],
-  );
-
-  useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      try {
-        await fetchMissions(1, "replace");
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [fetchMissions]);
-
+  // État dédié au pull-to-refresh manuel : `isRefetching` de React Query
+  // deviendrait vrai aussi pour les resynchronisations silencieuses
+  // déclenchées par une invalidation ailleurs (mission créée/modifiée sur
+  // un autre écran) — on ne veut PAS que le spinner de pull-to-refresh
+  // réapparaisse dans ce cas, seulement sur une action explicite.
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchMissions(1, "replace");
-    setIsRefreshing(false);
+    setIsPullRefreshing(true);
+    await refetch();
+    setIsPullRefreshing(false);
   };
 
-  const handleLoadMore = async () => {
-    if (isLoadingMore || isLoading || page >= totalPages) return;
-    setIsLoadingMore(true);
-    await fetchMissions(page + 1, "append");
-    setIsLoadingMore(false);
+  const missions = data?.pages.flatMap((page) => page.data) ?? [];
+  const error = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger les missions"
+    : null;
+
+  // React Query v5 n'a plus de callbacks onSuccess/onError : on journalise
+  // via un effet.
+  useEffect(() => {
+    const lastPage = data?.pages[data.pages.length - 1];
+    if (lastPage) {
+      logger.info("Missions", "Chargement réussi", {
+        page: lastPage.meta.page,
+        total: lastPage.meta.total,
+      });
+    }
+  }, [data]);
+  useEffect(() => {
+    if (error) logger.error("Missions", "Échec du chargement", error);
+  }, [error]);
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   };
 
   return (
@@ -146,7 +120,7 @@ export default function MissionsScreen() {
               </View>
             }
             ListFooterComponent={
-              isLoadingMore ? (
+              isFetchingNextPage ? (
                 <ThemedText
                   themeColor="textSecondary"
                   type="small"
@@ -180,7 +154,7 @@ export default function MissionsScreen() {
             }
             refreshControl={
               <RefreshControl
-                refreshing={isRefreshing}
+                refreshing={isPullRefreshing}
                 onRefresh={handleRefresh}
               />
             }

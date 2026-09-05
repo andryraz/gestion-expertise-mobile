@@ -22,8 +22,8 @@ import {
   ZONE_TYPES,
 } from "@/constants/zone-labels";
 import { useTheme } from "@/hooks/use-theme";
+import { useCreateZone, useUpdateZone } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
-import { createZone, updateZone } from "@/services/zone-services";
 import type { ZoneType } from "@/types/zone";
 import { logger } from "@/utils/logger";
 
@@ -47,23 +47,25 @@ export default function ZoneFormScreen() {
     if (isEdit) return (params.zoneType as ZoneType) ?? "PIECE";
     return params.parentZoneId ? "PIECE" : "ETAGE";
   });
-  const [isSaving, setIsSaving] = useState(false);
+
+  const createZoneMutation = useCreateZone(params.buildingId);
+  const updateZoneMutation = useUpdateZone(params.buildingId);
+  const isSaving = createZoneMutation.isPending || updateZoneMutation.isPending;
 
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert("Erreur", "Le nom de la zone est obligatoire");
       return;
     }
-    setIsSaving(true);
     try {
       if (isEdit && params.zoneId) {
-        await updateZone(params.zoneId, {
-          name: name.trim(),
-          zoneType,
+        await updateZoneMutation.mutateAsync({
+          zoneId: params.zoneId,
+          payload: { name: name.trim(), zoneType },
         });
         logger.info("Zones", "Zone modifiée", { id: params.zoneId });
       } else {
-        await createZone(params.buildingId, {
+        await createZoneMutation.mutateAsync({
           name: name.trim(),
           zoneType,
           parentZoneId: params.parentZoneId ?? null,
@@ -80,11 +82,13 @@ export default function ZoneFormScreen() {
           ? err.message
           : "Impossible d'enregistrer la zone";
       Alert.alert("Erreur", message);
-      logger.error("Zones", `Échec de ${isEdit ? "modification" : "création"}`, {
-        message,
-      });
-    } finally {
-      setIsSaving(false);
+      logger.error(
+        "Zones",
+        `Échec de ${isEdit ? "modification" : "création"}`,
+        {
+          message,
+        },
+      );
     }
   };
 

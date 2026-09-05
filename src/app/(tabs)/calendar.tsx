@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,9 +12,8 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { useTheme } from "@/hooks/use-theme";
+import { useAppointmentsRange } from "@/queries/appointments";
 import { ApiError } from "@/services/api-client";
-import { getAppointments } from "@/services/appointment-services";
-import { Appointment } from "@/types/appointment";
 import {
   addMonths,
   endOfMonth,
@@ -32,51 +31,48 @@ export default function CalendarScreen() {
     startOfMonth(new Date()),
   );
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadAppointments = useCallback(async () => {
-    setError(null);
-    try {
-      const from = startOfMonth(visibleMonth).toISOString();
-      const to = endOfMonth(visibleMonth).toISOString();
+  const from = startOfMonth(visibleMonth).toISOString();
+  const to = endOfMonth(visibleMonth).toISOString();
 
-      const result = await getAppointments(from, to);
+  const {
+    data: rawAppointments,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useAppointmentsRange(from, to);
 
-      const sorted = [...result].sort(
-        (a, b) =>
-          new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-      );
+  const appointments = [...(rawAppointments ?? [])].sort(
+    (a, b) =>
+      new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+  );
+  const error = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger le calendrier"
+    : null;
 
-      setAppointments(sorted);
-      logger.info("Calendar", "Chargement réussi", { count: sorted.length });
-    } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? err.message
-          : "Impossible de charger le calendrier";
-      setError(message);
-      logger.error("Calendar", "Échec du chargement", message);
-    }
-  }, [visibleMonth]);
-
+  // React Query v5 n'a plus de callbacks onSuccess/onError : on journalise
+  // via un effet.
   useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      try {
-        await loadAppointments();
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [loadAppointments]);
+    if (rawAppointments) {
+      logger.info("Calendar", "Chargement réussi", {
+        count: rawAppointments.length,
+      });
+    }
+  }, [rawAppointments]);
+  useEffect(() => {
+    if (error) logger.error("Calendar", "Échec du chargement", error);
+  }, [error]);
 
+  // État dédié au pull-to-refresh manuel — voir missions.tsx pour
+  // l'explication (isRefetching de React Query réagit aussi aux
+  // resynchronisations silencieuses déclenchées ailleurs).
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await loadAppointments();
-    setIsRefreshing(false);
+    setIsPullRefreshing(true);
+    await refetch();
+    setIsPullRefreshing(false);
   };
 
   const changeMonth = (delta: number) => {
@@ -151,7 +147,7 @@ export default function CalendarScreen() {
             contentContainerClassName="gap-three w-full max-w-content self-center px-four pb-six"
             refreshControl={
               <RefreshControl
-                refreshing={isRefreshing}
+                refreshing={isPullRefreshing}
                 onRefresh={handleRefresh}
               />
             }

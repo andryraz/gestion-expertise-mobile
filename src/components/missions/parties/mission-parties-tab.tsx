@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
+import { useMissionParties } from "@/queries/parties";
 import { ApiError } from "@/services/api-client";
-import { getMissionParties } from "@/services/party-services";
 import type { Party } from "@/types/party";
 
 import { PartyCard } from "./party-card";
@@ -23,41 +23,21 @@ export function MissionPartiesTab({
   isArchived,
 }: MissionPartiesTabProps) {
   const theme = useTheme();
-  const [parties, setParties] = useState<Party[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
   const [editingParty, setEditingParty] = useState<Party | null>(null);
 
-  const loadParties = useCallback(async () => {
-    setError(null);
-    try {
-      const result = await getMissionParties(missionId);
-      setParties(result);
-    } catch (err) {
-      const msg =
-        err instanceof ApiError
-          ? err.message
-          : "Impossible de charger les parties";
-      setError(msg);
-    }
-  }, [missionId]);
+  const {
+    data: parties = [],
+    isLoading,
+    error: queryError,
+  } = useMissionParties(missionId);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setIsLoading(true);
-      try {
-        await loadParties();
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadParties]);
+  const error = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger les parties"
+    : null;
 
   const openCreateModal = () => {
     setModalMode("create");
@@ -69,10 +49,6 @@ export function MissionPartiesTab({
     setModalMode("edit");
     setEditingParty(party);
     setModalVisible(true);
-  };
-
-  const handleSaved = (next: Party[]) => {
-    setParties(next);
   };
 
   if (isLoading) {
@@ -147,12 +123,10 @@ export function MissionPartiesTab({
         mode={modalMode}
         party={editingParty}
         missionId={missionId}
-        currentParties={parties}
         onClose={() => {
           setModalVisible(false);
           setEditingParty(null);
         }}
-        onSaved={handleSaved}
       />
     </>
   );

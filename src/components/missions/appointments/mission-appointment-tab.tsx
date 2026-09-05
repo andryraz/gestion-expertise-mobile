@@ -1,14 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
+import { useMissionAppointments } from "@/queries/appointments";
 import { ApiError } from "@/services/api-client";
-import { getMissionAppointments } from "@/services/appointment-services";
 import { type Appointment } from "@/types/appointment";
+import { logger } from "@/utils/logger";
 
 import { AppointmentRow } from "./appointment-row";
 import { StatusEditModal } from "./status-edit-modal";
@@ -23,60 +24,43 @@ export function MissionAppointmentTab({
   isArchived,
 }: MissionAppointmentTabProps) {
   const theme = useTheme();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
 
-  const loadAppointments = useCallback(async () => {
-    setError(null);
-    try {
-      const result = await getMissionAppointments(missionId);
-      const sorted = [...result].sort(
-        (a, b) =>
-          new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-      );
-      setAppointments(sorted);
-    } catch (err) {
-      const msg =
-        err instanceof ApiError
-          ? err.message
-          : "Impossible de charger les rendez-vous";
-      setError(msg);
-    }
-  }, [missionId]);
+  const {
+    data: rawAppointments,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useMissionAppointments(missionId);
+
+  const appointments = [...(rawAppointments ?? [])].sort(
+    (a, b) =>
+      new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+  );
+  const error = queryError
+    ? queryError instanceof ApiError
+      ? queryError.message
+      : "Impossible de charger les rendez-vous"
+    : null;
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setIsLoading(true);
-      try {
-        await loadAppointments();
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadAppointments]);
-
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      await loadAppointments();
-    } finally {
-      setIsRefreshing(false);
+    if (error) {
+      logger.error("RDV mission", "Échec du chargement", { missionId, error });
     }
-  }, [loadAppointments]);
+  }, [error, missionId]);
 
-  const handleStatusUpdated = (updated: Appointment) => {
-    setAppointments((prev) =>
-      prev.map((a) => (a.id === updated.id ? updated : a)),
-    );
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setIsPullRefreshing(true);
+    await refetch();
+    setIsPullRefreshing(false);
+  };
+
+  const handleStatusUpdated = (_updated: Appointment) => {
+    // La mutation de status-edit-modal.tsx invalide déjà ["appointments"],
+    // ce qui refetch automatiquement cette liste. Rien d'autre à faire ici.
   };
 
   if (isLoading) {
@@ -131,7 +115,10 @@ export function MissionAppointmentTab({
         contentContainerClassName="pb-4"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={isPullRefreshing}
+            onRefresh={handleRefresh}
+          />
         }
       >
         <View className="gap-two">

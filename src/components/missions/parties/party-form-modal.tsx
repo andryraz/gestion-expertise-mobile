@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,12 +14,12 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { useTheme } from "@/hooks/use-theme";
-import { ApiError } from "@/services/api-client";
 import {
-  createParty,
-  deleteParty,
-  updateParty,
-} from "@/services/party-services";
+  useCreateParty,
+  useDeleteParty,
+  useUpdateParty,
+} from "@/queries/parties";
+import { ApiError } from "@/services/api-client";
 import {
   PARTY_ROLE_LABELS,
   type CreatePartyPayload,
@@ -45,8 +45,6 @@ type PartyFormModalProps = {
   party: Party | null;
   missionId: string;
   onClose: () => void;
-  onSaved: (parties: Party[]) => void;
-  currentParties: Party[];
 };
 
 export function PartyFormModal({
@@ -55,19 +53,19 @@ export function PartyFormModal({
   party,
   missionId,
   onClose,
-  onSaved,
-  currentParties,
 }: PartyFormModalProps) {
   const theme = useTheme();
 
-  const [fullName, setFullName] = React.useState(party?.fullName ?? "");
-  const [role, setRole] = React.useState<PartyRole>(party?.role ?? "CLIENT");
-  const [email, setEmail] = React.useState(party?.email ?? "");
-  const [phone, setPhone] = React.useState(party?.phone ?? "");
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [fullName, setFullName] = useState(party?.fullName ?? "");
+  const [role, setRole] = useState<PartyRole>(party?.role ?? "CLIENT");
+  const [email, setEmail] = useState(party?.email ?? "");
+  const [phone, setPhone] = useState(party?.phone ?? "");
 
-  React.useEffect(() => {
+  const createPartyMutation = useCreateParty(missionId);
+  const updatePartyMutation = useUpdateParty(missionId);
+  const deletePartyMutation = useDeleteParty(missionId);
+
+  useEffect(() => {
     if (!visible) return;
     if (mode === "edit" && party) {
       setFullName(party.fullName);
@@ -91,7 +89,6 @@ export function PartyFormModal({
       Alert.alert("Erreur", "Le numéro de téléphone est obligatoire");
       return;
     }
-    setIsSaving(true);
     try {
       if (mode === "edit" && party) {
         const payload: UpdatePartyPayload = {
@@ -100,10 +97,7 @@ export function PartyFormModal({
           phone: phone.trim(),
           email: email.trim() || null,
         };
-        const updated = await updateParty(party.id, payload);
-        onSaved(
-          currentParties.map((p) => (p.id === updated.id ? updated : p)),
-        );
+        await updatePartyMutation.mutateAsync({ partyId: party.id, payload });
       } else {
         const payload: CreatePartyPayload = {
           fullName: fullName.trim(),
@@ -111,8 +105,7 @@ export function PartyFormModal({
           phone: phone.trim(),
         };
         if (email.trim()) payload.email = email.trim();
-        const created = await createParty(missionId, payload);
-        onSaved([...currentParties, created]);
+        await createPartyMutation.mutateAsync(payload);
       }
       onClose();
     } catch (err) {
@@ -121,8 +114,6 @@ export function PartyFormModal({
           ? err.message
           : "Impossible d'enregistrer la partie";
       Alert.alert("Erreur", msg);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -137,10 +128,8 @@ export function PartyFormModal({
           text: "Supprimer",
           style: "destructive",
           onPress: async () => {
-            setIsDeleting(true);
             try {
-              await deleteParty(party.id);
-              onSaved(currentParties.filter((p) => p.id !== party.id));
+              await deletePartyMutation.mutateAsync(party.id);
               onClose();
             } catch (err) {
               const msg =
@@ -148,14 +137,16 @@ export function PartyFormModal({
                   ? err.message
                   : "Impossible de supprimer la partie";
               Alert.alert("Erreur", msg);
-            } finally {
-              setIsDeleting(false);
             }
           },
         },
       ],
     );
   };
+
+  const isSaving =
+    createPartyMutation.isPending || updatePartyMutation.isPending;
+  const isDeleting = deletePartyMutation.isPending;
 
   return (
     <Modal
@@ -178,9 +169,7 @@ export function PartyFormModal({
               className="text-xl flex-1"
               themeColor="accent"
             >
-              {mode === "edit"
-                ? "Modifier la partie"
-                : "Nouvelle partie"}
+              {mode === "edit" ? "Modifier la partie" : "Nouvelle partie"}
             </ThemedText>
           </View>
 
