@@ -115,6 +115,7 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen name="buildings/[buildingId]/zones" />
+            <Stack.Screen name="zones/[zoneId]" />
             <Stack.Screen
               name="zones/zone-form"
               options={{

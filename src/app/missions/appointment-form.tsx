@@ -187,7 +187,6 @@ export default function AppointmentFormScreen() {
   const isSubmitting =
     createAppointmentMutation.isPending || updateAppointmentMutation.isPending;
 
-  // Redirige si le RDV à reporter n'a pas pu être chargé.
   useEffect(() => {
     if (isReschedule && appointmentId && appointmentError) {
       Alert.alert("Erreur", "Impossible de charger le rendez-vous");
@@ -195,7 +194,6 @@ export default function AppointmentFormScreen() {
     }
   }, [isReschedule, appointmentId, appointmentError]);
 
-  // Pré-remplit le formulaire une fois le RDV existant chargé (mode report).
   useEffect(() => {
     if (isReschedule && appointment) {
       setScheduledAt(new Date(appointment.scheduledAt));
@@ -208,7 +206,6 @@ export default function AppointmentFormScreen() {
   const isLocationRequired = type !== "APPEL";
 
   const handleSubmit = async () => {
-    // Validate future date
     if (!isDateInFuture(scheduledAt)) {
       Alert.alert(
         "Date invalide",
@@ -217,7 +214,6 @@ export default function AppointmentFormScreen() {
       return;
     }
 
-    // Validate location
     if (isLocationRequired && !location.trim()) {
       Alert.alert(
         "Erreur",

@@ -14,6 +14,7 @@ type MissionBuildingsSectionProps = {
   missionId: string;
   buildings: Building[];
   isArchived: boolean;
+  missionStatus?: string;
   onChange?: (buildings: Building[]) => void;
 };
 
@@ -23,6 +24,7 @@ export function MissionBuildingsSection({
   missionId,
   buildings: buildingsProp,
   isArchived,
+  missionStatus,
   onChange,
 }: MissionBuildingsSectionProps) {
   const theme = useTheme();
@@ -107,6 +109,8 @@ export function MissionBuildingsSection({
                   params: {
                     buildingId: building.id,
                     isArchived: String(isArchived),
+                    missionId,
+                    missionStatus: missionStatus ?? "",
                   },
                 })
               }

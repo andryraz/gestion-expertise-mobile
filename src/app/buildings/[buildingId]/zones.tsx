@@ -22,10 +22,13 @@ import { countDescendants, findZoneNode } from "@/utils/zone-tree";
 type TreeParams = {
   buildingId: string;
   isArchived?: string;
+  missionId?: string;
+  missionStatus?: string;
 };
 
 export default function ZonesTreeScreen() {
-  const { buildingId, isArchived } = useLocalSearchParams<TreeParams>();
+  const { buildingId, isArchived, missionId, missionStatus } =
+    useLocalSearchParams<TreeParams>();
   const archived = isArchived === "true";
   const theme = useTheme();
 
@@ -59,14 +62,26 @@ export default function ZonesTreeScreen() {
     }
   }, [buildingId]);
 
-  // On garde le rafraîchissement systématique au focus (comportement
-  // d'origine) : React Query sert le cache instantanément si dispo, puis
-  // ce refetch() vérifie la fraîcheur en arrière-plan.
   useFocusEffect(
     useCallback(() => {
       loadBuilding();
       refetch();
     }, [loadBuilding, refetch]),
+  );
+
+  const handleOpenZone = useCallback(
+    (zone: ZoneTreeNode) => {
+      router.push({
+        pathname: "/zones/[zoneId]" as any,
+        params: {
+          buildingId,
+          missionId: missionId ?? "",
+          zoneId: zone.id,
+          missionStatus: missionStatus ?? "",
+        },
+      });
+    },
+    [buildingId, missionId, missionStatus],
   );
 
   const handleAddRoot = () => {
@@ -250,6 +265,7 @@ export default function ZonesTreeScreen() {
                   depth={0}
                   isArchived={archived}
                   onMenuPress={setMenuZone}
+                  onZonePress={handleOpenZone}
                 />
               ))}
             </ScrollView>

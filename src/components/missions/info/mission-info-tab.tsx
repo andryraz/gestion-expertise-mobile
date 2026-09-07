@@ -81,6 +81,7 @@ export function MissionInfoTab({
         missionId={mission.id}
         buildings={mission.buildings ?? []}
         isArchived={isArchived}
+        missionStatus={mission.status}
         onChange={onBuildingsChange}
       />
 

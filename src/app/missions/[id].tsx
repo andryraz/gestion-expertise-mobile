@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -19,6 +19,8 @@ import {
   SegmentedControl,
   StatusTimeline,
 } from "@/components/missions";
+import { CaptureFab } from "@/components/photos/capture-fab";
+import { UnclassifiedPhotosSheet } from "@/components/photos/unclassified-photos-sheet";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -30,6 +32,7 @@ import {
   STATUS_LABELS,
   STATUS_TONE,
 } from "@/constants/mission-labels";
+import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
 import { queryClient } from "@/lib/query-client";
 import {
@@ -40,7 +43,9 @@ import {
   useUpdateMission,
   useUpdateMissionStatus,
 } from "@/queries/missions";
+import { useCreatePhoto, useMissionPhotos } from "@/queries/photos";
 import { ApiError } from "@/services/api-client";
+import { usePendingPhotosStore } from "@/store/pending-photos-store";
 import { Mission, UpdateMissionPayload } from "@/types/mission";
 import { formatRelativeTime } from "@/utils/format-relative-time";
 import { logger } from "@/utils/logger";
@@ -72,6 +77,8 @@ export default function MissionDetailScreen() {
 
   const [activeTab, setActiveTab] = useState("infos");
   const [showMenu, setShowMenu] = useState(false);
+  const [showUnclassified, setShowUnclassified] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const { data: mission, isLoading, error: queryError } = useMissionDetail(id);
   const loadError = queryError
@@ -84,6 +91,47 @@ export default function MissionDetailScreen() {
   const updateStatusMutation = useUpdateMissionStatus(id);
   const toggleArchiveMutation = useToggleMissionArchive(id);
   const refreshAfterExternalChange = useRefreshMissionAfterExternalChange(id);
+  const { data: photos = [] } = useMissionPhotos(id);
+  const createPhotoMutation = useCreatePhoto(id);
+  const { capture, isCapturing } = usePhotoCapture();
+  const addPending = usePendingPhotosStore((state) => state.addPending);
+
+  const unclassifiedCount = useMemo(
+    () =>
+      photos.filter(
+        (photo) =>
+          !photo.zoneId &&
+          !photo.observationId &&
+          !photo.id.startsWith("pending-"),
+      ).length,
+    [photos],
+  );
+
+  const firstBuildingId = mission?.buildings?.[0]?.id ?? null;
+
+  const handleCapture = async () => {
+    setUploadError(null);
+    const uri = await capture();
+    if (!uri || !id) return;
+
+    try {
+      await createPhotoMutation.mutateAsync({ uri });
+      logger.info("Photos", "Photo capturée (libre)", { missionId: id });
+      setShowUnclassified(true);
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Impossible d'envoyer la photo. Vérifie ta connexion.";
+      addPending({ missionId: id, zoneId: null, observationId: null, uri });
+      setUploadError(message);
+      setShowUnclassified(true);
+      logger.error("Photos", "Échec upload photo libre", {
+        missionId: id,
+        message,
+      });
+    }
+  };
 
   const isArchived = !!mission?.archivedAt;
 
@@ -176,20 +224,12 @@ export default function MissionDetailScreen() {
   };
 
   const handleBuildingsChange = (buildings: Mission["buildings"]) => {
-    // Patch optimiste directement dans le cache React Query — remplace
-    // l'ancien setMission local. building-form-modal.tsx gère lui-même
-    // l'appel réseau (createBuilding/updateBuilding/deleteBuilding), donc
-    // on écrit juste le résultat déjà connu dans le cache.
     queryClient.setQueryData<Mission>(missionsKeys.detail(id), (prev) =>
       prev ? { ...prev, buildings } : prev,
     );
   };
 
   const handleMissionChangedFromQuoteTab = useCallback(() => {
-    // Un devis accepté/refusé peut faire évoluer le statut global de la
-    // mission (ex: DEVIS_ENVOYE -> ACCEPTEE) : on invalide la mission ET
-    // les listes (dashboard.tsx / missions.tsx) pour qu'elles se
-    // resynchronisent.
     refreshAfterExternalChange();
   }, [refreshAfterExternalChange]);
 
@@ -393,6 +433,57 @@ export default function MissionDetailScreen() {
                 </View>
               )}
             </KeyboardAvoidingView>
+          )}
+
+          {mission && !isArchived && mission.status === "EN_COURS" && (
+            <>
+              {uploadError && (
+                <View className="absolute bottom-24 left-four right-four rounded-three border border-danger/40 bg-danger/10 px-three py-two">
+                  <View className="flex-row items-center gap-two">
+                    <Ionicons
+                      name="cloud-offline-outline"
+                      color={theme.danger}
+                      size={16}
+                    />
+                    <ThemedText
+                      type="small"
+                      themeColor="danger"
+                      className="flex-1"
+                    >
+                      {uploadError} La photo reste enregistrée dans « Photos non
+                      classées ».
+                    </ThemedText>
+                  </View>
+                  <Pressable
+                    onPress={() => setUploadError(null)}
+                    className="mt-one self-end"
+                    hitSlop={8}
+                  >
+                    <ThemedText type="smallBold" themeColor="danger">
+                      Fermer
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              )}
+
+              <CaptureFab
+                onPress={handleCapture}
+                onLongPress={() => setShowUnclassified(true)}
+                badgeCount={unclassifiedCount}
+                disabled={isCapturing || createPhotoMutation.isPending}
+              />
+
+              <UnclassifiedPhotosSheet
+                visible={showUnclassified}
+                missionId={id}
+                buildingId={firstBuildingId}
+                photos={photos}
+                onClose={() => {
+                  setShowUnclassified(false);
+                  setUploadError(null);
+                }}
+              />
+            </>
           )}
         </ScreenFade>
       </SafeAreaView>

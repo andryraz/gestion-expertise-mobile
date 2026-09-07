@@ -14,6 +14,7 @@ type ZoneNodeProps = {
   depth: number;
   isArchived: boolean;
   onMenuPress: (zone: ZoneTreeNode) => void;
+  onZonePress?: (zone: ZoneTreeNode) => void;
 };
 
 export const ZoneNode = memo(function ZoneNode({
@@ -21,6 +22,7 @@ export const ZoneNode = memo(function ZoneNode({
   depth,
   isArchived,
   onMenuPress,
+  onZonePress,
 }: ZoneNodeProps) {
   const theme = useTheme();
   const hasChildren = zone.children.length > 0;
@@ -30,13 +32,21 @@ export const ZoneNode = memo(function ZoneNode({
     <View>
       <Pressable
         onPress={() => {
+          if (onZonePress) {
+            onZonePress(zone);
+            return;
+          }
           if (hasChildren) setExpanded((prev) => !prev);
         }}
-        disabled={!hasChildren}
         className="flex-row items-center gap-one py-two pr-two"
         style={{ paddingLeft: depth * INDENT_PER_DEPTH }}
       >
-        <View className="w-four items-center justify-center">
+        <Pressable
+          onPress={() => hasChildren && setExpanded((prev) => !prev)}
+          disabled={!hasChildren}
+          hitSlop={8}
+          className="w-four items-center justify-center"
+        >
           {hasChildren && (
             <Ionicons
               name={expanded ? "chevron-down" : "chevron-forward"}
@@ -44,7 +54,7 @@ export const ZoneNode = memo(function ZoneNode({
               size={14}
             />
           )}
-        </View>
+        </Pressable>
 
         <Ionicons
           name={ZONE_TYPE_ICONS[zone.zoneType]}
@@ -80,6 +90,7 @@ export const ZoneNode = memo(function ZoneNode({
               depth={depth + 1}
               isArchived={isArchived}
               onMenuPress={onMenuPress}
+              onZonePress={onZonePress}
             />
           ))}
         </View>
