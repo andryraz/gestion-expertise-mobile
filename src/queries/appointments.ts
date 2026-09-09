@@ -22,7 +22,6 @@ export const appointmentsKeys = {
   detail: (id: string) => [...appointmentsKeys.all, "detail", id] as const,
 };
 
-// appointment-form.tsx (mode reschedule) : charge le RDV existant
 export function useAppointment(id: string) {
   return useQuery({
     queryKey: appointmentsKeys.detail(id),

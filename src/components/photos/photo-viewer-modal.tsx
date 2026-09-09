@@ -11,7 +11,6 @@ import {
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { useTheme } from "@/hooks/use-theme";
 import { useDeletePhoto } from "@/queries/photos";
 import { ApiError } from "@/services/api-client";
 import type { Photo } from "@/types/photo";
@@ -29,7 +28,6 @@ export function PhotoViewerModal({
   missionId,
   onClose,
 }: PhotoViewerModalProps) {
-  const theme = useTheme();
   const [isDeleting, setIsDeleting] = useState(false);
   const deleteMutation = useDeletePhoto(missionId ?? "");
 

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Alert, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CaptureFab } from "@/components/photos";
@@ -12,13 +12,14 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import {
+  OBSERVATION_SEVERITY_BG,
   OBSERVATION_SEVERITY_LABELS,
-  OBSERVATION_SEVERITY_TONE,
+  OBSERVATION_SEVERITY_TEXT_COLOR,
 } from "@/constants/observation-labels";
 import { ZONE_TYPE_ICONS, ZONE_TYPE_LABELS } from "@/constants/zone-labels";
 import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
-import { useZoneObservations } from "@/queries/observations";
+import { useDeleteObservation, useZoneObservations } from "@/queries/observations";
 import { useCreatePhoto, useZonePhotos } from "@/queries/photos";
 import { useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
@@ -35,44 +36,46 @@ type ZoneDetailParams = {
   missionStatus?: string;
 };
 
-const SEVERITY_BG: Record<string, string> = {
-  muted: "bg-background-selected dark:bg-background-selected-dark",
-  accent: "bg-accent",
-  danger: "bg-danger dark:bg-danger-dark",
-};
-
-const SEVERITY_TEXT: Record<string, "textSecondary" | "background"> = {
-  muted: "textSecondary",
-  accent: "background",
-  danger: "background",
-};
-
-function ObservationRow({ observation }: { observation: Observation }) {
+function ObservationRow({
+  observation,
+  onPress,
+  onDelete,
+}: {
+  observation: Observation;
+  onPress: () => void;
+  onDelete: () => void;
+}) {
   const theme = useTheme();
-  const tone = OBSERVATION_SEVERITY_TONE[observation.severity];
 
   return (
-    <View className="rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark px-three py-two">
-      <View className="flex-row items-center gap-two">
-        <View
-          className={["rounded-five px-two py-half", SEVERITY_BG[tone]].join(
-            " ",
-          )}
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center gap-two rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark px-three py-two active:opacity-80"
+    >
+      <View
+        className={["rounded-five px-two py-half", OBSERVATION_SEVERITY_BG[observation.severity]].join(
+          " ",
+        )}
+      >
+        <ThemedText
+          type="eyebrow"
+          themeColor={OBSERVATION_SEVERITY_TEXT_COLOR[observation.severity]}
         >
-          <ThemedText type="eyebrow" themeColor={SEVERITY_TEXT[tone]}>
-            {OBSERVATION_SEVERITY_LABELS[observation.severity]}
-          </ThemedText>
-        </View>
-        <Ionicons
-          name="alert-circle-outline"
-          color={theme.textSecondary}
-          size={14}
-        />
+          {OBSERVATION_SEVERITY_LABELS[observation.severity]}
+        </ThemedText>
       </View>
-      <ThemedText type="default" className="mt-one" numberOfLines={3}>
+      <ThemedText type="default" className="flex-1" numberOfLines={3}>
         {observation.description}
       </ThemedText>
-    </View>
+      <Pressable onPress={onDelete} hitSlop={8}>
+        <Ionicons name="trash-outline" color={theme.danger} size={18} />
+      </Pressable>
+      <Ionicons
+        name="chevron-forward"
+        color={theme.textSecondary}
+        size={14}
+      />
+    </Pressable>
   );
 }
 
@@ -107,6 +110,7 @@ export default function ZoneDetailScreen() {
   } = useZoneObservations(zoneId);
 
   const createPhotoMutation = useCreatePhoto(missionId);
+  const deleteObservationMutation = useDeleteObservation();
   const { capture, isCapturing } = usePhotoCapture();
 
   const isLoading = isLoadingTree || isLoadingPhotos || isLoadingObservations;
@@ -134,6 +138,58 @@ export default function ZoneDetailScreen() {
 
   const handlePhotoPress = (photo: Photo) => {
     setViewedPhoto(photo);
+  };
+
+  const handleObservationPress = (observation: Observation) => {
+    router.push({
+      pathname: "/observations/[observationId]",
+      params: {
+        observationId: observation.id,
+        missionId,
+        missionStatus,
+      },
+    });
+  };
+
+  const handleDeleteObservation = (observation: Observation) => {
+    Alert.alert(
+      "Supprimer l'observation",
+      "Les photos et mesures liées seront détachées mais conservées. Cette action est définitive.",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteObservationMutation.mutateAsync(observation.id);
+              logger.info("Observations", "Observation supprimée depuis la zone", {
+                id: observation.id,
+                zoneId,
+              });
+            } catch (err) {
+              const message =
+                err instanceof ApiError
+                  ? err.message
+                  : "Impossible de supprimer l'observation";
+              Alert.alert("Erreur", message);
+              logger.error(
+                "Observations",
+                "Échec de suppression d'observation",
+                { id: observation.id, message },
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleCreateObservation = () => {
+    router.push({
+      pathname: "/observations/observation-form",
+      params: { zoneId, zoneName: node?.name },
+    });
   };
 
   const renderError = (err: unknown, label: string) =>
@@ -312,8 +368,19 @@ export default function ZoneDetailScreen() {
                       <ObservationRow
                         key={observation.id}
                         observation={observation}
+                        onPress={() => handleObservationPress(observation)}
+                        onDelete={() => handleDeleteObservation(observation)}
                       />
                     ))}
+                  </View>
+                )}
+                {canCapture && (
+                  <View className="mt-two">
+                    <PrimaryButton
+                      label="Ajouter une observation"
+                      icon="add-circle-outline"
+                      onPress={handleCreateObservation}
+                    />
                   </View>
                 )}
               </View>

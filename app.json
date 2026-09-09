@@ -43,9 +43,17 @@
           "locationAlwaysAndWhenInUsePermission": "L'application utilise votre position pour localiser automatiquement le bâtiment expertisé."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "L'application utilise la caméra pour photographier les constats et désordres relevés pendant la mission.",
+          "photosPermission": "L'application accède à vos photos pour rattacher des images aux zones et observations de la mission."
+        }
+      ],
       "expo-mail-composer",
       "expo-sharing",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,

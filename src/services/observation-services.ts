@@ -4,6 +4,7 @@ import type {
   Observation,
   ObservationDetail,
   ObservationSeverity,
+  UpdateObservationPayload,
 } from "@/types/observation";
 
 export function getZoneObservations(
@@ -38,6 +39,24 @@ export function createObservation(
   return apiRequest<Observation>(`/zones/${zoneId}/observations`, {
     method: "POST",
     body: payload,
+    auth: true,
+  });
+}
+
+export function updateObservation(
+  id: string,
+  payload: UpdateObservationPayload,
+) {
+  return apiRequest<Observation>(`/observations/${id}`, {
+    method: "PATCH",
+    body: payload,
+    auth: true,
+  });
+}
+
+export function deleteObservation(id: string) {
+  return apiRequest<void>(`/observations/${id}`, {
+    method: "DELETE",
     auth: true,
   });
 }

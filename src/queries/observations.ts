@@ -2,11 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   createObservation,
+  deleteObservation,
   getMissionObservations,
   getObservation,
   getZoneObservations,
+  updateObservation,
 } from "@/services/observation-services";
-import type { CreateObservationPayload } from "@/types/observation";
+import type {
+  CreateObservationPayload,
+  UpdateObservationPayload,
+} from "@/types/observation";
 
 export const observationsKeys = {
   all: ["observations"] as const,
@@ -49,6 +54,39 @@ export function useCreateObservation(zoneId: string) {
       queryClient.invalidateQueries({
         queryKey: observationsKeys.zone(created.zoneId),
       });
+      queryClient.invalidateQueries({ queryKey: observationsKeys.all });
+    },
+  });
+}
+
+export function useUpdateObservation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      observationId,
+      payload,
+    }: {
+      observationId: string;
+      payload: UpdateObservationPayload;
+    }) => updateObservation(observationId, payload),
+    onSuccess: (updated) => {
+      // La liste de la zone et toutes les vues observations (mission,
+      // détail) doivent refléter les champs modifiés.
+      queryClient.invalidateQueries({
+        queryKey: observationsKeys.zone(updated.zoneId),
+      });
+      queryClient.invalidateQueries({ queryKey: observationsKeys.all });
+    },
+  });
+}
+
+export function useDeleteObservation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (observationId: string) => deleteObservation(observationId),
+    onSuccess: () => {
+      // Les photos/mesures liées sont détachées côté backend : on
+      // resynchronise toutes les listes (zone, mission, détail).
       queryClient.invalidateQueries({ queryKey: observationsKeys.all });
     },
   });

@@ -1811,6 +1811,216 @@
         "tags": ["Zones de construction"]
       }
     },
+    "/ouvrage-categories": {
+      "get": {
+        "description": "Retourne le catalogue global des désignations d'ouvrages et de leurs matériaux possibles, reconstruit en arbre en mémoire à partir d'une requête plate. Catalogue global : aucune vérification d'appartenance. Le paramètre optionnel ficheType filtre sur une seule fiche; sans lui, les deux arbres (GROS_OEUVRE et SECOND_OEUVRE) sont retournés séparément.",
+        "operationId": "OuvrageCategoriesController_findTree",
+        "parameters": [
+          {
+            "name": "ficheType",
+            "required": false,
+            "in": "query",
+            "description": "Filtrer par type de fiche technique",
+            "schema": {
+              "enum": ["GROS_OEUVRE", "SECOND_OEUVRE"],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Arbre du catalogue (un tableau de racines si ficheType est fourni, sinon un objet avec les deux arbres)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OuvrageCategoryResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Arbre complet du catalogue des fiches techniques",
+        "tags": ["Fiches techniques"]
+      }
+    },
+    "/buildings/{buildingId}/technical-selections": {
+      "post": {
+        "description": "Ajoute une sélection technique (option de matériau du catalogue + note libre optionnelle) pour un bâtiment. Vérifie que le bâtiment appartient (via sa mission) à l'expert authentifié. Requiert une mission en cours (EN_COURS) et non archivée. 409 si l'option est déjà cochée pour ce bâtiment.",
+        "operationId": "TechnicalSelectionsController_create",
+        "parameters": [
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTechnicalSelectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sélection technique créée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicalSelectionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "409": {
+            "description": "Cette option de matériau est déjà sélectionnée pour ce bâtiment"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cocher une option de matériau pour un bâtiment",
+        "tags": ["Fiches techniques"]
+      },
+      "get": {
+        "description": "Retourne la liste plate des sélections du bâtiment, avec l'option de matériau et sa catégorie incluses (le frontend recroise avec l'arbre du catalogue). Vérifie que le bâtiment appartient (via sa mission) à l'expert authentifié.",
+        "operationId": "TechnicalSelectionsController_findAllByBuilding",
+        "parameters": [
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste plate des sélections techniques",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TechnicalSelectionResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les sélections techniques d'un bâtiment",
+        "tags": ["Fiches techniques"]
+      }
+    },
+    "/technical-selections/{id}": {
+      "patch": {
+        "description": "Met à jour la note libre d'une sélection technique (null pour l'effacer). Impossible si la mission associée est archivée.",
+        "operationId": "TechnicalSelectionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTechnicalSelectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sélection technique mise à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicalSelectionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier la note d'une sélection technique",
+        "tags": ["Fiches techniques"]
+      },
+      "delete": {
+        "description": "Retire une option de matériau cochée d'un bâtiment. Impossible si la mission associée est archivée.",
+        "operationId": "TechnicalSelectionsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sélection technique supprimée avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer une sélection technique",
+        "tags": ["Fiches techniques"]
+      }
+    },
     "/disorder-types": {
       "post": {
         "description": "Crée un nouveau type de désordre. Le nom doit être unique : si un type de désordre portant le même nom existe déjà, une erreur 409 est renvoyée.",
@@ -3547,6 +3757,176 @@
             "type": "object",
             "description": "ID de la zone parente (si sous-zone). Doit appartenir à la même mission. Une zone ne peut pas devenir son propre ancêtre.",
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          }
+        }
+      },
+      "MaterialOptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "name": {
+            "type": "string",
+            "example": "Semelles isolées et longrines en B.A"
+          },
+          "orderIndex": {
+            "type": "object",
+            "example": 1
+          }
+        },
+        "required": ["id", "name", "orderIndex"]
+      },
+      "OuvrageCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "ficheType": {
+            "type": "string",
+            "enum": ["GROS_OEUVRE", "SECOND_OEUVRE"],
+            "example": "GROS_OEUVRE"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fondations"
+          },
+          "parentCategoryId": {
+            "type": "object",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+            "nullable": true
+          },
+          "orderIndex": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          },
+          "materialOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialOptionResponseDto"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OuvrageCategoryResponseDto"
+            }
+          }
+        },
+        "required": ["id", "ficheType", "name", "materialOptions", "children"]
+      },
+      "CreateTechnicalSelectionDto": {
+        "type": "object",
+        "properties": {
+          "materialOptionId": {
+            "type": "string",
+            "description": "Option de matériau cochée pour ce bâtiment",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "note": {
+            "type": "string",
+            "description": "Note libre associée à la sélection",
+            "example": "Fissures observées sur la semelle côté est",
+            "maxLength": 2000
+          }
+        },
+        "required": ["materialOptionId"]
+      },
+      "OuvrageCategoryRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fondations"
+          },
+          "ficheType": {
+            "type": "string",
+            "enum": ["GROS_OEUVRE", "SECOND_OEUVRE"],
+            "example": "GROS_OEUVRE"
+          },
+          "parentCategoryId": {
+            "type": "object",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+            "nullable": true
+          },
+          "orderIndex": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "ficheType"]
+      },
+      "SelectedMaterialOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "name": {
+            "type": "string",
+            "example": "Semelles isolées et longrines en B.A"
+          },
+          "orderIndex": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          },
+          "category": {
+            "description": "Catégorie du catalogue à laquelle appartient cette option (le frontend recroise avec l'arbre du catalogue)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OuvrageCategoryRefDto"
+              }
+            ]
+          }
+        },
+        "required": ["id", "name", "category"]
+      },
+      "TechnicalSelectionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "buildingId": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "materialOption": {
+            "$ref": "#/components/schemas/SelectedMaterialOptionDto"
+          },
+          "note": {
+            "type": "object",
+            "example": "Fissures observées sur la semelle côté est",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["id", "buildingId", "materialOption", "createdAt"]
+      },
+      "UpdateTechnicalSelectionDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "object",
+            "description": "Note libre associée à la sélection (null pour effacer la note)",
+            "example": "Fissures observées sur la semelle côté est",
+            "maxLength": 2000,
+            "nullable": true
           }
         }
       },
