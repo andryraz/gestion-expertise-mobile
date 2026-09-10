@@ -204,6 +204,29 @@ export default function ZonesTreeScreen() {
                 {building?.name ?? "Bâtiment"}
               </ThemedText>
             </View>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/buildings/[buildingId]/technical-sheet" as any,
+                  params: {
+                    buildingId,
+                    isArchived: String(archived),
+                    missionStatus: missionStatus ?? "",
+                  },
+                })
+              }
+              hitSlop={8}
+              className="flex-row items-center gap-one rounded-three border border-border bg-background-element px-two py-two dark:border-border-dark dark:bg-background-element-dark"
+            >
+              <Ionicons
+                name="clipboard-outline"
+                color={theme.accent}
+                size={16}
+              />
+              <ThemedText type="small" themeColor="accent">
+                Fiche technique
+              </ThemedText>
+            </Pressable>
           </View>
 
           {isLoading && (
