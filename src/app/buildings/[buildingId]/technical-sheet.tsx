@@ -79,9 +79,28 @@ export default function TechnicalSheetScreen() {
   const toggleMutation = useToggleTechnicalSelection(buildingId);
   const updateNoteMutation = useUpdateTechnicalSelection(buildingId);
 
-  // Une seule mutation en vol à la fois : la case est verrouillée
-  // pendant le POST/DELETE pour éviter les doubles-taps rapides.
-  const pendingToggleRef = useRef(false);
+  // Toggles en vol, par option : grâce à la mise à jour optimiste, SEULE
+  // la ligne concernée est verrouillée (anti double-tap) ; toutes les
+  // autres cases restent cliquables instantanément pendant que les
+  // appels réseau partent en arrière-plan.
+  const pendingToggleIdsRef = useRef<Set<string>>(new Set<string>());
+  const [pendingToggleIds, setPendingToggleIds] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
+
+  const setTogglePending = useCallback(
+    (optionId: string, pending: boolean) => {
+      const next = new Set(pendingToggleIdsRef.current);
+      if (pending) {
+        next.add(optionId);
+      } else {
+        next.delete(optionId);
+      }
+      pendingToggleIdsRef.current = next;
+      setPendingToggleIds(next);
+    },
+    [],
+  );
 
   const error = catalogError
     ? catalogError instanceof ApiError
@@ -115,7 +134,7 @@ export default function TechnicalSheetScreen() {
 
   const handleToggle = useCallback(
     async (materialOptionId: string, checked: boolean) => {
-      if (!canEdit || pendingToggleRef.current) return;
+      if (!canEdit || pendingToggleIdsRef.current.has(materialOptionId)) return;
 
       // Recroisement côté client : on cherche la sélection existante
       // pour décider de l'action (POST vs DELETE).
@@ -137,7 +156,7 @@ export default function TechnicalSheetScreen() {
         return;
       }
 
-      pendingToggleRef.current = true;
+      setTogglePending(materialOptionId, true);
       try {
         await toggleMutation.mutateAsync({ materialOptionId, selection });
         logger.info(
@@ -172,10 +191,10 @@ export default function TechnicalSheetScreen() {
           setToggleError(message);
         }
       } finally {
-        pendingToggleRef.current = false;
+        setTogglePending(materialOptionId, false);
       }
     },
-    [buildingId, canEdit, toggleMutation],
+    [buildingId, canEdit, setTogglePending, toggleMutation],
   );
 
   const handleSaveNote = useCallback(
@@ -292,7 +311,8 @@ export default function TechnicalSheetScreen() {
                     category={rootCategory}
                     depth={0}
                     selections={selections ?? []}
-                    isToggling={!canEdit || toggleMutation.isPending}
+                    canEdit={canEdit}
+                    pendingOptionIds={pendingToggleIds}
                     noteLabel={NOTE_LABELS[activeTab]}
                     notePlaceholder={NOTE_PLACEHOLDERS[activeTab]}
                     onToggle={handleToggle}

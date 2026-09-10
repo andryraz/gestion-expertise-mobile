@@ -21,7 +21,9 @@ type CategoryAccordionProps = {
   category: OuvrageCategory;
   depth: number;
   selections: TechnicalSelection[];
-  isToggling: boolean;
+  canEdit: boolean;
+  /** Options dont le toggle est en vol (case verrouillée + spinner). */
+  pendingOptionIds: ReadonlySet<string>;
   /** Libellé du champ note ("Observation" ou "Localisation"). */
   noteLabel: string;
   /** Placeholder du champ note, adapté à la fiche active. */
@@ -39,7 +41,8 @@ export const CategoryAccordion = memo(function CategoryAccordion({
   category,
   depth,
   selections,
-  isToggling,
+  canEdit,
+  pendingOptionIds,
   noteLabel,
   notePlaceholder,
   onToggle,
@@ -83,7 +86,8 @@ export const CategoryAccordion = memo(function CategoryAccordion({
               category={child}
               depth={depth + 1}
               selections={selections}
-              isToggling={isToggling}
+              canEdit={canEdit}
+              pendingOptionIds={pendingOptionIds}
               noteLabel={noteLabel}
               notePlaceholder={notePlaceholder}
               onToggle={onToggle}
@@ -103,7 +107,8 @@ export const CategoryAccordion = memo(function CategoryAccordion({
                 optionName={option.name}
                 depth={depth + 1}
                 selection={selection}
-                isToggling={isToggling}
+                canEdit={canEdit}
+                isPending={pendingOptionIds.has(option.id)}
                 noteLabel={noteLabel}
                 notePlaceholder={notePlaceholder}
                 onToggle={onToggle}
@@ -122,7 +127,9 @@ type MaterialRowProps = {
   optionName: string;
   depth: number;
   selection?: TechnicalSelection;
-  isToggling: boolean;
+  canEdit: boolean;
+  /** Toggle de CETTE option en vol (appel réseau en arrière-plan). */
+  isPending: boolean;
   noteLabel: string;
   notePlaceholder: string;
   onToggle: (materialOptionId: string, checked: boolean) => void;
@@ -135,7 +142,8 @@ const MaterialRow = memo(function MaterialRow({
   optionName,
   depth,
   selection,
-  isToggling,
+  canEdit,
+  isPending,
   noteLabel,
   notePlaceholder,
   onToggle,
@@ -146,17 +154,20 @@ const MaterialRow = memo(function MaterialRow({
   const [noteDraft, setNoteDraft] = useState(selection?.note ?? "");
   const lastSavedNote = useRef(selection?.note ?? "");
 
-  // Resynchronisation après invalidation du cache (ex: toggle en cours),
-  // sans écraser ce que l'utilisateur est en train de taper.
+  // Resynchronisation quand la note serveur change réellement (null et ""
+  // sont équivalents), sans écraser ce que l'utilisateur est en train de
+  // taper — notamment lors du remplacement de l'entrée optimiste par la
+  // sélection réelle après le POST.
   useEffect(() => {
     if (!selection) {
       lastSavedNote.current = "";
       setNoteDraft("");
       return;
     }
-    if (selection.note !== lastSavedNote.current) {
-      lastSavedNote.current = selection.note ?? "";
-      setNoteDraft(selection.note ?? "");
+    const serverNote = selection.note ?? "";
+    if (serverNote !== lastSavedNote.current) {
+      lastSavedNote.current = serverNote;
+      setNoteDraft(serverNote);
     }
   }, [selection]);
 
@@ -177,7 +188,7 @@ const MaterialRow = memo(function MaterialRow({
     >
       <Pressable
         onPress={() => onToggle(optionId, isChecked)}
-        disabled={isToggling}
+        disabled={!canEdit || isPending}
         className="flex-row items-center gap-two py-two"
         accessibilityRole="checkbox"
         accessibilityState={{ checked: isChecked }}
@@ -204,12 +215,12 @@ const MaterialRow = memo(function MaterialRow({
           {optionName}
         </ThemedText>
 
-        {isToggling && isChecked && (
-          <ActivityIndicator size="small" color={theme.accent} />
-        )}
+        {isPending && <ActivityIndicator size="small" color={theme.accent} />}
       </Pressable>
 
-      {isChecked && selection && (
+      {/* Masqué pendant le POST (l'entrée optimiste n'a pas d'id réel) :
+          il apparaît dès que la sélection réelle est enregistrée. */}
+      {isChecked && selection && !isPending && (
         <View
           className="ml-six rounded-two border border-border bg-background-element px-two py-half dark:border-border-dark dark:bg-background-element-dark"
           style={{ marginLeft: depth * INDENT_PER_DEPTH + 28 }}

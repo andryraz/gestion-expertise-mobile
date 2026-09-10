@@ -43,6 +43,5 @@ export type CreateTechnicalSelectionPayload = {
 };
 
 export type UpdateTechnicalSelectionPayload = {
-  /** Passer null pour effacer la note actuelle. */
   note?: string | null;
 };
