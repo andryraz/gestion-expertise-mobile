@@ -42,3 +42,21 @@ export function flattenTree(
   }
   return result;
 }
+
+/**
+ * Chaîne d'ancêtres de la zone (racine → cible), cible incluse. Sert à
+ * libeller la source de la copie : path.length === 1 → zone racine (la
+ * source est le bâtiment), sinon le parent est path[path.length - 2].
+ * Récursion sans limite de profondeur (l'arbre lui-même est illimité).
+ */
+export function findZonePath(
+  nodes: ZoneTreeNode[],
+  zoneId: string,
+): ZoneTreeNode[] {
+  for (const node of nodes) {
+    if (node.id === zoneId) return [node];
+    const subPath = findZonePath(node.children, zoneId);
+    if (subPath.length > 0) return [node, ...subPath];
+  }
+  return [];
+}

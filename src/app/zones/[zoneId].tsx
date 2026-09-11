@@ -11,6 +11,7 @@ import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { ZoneTechnicalSheetSection } from "@/components/zones/zone-technical-sheet-section";
 import {
   OBSERVATION_SEVERITY_BG,
   OBSERVATION_SEVERITY_LABELS,
@@ -301,6 +302,12 @@ export default function ZoneDetailScreen() {
                   </View>
                 )}
               </View>
+
+              <ZoneTechnicalSheetSection
+                zoneId={zoneId}
+                buildingId={buildingId}
+                missionStatus={missionStatus}
+              />
 
               <View className="mb-four">
                 <ThemedText

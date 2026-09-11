@@ -13,8 +13,8 @@ import { useTheme } from "@/hooks/use-theme";
 import {
   findSelectionByMaterialOptionId,
   technicalSheetKeys,
+  useBuildingTechnicalSelections,
   useOuvrageCatalog,
-  useTechnicalSelections,
   useToggleTechnicalSelection,
   useUpdateTechnicalSelection,
 } from "@/queries/technical-sheets";
@@ -74,10 +74,11 @@ export default function TechnicalSheetScreen() {
     isLoading: isLoadingSelections,
     error: selectionsError,
     refetch: refetchSelections,
-  } = useTechnicalSelections(buildingId);
+  } = useBuildingTechnicalSelections(buildingId);
 
-  const toggleMutation = useToggleTechnicalSelection(buildingId);
-  const updateNoteMutation = useUpdateTechnicalSelection(buildingId);
+  const buildingTarget = { kind: "building", buildingId } as const;
+  const toggleMutation = useToggleTechnicalSelection(buildingTarget);
+  const updateNoteMutation = useUpdateTechnicalSelection(buildingTarget);
 
   // Toggles en vol, par option : grâce à la mise à jour optimiste, SEULE
   // la ligne concernée est verrouillée (anti double-tap) ; toutes les
@@ -140,7 +141,7 @@ export default function TechnicalSheetScreen() {
       // pour décider de l'action (POST vs DELETE).
       const selection = findSelectionByMaterialOptionId(
         queryClient.getQueryData<TechnicalSelection[]>(
-          technicalSheetKeys.selections(buildingId),
+          technicalSheetKeys.buildingSelections(buildingId),
         ),
         materialOptionId,
       );
@@ -174,7 +175,7 @@ export default function TechnicalSheetScreen() {
             { buildingId, materialOptionId },
           );
           queryClient.invalidateQueries({
-            queryKey: technicalSheetKeys.selections(buildingId),
+            queryKey: technicalSheetKeys.buildingSelections(buildingId),
           });
         } else {
           const message =
