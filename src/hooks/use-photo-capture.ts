@@ -33,7 +33,8 @@ async function compressCapture(uri: string): Promise<string> {
 }
 
 async function ensureCameraPermission(): Promise<boolean> {
-  const { granted, canAskAgain } = await ImagePicker.requestCameraPermissionsAsync();
+  const { granted, canAskAgain } =
+    await ImagePicker.requestCameraPermissionsAsync();
   if (granted) return true;
 
   Alert.alert(
@@ -45,7 +46,10 @@ async function ensureCameraPermission(): Promise<boolean> {
       ? [{ text: "OK", style: "cancel" }]
       : [
           { text: "Annuler", style: "cancel" },
-          { text: "Ouvrir les réglages", onPress: () => Linking.openSettings() },
+          {
+            text: "Ouvrir les réglages",
+            onPress: () => Linking.openSettings(),
+          },
         ],
   );
   return false;
@@ -58,9 +62,9 @@ type UsePhotoCaptureResult = {
 };
 
 /**
- * Capture photo réutilisable (MissionDetailScreen, ZoneDetailScreen, puis
- * ObservationDetailScreen plus tard). N'upload rien : renvoie l'URI locale
- * compressée — l'appelant gère l'upload et le cas d'échec.
+ * Capture photo réutilisable (MissionDetailScreen, ZoneDetailScreen).
+ * N'upload rien : renvoie l'URI locale compressée — l'appelant gère
+ * l'upload et le cas d'échec.
  */
 export function usePhotoCapture(): UsePhotoCaptureResult {
   const [isCapturing, setIsCapturing] = useState(false);

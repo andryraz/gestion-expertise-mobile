@@ -65,8 +65,6 @@ export default function ZonesTreeScreen() {
   } = useZonesTree(buildingId);
   const deleteZoneMutation = useDeleteZone(buildingId);
 
-  // Photos de la mission : pour le badge « Photos non classées » et pour la
-  // feuille de classement, mêmes sources que l'écran mission.
   const { data: photos = [] } = useMissionPhotos(missionId ?? "");
   const createPhotoMutation = useCreatePhoto(missionId ?? "");
   const { capture, isCapturing } = usePhotoCapture();
@@ -74,10 +72,7 @@ export default function ZonesTreeScreen() {
   const unclassifiedCount = useMemo(
     () =>
       photos.filter(
-        (photo) =>
-          !photo.zoneId &&
-          !photo.observationId &&
-          !photo.id.startsWith("pending-"),
+        (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
       ).length,
     [photos],
   );
@@ -195,7 +190,7 @@ export default function ZonesTreeScreen() {
         err instanceof ApiError
           ? err.message
           : "Impossible d'envoyer la photo. Vérifie ta connexion.";
-      addPending({ missionId, zoneId: null, observationId: null, uri });
+      addPending({ missionId, zoneId: null, uri });
       setUploadError(message);
       setShowUnclassified(true);
       logger.error("Photos", "Échec upload photo libre", {

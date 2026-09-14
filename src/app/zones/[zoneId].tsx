@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -17,18 +17,9 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { ZoneTechnicalSheetSection } from "@/components/zones/zone-technical-sheet-section";
-import {
-  OBSERVATION_SEVERITY_BG,
-  OBSERVATION_SEVERITY_LABELS,
-  OBSERVATION_SEVERITY_TEXT_COLOR,
-} from "@/constants/observation-labels";
 import { ZONE_TYPE_ICONS, ZONE_TYPE_LABELS } from "@/constants/zone-labels";
 import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
-import {
-  useDeleteObservation,
-  useZoneObservations,
-} from "@/queries/observations";
 import {
   useCreatePhoto,
   useMissionPhotos,
@@ -37,7 +28,6 @@ import {
 import { useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
 import { usePendingPhotosStore } from "@/store/pending-photos-store";
-import type { Observation } from "@/types/observation";
 import type { Photo } from "@/types/photo";
 import { logger } from "@/utils/logger";
 import { findZoneNode } from "@/utils/zone-tree";
@@ -49,54 +39,13 @@ type ZoneDetailParams = {
   missionStatus?: string;
 };
 
-type ZoneTabKey = "fiche" | "observations" | "photos" | "mesures";
+type ZoneTabKey = "fiche" | "photos" | "mesures";
 
 const ZONE_TABS: TabOption[] = [
   { key: "fiche", label: "Fiche" },
-  { key: "observations", label: "Observations" },
   { key: "photos", label: "Photos" },
   { key: "mesures", label: "Mesures", disabled: true },
 ];
-
-function ObservationRow({
-  observation,
-  onPress,
-  onDelete,
-}: {
-  observation: Observation;
-  onPress: () => void;
-  onDelete: () => void;
-}) {
-  const theme = useTheme();
-
-  return (
-    <Pressable
-      onPress={onPress}
-      className="flex-row items-center gap-two rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark px-three py-two active:opacity-80"
-    >
-      <View
-        className={[
-          "rounded-five px-two py-half",
-          OBSERVATION_SEVERITY_BG[observation.severity],
-        ].join(" ")}
-      >
-        <ThemedText
-          type="eyebrow"
-          themeColor={OBSERVATION_SEVERITY_TEXT_COLOR[observation.severity]}
-        >
-          {OBSERVATION_SEVERITY_LABELS[observation.severity]}
-        </ThemedText>
-      </View>
-      <ThemedText type="default" className="flex-1" numberOfLines={3}>
-        {observation.description}
-      </ThemedText>
-      <Pressable onPress={onDelete} hitSlop={8}>
-        <Ionicons name="trash-outline" color={theme.danger} size={18} />
-      </Pressable>
-      <Ionicons name="chevron-forward" color={theme.textSecondary} size={14} />
-    </Pressable>
-  );
-}
 
 export default function ZoneDetailScreen() {
   const params = useLocalSearchParams<ZoneDetailParams>();
@@ -128,27 +77,17 @@ export default function ZoneDetailScreen() {
   // feuille de classement, mêmes sources que l'écran mission.
   const { data: missionPhotos = [] } = useMissionPhotos(missionId);
 
-  const {
-    data: observations = [],
-    isLoading: isLoadingObservations,
-    error: observationsError,
-  } = useZoneObservations(zoneId);
-
   const createPhotoMutation = useCreatePhoto(missionId);
-  const deleteObservationMutation = useDeleteObservation();
   const { capture, isCapturing } = usePhotoCapture();
 
-  const isLoading = isLoadingTree || isLoadingPhotos || isLoadingObservations;
+  const isLoading = isLoadingTree || isLoadingPhotos;
 
   const canCapture = missionStatus === "EN_COURS";
 
   const unclassifiedCount = useMemo(
     () =>
       missionPhotos.filter(
-        (photo) =>
-          !photo.zoneId &&
-          !photo.observationId &&
-          !photo.id.startsWith("pending-"),
+        (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
       ).length,
     [missionPhotos],
   );
@@ -166,7 +105,7 @@ export default function ZoneDetailScreen() {
         err instanceof ApiError
           ? err.message
           : "Impossible d'envoyer la photo. Vérifie ta connexion.";
-      addPending({ missionId, zoneId, observationId: null, uri });
+      addPending({ missionId, zoneId, uri });
       setUploadError(message);
       logger.error("Photos", "Échec upload photo zone", { zoneId, message });
     }
@@ -174,63 +113,6 @@ export default function ZoneDetailScreen() {
 
   const handlePhotoPress = (photo: Photo) => {
     setViewedPhoto(photo);
-  };
-
-  const handleObservationPress = (observation: Observation) => {
-    router.push({
-      pathname: "/observations/[observationId]",
-      params: {
-        observationId: observation.id,
-        buildingId,
-        missionId,
-        missionStatus,
-      },
-    });
-  };
-
-  const handleDeleteObservation = (observation: Observation) => {
-    Alert.alert(
-      "Supprimer l'observation",
-      "Les photos et mesures liées seront détachées mais conservées. Cette action est définitive.",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteObservationMutation.mutateAsync(observation.id);
-              logger.info(
-                "Observations",
-                "Observation supprimée depuis la zone",
-                {
-                  id: observation.id,
-                  zoneId,
-                },
-              );
-            } catch (err) {
-              const message =
-                err instanceof ApiError
-                  ? err.message
-                  : "Impossible de supprimer l'observation";
-              Alert.alert("Erreur", message);
-              logger.error(
-                "Observations",
-                "Échec de suppression d'observation",
-                { id: observation.id, message },
-              );
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleCreateObservation = () => {
-    router.push({
-      pathname: "/observations/observation-form",
-      params: { zoneId, zoneName: node?.name },
-    });
   };
 
   const renderError = (err: unknown, label: string) =>
@@ -337,46 +219,6 @@ export default function ZoneDetailScreen() {
                           }
                           loading={createPhotoMutation.isPending}
                           loadingLabel="Envoi..."
-                        />
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {activeTab === "observations" && (
-                  <View className="mb-four">
-                    {renderError(
-                      observationsError,
-                      "Impossible de charger les observations",
-                    )}
-                    {isLoadingObservations ? (
-                      <ThemedText type="small" themeColor="textSecondary">
-                        Chargement...
-                      </ThemedText>
-                    ) : observations.length === 0 ? (
-                      <ThemedText type="small" themeColor="textSecondary">
-                        Aucune observation sur cette zone
-                      </ThemedText>
-                    ) : (
-                      <View className="gap-two">
-                        {observations.map((observation) => (
-                          <ObservationRow
-                            key={observation.id}
-                            observation={observation}
-                            onPress={() => handleObservationPress(observation)}
-                            onDelete={() =>
-                              handleDeleteObservation(observation)
-                            }
-                          />
-                        ))}
-                      </View>
-                    )}
-                    {canCapture && (
-                      <View className="mt-two">
-                        <PrimaryButton
-                          label="Ajouter une observation"
-                          icon="add-circle-outline"
-                          onPress={handleCreateObservation}
                         />
                       </View>
                     )}

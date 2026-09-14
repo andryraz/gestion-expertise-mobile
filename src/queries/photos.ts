@@ -5,7 +5,6 @@ import {
   createPhoto,
   deletePhoto,
   getMissionPhotos,
-  getObservationPhotos,
   getZonePhotos,
 } from "@/services/photo-services";
 import type {
@@ -19,8 +18,6 @@ export const photosKeys = {
   mission: (missionId: string) =>
     [...photosKeys.all, "mission", missionId] as const,
   zone: (zoneId: string) => [...photosKeys.all, "zone", zoneId] as const,
-  observation: (observationId: string) =>
-    [...photosKeys.all, "observation", observationId] as const,
 };
 
 export function useMissionPhotos(missionId: string) {
@@ -39,27 +36,20 @@ export function useZonePhotos(zoneId: string) {
   });
 }
 
-// ObservationDetailScreen (à implémenter plus tard) : galerie d'une observation
-export function useObservationPhotos(observationId: string) {
-  return useQuery({
-    queryKey: photosKeys.observation(observationId),
-    queryFn: () => getObservationPhotos(observationId),
-    enabled: !!observationId,
-  });
-}
-
 /**
  * Construit un placeholder optimiste à partir de la requête d'upload.
  * `filePath` pointe vers l'URI locale (file://) en attendant la réponse
  * du serveur : l'aperçu s'affiche instantanément dans la galerie.
  */
-function buildPlaceholder(missionId: string, payload: UploadPhotoPayload): Photo {
+function buildPlaceholder(
+  missionId: string,
+  payload: UploadPhotoPayload,
+): Photo {
   const now = new Date().toISOString();
   return {
     id: `pending-${payload.uri}-${now}`,
     missionId,
     zoneId: payload.zoneId ?? null,
-    observationId: payload.observationId ?? null,
     filePath: payload.uri,
     annotations: null,
     takenAt: now,
@@ -71,7 +61,7 @@ function buildPlaceholder(missionId: string, payload: UploadPhotoPayload): Photo
 /**
  * Upload d'une photo avec placeholder optimiste :
  * - la photo apparaît immédiatement dans les galeries concernées
- *   (mission / zone / observation) avec son URI locale ;
+ *   (mission / zone) avec son URI locale ;
  * - en cas d'échec réseau, le placeholder est retiré (rollback) et
  *   l'URI locale est conservée par l'appelant pour relancer l'upload
  *   sans reprendre la photo.
@@ -95,9 +85,6 @@ export function useCreatePhoto(missionId: string) {
       const candidateKeys = [
         photosKeys.mission(missionId),
         ...(payload.zoneId ? [photosKeys.zone(payload.zoneId)] : []),
-        ...(payload.observationId
-          ? [photosKeys.observation(payload.observationId)]
-          : []),
       ];
 
       const snapshots: {
@@ -164,9 +151,9 @@ export function useAttachPhoto(missionId: string) {
       payload: AttachPhotoPayload;
     }) => attachPhoto(photoId, payload),
     onSuccess: (updated) => {
-      // La photo a (peut-être) changé de zone/observation : toutes les
-      // galeries doivent se resynchroniser, y compris l'ancienne zone qui
-      // ne doit plus afficher la photo.
+      // La photo a (peut-être) changé de zone : toutes les galeries
+      // doivent se resynchroniser, y compris l'ancienne zone qui ne
+      // doit plus afficher la photo.
       queryClient.invalidateQueries({ queryKey: photosKeys.all });
       void updated;
     },

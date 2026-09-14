@@ -2,7 +2,6 @@ export type Photo = {
   id: string;
   missionId: string;
   zoneId: string | null;
-  observationId: string | null;
   filePath: string;
   annotations?: {
     orientation?: string;
@@ -17,14 +16,12 @@ export type Photo = {
 export type UploadPhotoPayload = {
   uri: string;
   zoneId?: string | null;
-  observationId?: string | null;
   caption?: string;
   annotation?: string;
 };
 
 export type AttachPhotoPayload = {
   zoneId?: string | null;
-  observationId?: string | null;
 };
 
 export type UpdatePhotoPayload = {
@@ -35,7 +32,6 @@ export type PendingPhoto = {
   localId: string;
   missionId: string;
   zoneId: string | null;
-  observationId: string | null;
   uri: string;
   failedAt: string;
 };

@@ -42,8 +42,7 @@ export function UnclassifiedPhotosSheet({
   const removePending = usePendingPhotosStore((state) => state.removePending);
 
   const unclassified = photos.filter(
-    (photo) =>
-      !photo.zoneId && !photo.observationId && !photo.id.startsWith("pending-"),
+    (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
   );
 
   const missionPending = pending.filter((p) => p.missionId === missionId);
@@ -53,7 +52,6 @@ export function UnclassifiedPhotosSheet({
       await createPhotoMutation.mutateAsync({
         uri: pendingPhoto.uri,
         zoneId: pendingPhoto.zoneId,
-        observationId: pendingPhoto.observationId,
       });
       removePending(pendingPhoto.localId);
       logger.info("Photos", "Upload relancé avec succès", {
@@ -72,17 +70,16 @@ export function UnclassifiedPhotosSheet({
     }
   };
 
-  const handleAttach = async (zoneId: string, observationId: string | null) => {
+  const handleAttach = async (zoneId: string) => {
     if (!attachTarget) return;
     try {
       await attachMutation.mutateAsync({
         photoId: attachTarget.id,
-        payload: { zoneId, observationId },
+        payload: { zoneId },
       });
       logger.info("Photos", "Photo classée", {
         photoId: attachTarget.id,
         zoneId,
-        observationId,
       });
       setAttachTarget(null);
     } catch (err) {

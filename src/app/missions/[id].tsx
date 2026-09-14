@@ -99,10 +99,7 @@ export default function MissionDetailScreen() {
   const unclassifiedCount = useMemo(
     () =>
       photos.filter(
-        (photo) =>
-          !photo.zoneId &&
-          !photo.observationId &&
-          !photo.id.startsWith("pending-"),
+        (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
       ).length,
     [photos],
   );
@@ -123,7 +120,7 @@ export default function MissionDetailScreen() {
         err instanceof ApiError
           ? err.message
           : "Impossible d'envoyer la photo. Vérifie ta connexion.";
-      addPending({ missionId: id, zoneId: null, observationId: null, uri });
+      addPending({ missionId: id, zoneId: null, uri });
       setUploadError(message);
       setShowUnclassified(true);
       logger.error("Photos", "Échec upload photo libre", {

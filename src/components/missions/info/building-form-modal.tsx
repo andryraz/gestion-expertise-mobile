@@ -57,7 +57,9 @@ export function BuildingFormModal({
 
   const [name, setName] = React.useState(building?.name ?? "");
   const [address, setAddress] = React.useState(building?.address ?? "");
-  const [buildingType, setBuildingType] = React.useState(building?.buildingType ?? "");
+  const [buildingType, setBuildingType] = React.useState(
+    building?.buildingType ?? "",
+  );
   const [lat, setLat] = React.useState(
     building?.gpsLat != null ? String(building.gpsLat) : "",
   );
@@ -118,7 +120,9 @@ export function BuildingFormModal({
           gpsLng: lngNum !== undefined && !Number.isNaN(lngNum) ? lngNum : null,
         };
         const updated = await updateBuilding(building.id, payload);
-        onSaved(currentBuildings.map((b) => (b.id === updated.id ? updated : b)));
+        onSaved(
+          currentBuildings.map((b) => (b.id === updated.id ? updated : b)),
+        );
       } else {
         const payload: CreateBuildingPayload = {
           name: name.trim(),
@@ -148,7 +152,7 @@ export function BuildingFormModal({
     if (!building) return;
     Alert.alert(
       "Supprimer ce bâtiment ?",
-      `"${building.name}" ainsi que ses zones et observations seront définitivement supprimés.`,
+      `"${building.name}" ainsi que ses zones seront définitivement supprimés.`,
       [
         { text: "Annuler", style: "cancel" },
         {
@@ -196,9 +200,7 @@ export function BuildingFormModal({
               className="text-xl flex-1"
               themeColor="accent"
             >
-              {mode === "edit"
-                ? "Modifier le bâtiment"
-                : "Nouveau bâtiment"}
+              {mode === "edit" ? "Modifier le bâtiment" : "Nouveau bâtiment"}
             </ThemedText>
           </View>
 

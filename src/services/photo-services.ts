@@ -19,19 +19,12 @@ export function getZonePhotos(zoneId: string) {
   return apiRequest<Photo[]>(`/zones/${zoneId}/photos`, { auth: true });
 }
 
-export function getObservationPhotos(observationId: string) {
-  return apiRequest<Photo[]>(`/observations/${observationId}/photos`, {
-    auth: true,
-  });
-}
-
 export function createPhoto(missionId: string, payload: UploadPhotoPayload) {
   return uploadPhotoFile(
     `/missions/${missionId}/photos`,
     {
       uri: payload.uri,
       zoneId: payload.zoneId ?? undefined,
-      observationId: payload.observationId ?? undefined,
       caption: payload.caption,
       annotation: payload.annotation,
     },
@@ -74,7 +67,6 @@ async function uploadPhotoFile(
   payload: {
     uri: string;
     zoneId?: string;
-    observationId?: string;
     caption?: string;
     annotation?: string;
   },
@@ -104,9 +96,6 @@ async function uploadPhotoFile(
       uploadType: UploadType.MULTIPART,
       parameters: {
         ...(payload.zoneId ? { zoneId: payload.zoneId } : {}),
-        ...(payload.observationId
-          ? { observationId: payload.observationId }
-          : {}),
         ...(payload.caption ? { caption: payload.caption } : {}),
         ...(payload.annotation ? { annotation: payload.annotation } : {}),
       },
@@ -140,6 +129,10 @@ async function uploadPhotoFile(
     );
   }
 
-  logger.debug("API", `← ${result.status} ${method} ${path} (photo upload)`, "OK");
+  logger.debug(
+    "API",
+    `← ${result.status} ${method} ${path} (photo upload)`,
+    "OK",
+  );
   return data as Photo;
 }

@@ -13,7 +13,6 @@ import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { ZONE_TYPE_ICONS } from "@/constants/zone-labels";
 import { useTheme } from "@/hooks/use-theme";
-import { useZoneObservations } from "@/queries/observations";
 import { useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
 import type { ZoneTreeNode } from "@/types/zone";
@@ -24,7 +23,7 @@ type PhotoAttachModalProps = {
   buildingId: string | null;
   isAttaching?: boolean;
   onClose: () => void;
-  onAttach: (zoneId: string, observationId: string | null) => Promise<void>;
+  onAttach: (zoneId: string) => Promise<void>;
 };
 
 export function PhotoAttachModal({
@@ -38,9 +37,6 @@ export function PhotoAttachModal({
 
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [selectedZoneName, setSelectedZoneName] = useState<string | null>(null);
-  const [selectedObservationId, setSelectedObservationId] = useState<
-    string | null
-  >(null);
 
   const {
     data: tree = [],
@@ -48,13 +44,9 @@ export function PhotoAttachModal({
     error: treeError,
   } = useZonesTree(buildingId ?? "");
 
-  const { data: observations = [], isLoading: isLoadingObservations } =
-    useZoneObservations(selectedZoneId ?? "");
-
   const reset = () => {
     setSelectedZoneId(null);
     setSelectedZoneName(null);
-    setSelectedObservationId(null);
   };
 
   const handleClose = () => {
@@ -65,12 +57,11 @@ export function PhotoAttachModal({
   const handleSelectZone = (zone: ZoneTreeNode) => {
     setSelectedZoneId(zone.id);
     setSelectedZoneName(zone.name);
-    setSelectedObservationId(null);
   };
 
   const handleConfirm = async () => {
     if (!selectedZoneId) return;
-    await onAttach(selectedZoneId, selectedObservationId);
+    await onAttach(selectedZoneId);
   };
 
   const options = flattenTree(tree);
@@ -96,7 +87,7 @@ export function PhotoAttachModal({
               Classer la photo
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              Choisis une zone, puis éventuellement une observation
+              Choisis une zone
             </ThemedText>
           </View>
         </View>
@@ -135,7 +126,6 @@ export function PhotoAttachModal({
                     onPress={() => {
                       setSelectedZoneId(null);
                       setSelectedZoneName(null);
-                      setSelectedObservationId(null);
                     }}
                     hitSlop={8}
                   >
@@ -189,67 +179,6 @@ export function PhotoAttachModal({
                 );
               }}
             />
-
-            {selectedZoneId && (
-              <View className="px-four pb-two">
-                <ThemedText
-                  type="eyebrow"
-                  themeColor="accent"
-                  className="mb-one"
-                >
-                  Rattacher à une observation (optionnel)
-                </ThemedText>
-                {isLoadingObservations ? (
-                  <ActivityIndicator
-                    color={theme.textSecondary}
-                    style={{ paddingVertical: 12 }}
-                  />
-                ) : observations.length === 0 ? (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Aucune observation sur cette zone — la photo sera rattachée
-                    à la zone seule.
-                  </ThemedText>
-                ) : (
-                  <View className="gap-one">
-                    {observations.map((observation) => {
-                      const isSelected =
-                        selectedObservationId === observation.id;
-                      return (
-                        <Pressable
-                          key={observation.id}
-                          onPress={() =>
-                            setSelectedObservationId(
-                              isSelected ? null : observation.id,
-                            )
-                          }
-                          className={[
-                            "flex-row items-center gap-two rounded-two px-three py-two",
-                            isSelected
-                              ? "bg-background-selected dark:bg-background-selected-dark"
-                              : "bg-background-element dark:bg-background-element-dark",
-                          ].join(" ")}
-                        >
-                          <Ionicons
-                            name={isSelected ? "checkbox" : "square-outline"}
-                            color={
-                              isSelected ? theme.accent : theme.textSecondary
-                            }
-                            size={16}
-                          />
-                          <ThemedText
-                            type="small"
-                            className="flex-1"
-                            numberOfLines={2}
-                          >
-                            {observation.description}
-                          </ThemedText>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                )}
-              </View>
-            )}
 
             <View className="border-t border-border px-four py-three dark:border-border-dark">
               <PrimaryButton
