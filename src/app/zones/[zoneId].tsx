@@ -1,12 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import {
+  SegmentedControl,
+  type TabOption,
+} from "@/components/missions/segmented-control";
 import { CaptureFab } from "@/components/photos";
-import { PhotoViewerModal } from "@/components/photos/photo-viewer-modal";
 import { PhotoGrid } from "@/components/photos/photo-thumbnail";
+import { PhotoViewerModal } from "@/components/photos/photo-viewer-modal";
+import { UnclassifiedPhotosSheet } from "@/components/photos/unclassified-photos-sheet";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -20,8 +25,15 @@ import {
 import { ZONE_TYPE_ICONS, ZONE_TYPE_LABELS } from "@/constants/zone-labels";
 import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
-import { useDeleteObservation, useZoneObservations } from "@/queries/observations";
-import { useCreatePhoto, useZonePhotos } from "@/queries/photos";
+import {
+  useDeleteObservation,
+  useZoneObservations,
+} from "@/queries/observations";
+import {
+  useCreatePhoto,
+  useMissionPhotos,
+  useZonePhotos,
+} from "@/queries/photos";
 import { useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
 import { usePendingPhotosStore } from "@/store/pending-photos-store";
@@ -36,6 +48,15 @@ type ZoneDetailParams = {
   zoneId: string;
   missionStatus?: string;
 };
+
+type ZoneTabKey = "fiche" | "observations" | "photos" | "mesures";
+
+const ZONE_TABS: TabOption[] = [
+  { key: "fiche", label: "Fiche" },
+  { key: "observations", label: "Observations" },
+  { key: "photos", label: "Photos" },
+  { key: "mesures", label: "Mesures", disabled: true },
+];
 
 function ObservationRow({
   observation,
@@ -54,9 +75,10 @@ function ObservationRow({
       className="flex-row items-center gap-two rounded-three border border-border dark:border-border-dark bg-background-element dark:bg-background-element-dark px-three py-two active:opacity-80"
     >
       <View
-        className={["rounded-five px-two py-half", OBSERVATION_SEVERITY_BG[observation.severity]].join(
-          " ",
-        )}
+        className={[
+          "rounded-five px-two py-half",
+          OBSERVATION_SEVERITY_BG[observation.severity],
+        ].join(" ")}
       >
         <ThemedText
           type="eyebrow"
@@ -71,11 +93,7 @@ function ObservationRow({
       <Pressable onPress={onDelete} hitSlop={8}>
         <Ionicons name="trash-outline" color={theme.danger} size={18} />
       </Pressable>
-      <Ionicons
-        name="chevron-forward"
-        color={theme.textSecondary}
-        size={14}
-      />
+      <Ionicons name="chevron-forward" color={theme.textSecondary} size={14} />
     </Pressable>
   );
 }
@@ -85,6 +103,8 @@ export default function ZoneDetailScreen() {
   const { buildingId, missionId, zoneId, missionStatus } = params;
   const theme = useTheme();
 
+  const [activeTab, setActiveTab] = useState<ZoneTabKey>("fiche");
+  const [showUnclassified, setShowUnclassified] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [viewedPhoto, setViewedPhoto] = useState<Photo | null>(null);
 
@@ -104,6 +124,10 @@ export default function ZoneDetailScreen() {
     error: photosError,
   } = useZonePhotos(zoneId);
 
+  // Photos de la mission : pour le badge « Photos non classées » et la
+  // feuille de classement, mêmes sources que l'écran mission.
+  const { data: missionPhotos = [] } = useMissionPhotos(missionId);
+
   const {
     data: observations = [],
     isLoading: isLoadingObservations,
@@ -117,6 +141,17 @@ export default function ZoneDetailScreen() {
   const isLoading = isLoadingTree || isLoadingPhotos || isLoadingObservations;
 
   const canCapture = missionStatus === "EN_COURS";
+
+  const unclassifiedCount = useMemo(
+    () =>
+      missionPhotos.filter(
+        (photo) =>
+          !photo.zoneId &&
+          !photo.observationId &&
+          !photo.id.startsWith("pending-"),
+      ).length,
+    [missionPhotos],
+  );
 
   const handleCapture = async () => {
     setUploadError(null);
@@ -146,6 +181,7 @@ export default function ZoneDetailScreen() {
       pathname: "/observations/[observationId]",
       params: {
         observationId: observation.id,
+        buildingId,
         missionId,
         missionStatus,
       },
@@ -164,10 +200,14 @@ export default function ZoneDetailScreen() {
           onPress: async () => {
             try {
               await deleteObservationMutation.mutateAsync(observation.id);
-              logger.info("Observations", "Observation supprimée depuis la zone", {
-                id: observation.id,
-                zoneId,
-              });
+              logger.info(
+                "Observations",
+                "Observation supprimée depuis la zone",
+                {
+                  id: observation.id,
+                  zoneId,
+                },
+              );
             } catch (err) {
               const message =
                 err instanceof ApiError
@@ -199,8 +239,6 @@ export default function ZoneDetailScreen() {
         {err instanceof ApiError ? err.message : label}
       </ThemedText>
     ) : null;
-
-  const directChildren = node?.children ?? [];
 
   return (
     <ThemedView className="flex-1">
@@ -249,162 +287,103 @@ export default function ZoneDetailScreen() {
           {renderError(treeError, "Impossible de charger la zone")}
 
           {node && !isLoadingTree && (
-            <ScrollView
-              className="flex-1"
-              contentContainerClassName="px-four pb-40"
-              showsVerticalScrollIndicator={false}
-            >
-              <View className="mb-four">
-                <ThemedText
-                  type="eyebrow"
-                  themeColor="accent"
-                  className="mb-two"
-                >
-                  Sous-zones
-                </ThemedText>
-                {directChildren.length === 0 ? (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Aucune sous-zone
-                  </ThemedText>
-                ) : (
-                  <View className="gap-one">
-                    {directChildren.map((child) => (
-                      <Pressable
-                        key={child.id}
-                        onPress={() =>
-                          router.push({
-                            pathname: "/zones/[zoneId]" as any,
-                            params: {
-                              buildingId,
-                              missionId,
-                              zoneId: child.id,
-                              missionStatus,
-                            },
-                          })
-                        }
-                        className="flex-row items-center gap-two rounded-two bg-background-element dark:bg-background-element-dark px-three py-two active:opacity-70"
-                      >
-                        <Ionicons
-                          name={ZONE_TYPE_ICONS[child.zoneType]}
-                          color={theme.textSecondary}
-                          size={16}
-                        />
-                        <ThemedText type="smallBold" className="flex-1">
-                          {child.name}
-                        </ThemedText>
-                        <Ionicons
-                          name="chevron-forward"
-                          color={theme.textSecondary}
-                          size={14}
-                        />
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
-              </View>
-
-              <ZoneTechnicalSheetSection
-                zoneId={zoneId}
-                buildingId={buildingId}
-                missionStatus={missionStatus}
-              />
-
-              <View className="mb-four">
-                <ThemedText
-                  type="eyebrow"
-                  themeColor="accent"
-                  className="mb-two"
-                >
-                  Photos
-                </ThemedText>
-                {renderError(photosError, "Impossible de charger les photos")}
-                {isLoadingPhotos ? (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Chargement...
-                  </ThemedText>
-                ) : (
-                  <PhotoGrid
-                    photos={photos}
-                    emptyLabel="Aucune photo pour cette zone"
-                    onPhotoPress={handlePhotoPress}
-                  />
-                )}
-                {canCapture && (
-                  <View className="mt-two">
-                    <PrimaryButton
-                      label="Capturer une photo ici"
-                      icon="camera-outline"
-                      onPress={handleCapture}
-                      disabled={isCapturing || createPhotoMutation.isPending}
-                      loading={createPhotoMutation.isPending}
-                      loadingLabel="Envoi..."
-                    />
-                  </View>
-                )}
-
-                <PhotoViewerModal
-                  photo={viewedPhoto}
-                  missionId={missionId}
-                  onClose={() => setViewedPhoto(null)}
+            <>
+              <View className="pb-three">
+                <SegmentedControl
+                  options={ZONE_TABS}
+                  value={activeTab}
+                  onChange={(key) => setActiveTab(key as ZoneTabKey)}
                 />
               </View>
 
-              <View className="mb-four">
-                <ThemedText
-                  type="eyebrow"
-                  themeColor="accent"
-                  className="mb-two"
-                >
-                  Observations
-                </ThemedText>
-                {renderError(
-                  observationsError,
-                  "Impossible de charger les observations",
+              <ScrollView
+                className="flex-1"
+                contentContainerClassName="px-four pb-40"
+                showsVerticalScrollIndicator={false}
+              >
+                {activeTab === "fiche" && (
+                  <ZoneTechnicalSheetSection
+                    zoneId={zoneId}
+                    buildingId={buildingId}
+                    missionStatus={missionStatus}
+                  />
                 )}
-                {isLoadingObservations ? (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Chargement...
-                  </ThemedText>
-                ) : observations.length === 0 ? (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Aucune observation sur cette zone
-                  </ThemedText>
-                ) : (
-                  <View className="gap-two">
-                    {observations.map((observation) => (
-                      <ObservationRow
-                        key={observation.id}
-                        observation={observation}
-                        onPress={() => handleObservationPress(observation)}
-                        onDelete={() => handleDeleteObservation(observation)}
-                      />
-                    ))}
-                  </View>
-                )}
-                {canCapture && (
-                  <View className="mt-two">
-                    <PrimaryButton
-                      label="Ajouter une observation"
-                      icon="add-circle-outline"
-                      onPress={handleCreateObservation}
-                    />
-                  </View>
-                )}
-              </View>
 
-              <View className="mb-four">
-                <ThemedText
-                  type="eyebrow"
-                  themeColor="accent"
-                  className="mb-two"
-                >
-                  Mesures
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Les mesures seront disponibles prochainement.
-                </ThemedText>
-              </View>
-            </ScrollView>
+                {activeTab === "photos" && (
+                  <View className="mb-four">
+                    {renderError(
+                      photosError,
+                      "Impossible de charger les photos",
+                    )}
+                    {isLoadingPhotos ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        Chargement...
+                      </ThemedText>
+                    ) : (
+                      <PhotoGrid
+                        photos={photos}
+                        emptyLabel="Aucune photo pour cette zone"
+                        onPhotoPress={handlePhotoPress}
+                      />
+                    )}
+                    {canCapture && (
+                      <View className="mt-two">
+                        <PrimaryButton
+                          label="Capturer une photo ici"
+                          icon="camera-outline"
+                          onPress={handleCapture}
+                          disabled={
+                            isCapturing || createPhotoMutation.isPending
+                          }
+                          loading={createPhotoMutation.isPending}
+                          loadingLabel="Envoi..."
+                        />
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {activeTab === "observations" && (
+                  <View className="mb-four">
+                    {renderError(
+                      observationsError,
+                      "Impossible de charger les observations",
+                    )}
+                    {isLoadingObservations ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        Chargement...
+                      </ThemedText>
+                    ) : observations.length === 0 ? (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        Aucune observation sur cette zone
+                      </ThemedText>
+                    ) : (
+                      <View className="gap-two">
+                        {observations.map((observation) => (
+                          <ObservationRow
+                            key={observation.id}
+                            observation={observation}
+                            onPress={() => handleObservationPress(observation)}
+                            onDelete={() =>
+                              handleDeleteObservation(observation)
+                            }
+                          />
+                        ))}
+                      </View>
+                    )}
+                    {canCapture && (
+                      <View className="mt-two">
+                        <PrimaryButton
+                          label="Ajouter une observation"
+                          icon="add-circle-outline"
+                          onPress={handleCreateObservation}
+                        />
+                      </View>
+                    )}
+                  </View>
+                )}
+              </ScrollView>
+            </>
           )}
 
           {uploadError && (
@@ -435,9 +414,28 @@ export default function ZoneDetailScreen() {
           {canCapture && (
             <CaptureFab
               onPress={handleCapture}
+              onLongPress={() => setShowUnclassified(true)}
+              badgeCount={unclassifiedCount}
               disabled={isCapturing || createPhotoMutation.isPending}
             />
           )}
+
+          <UnclassifiedPhotosSheet
+            visible={showUnclassified}
+            missionId={missionId}
+            buildingId={buildingId}
+            photos={missionPhotos}
+            onClose={() => {
+              setShowUnclassified(false);
+              setUploadError(null);
+            }}
+          />
+
+          <PhotoViewerModal
+            photo={viewedPhoto}
+            missionId={missionId}
+            onClose={() => setViewedPhoto(null)}
+          />
         </ScreenFade>
       </SafeAreaView>
     </ThemedView>

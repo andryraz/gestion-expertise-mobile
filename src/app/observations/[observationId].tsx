@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CaptureFab, PhotoViewerModal } from "@/components/photos";
 import { PhotoGrid } from "@/components/photos/photo-thumbnail";
+import { UnclassifiedPhotosSheet } from "@/components/photos/unclassified-photos-sheet";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -20,7 +21,11 @@ import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
 import { useDisorderTypes } from "@/queries/disorder-types";
 import { useDeleteObservation, useObservation } from "@/queries/observations";
-import { useCreatePhoto, useObservationPhotos } from "@/queries/photos";
+import {
+  useCreatePhoto,
+  useMissionPhotos,
+  useObservationPhotos,
+} from "@/queries/photos";
 import { ApiError } from "@/services/api-client";
 import { usePendingPhotosStore } from "@/store/pending-photos-store";
 import type { Photo } from "@/types/photo";
@@ -30,6 +35,8 @@ type ObservationDetailParams = {
   observationId: string;
   /** Requis pour l'upload photo (POST /missions/{missionId}/photos). */
   missionId?: string;
+  /** Requis pour le classement des photos libres vers une zone. */
+  buildingId?: string;
   missionStatus?: string;
 };
 
@@ -40,11 +47,12 @@ type ObservationDetailParams = {
  */
 export default function ObservationDetailScreen() {
   const params = useLocalSearchParams<ObservationDetailParams>();
-  const { observationId, missionId, missionStatus } = params;
+  const { observationId, missionId, buildingId, missionStatus } = params;
   const theme = useTheme();
 
   const [viewedPhoto, setViewedPhoto] = useState<Photo | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showUnclassified, setShowUnclassified] = useState(false);
 
   const {
     data: observation,
@@ -53,6 +61,10 @@ export default function ObservationDetailScreen() {
   } = useObservation(observationId);
 
   const { data: photos = [] } = useObservationPhotos(observationId);
+
+  // Photos de la mission : pour le badge « Photos non classées » et la
+  // feuille de classement, mêmes sources que l'écran mission.
+  const { data: missionPhotos = [] } = useMissionPhotos(missionId ?? "");
 
   // Le backend peut ne pas inclure le type de désordre imbriqué dans le
   // détail : on retombe sur la liste complète (pas de pagination).
@@ -72,6 +84,17 @@ export default function ObservationDetailScreen() {
   const addPending = usePendingPhotosStore((state) => state.addPending);
 
   const canCapture = !!missionId && missionStatus === "EN_COURS";
+
+  const unclassifiedCount = useMemo(
+    () =>
+      missionPhotos.filter(
+        (photo) =>
+          !photo.zoneId &&
+          !photo.observationId &&
+          !photo.id.startsWith("pending-"),
+      ).length,
+    [missionPhotos],
+  );
 
   const handleCapture = async () => {
     if (!observation || !missionId) return;
@@ -385,9 +408,22 @@ export default function ObservationDetailScreen() {
           {canCapture && (
             <CaptureFab
               onPress={handleCapture}
+              onLongPress={() => setShowUnclassified(true)}
+              badgeCount={unclassifiedCount}
               disabled={isCapturing || createPhotoMutation.isPending}
             />
           )}
+
+          <UnclassifiedPhotosSheet
+            visible={showUnclassified}
+            missionId={missionId ?? ""}
+            buildingId={buildingId ?? null}
+            photos={missionPhotos}
+            onClose={() => {
+              setShowUnclassified(false);
+              setUploadError(null);
+            }}
+          />
 
           <PhotoViewerModal
             photo={viewedPhoto}

@@ -1,19 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BuildingTechnicalSheetTab } from "@/components/buildings/technical-sheet/building-technical-sheet-tab";
+import {
+  SegmentedControl,
+  type TabOption,
+} from "@/components/missions/segmented-control";
 import { ZoneContextMenu } from "@/components/missions/zones/zone-context-menu";
 import { ZoneNode } from "@/components/missions/zones/zone-node";
+import { UnclassifiedPhotosSheet } from "@/components/photos/unclassified-photos-sheet";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
+import { useCreatePhoto, useMissionPhotos } from "@/queries/photos";
 import { useDeleteZone, useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
 import { getBuilding } from "@/services/building-services";
+import { usePendingPhotosStore } from "@/store/pending-photos-store";
 import type { Building } from "@/types/building";
 import type { ZoneTreeNode } from "@/types/zone";
 import { logger } from "@/utils/logger";
@@ -26,14 +35,27 @@ type TreeParams = {
   missionStatus?: string;
 };
 
+type BuildingTabKey = "zones" | "fiche" | "mesures";
+
+const BUILDING_TABS: TabOption[] = [
+  { key: "zones", label: "Zones" },
+  { key: "fiche", label: "Fiche technique" },
+  { key: "mesures", label: "Mesures", disabled: true },
+];
+
 export default function ZonesTreeScreen() {
   const { buildingId, isArchived, missionId, missionStatus } =
     useLocalSearchParams<TreeParams>();
   const archived = isArchived === "true";
   const theme = useTheme();
 
+  const [activeTab, setActiveTab] = useState<BuildingTabKey>("zones");
   const [building, setBuilding] = useState<Building | null>(null);
   const [menuZone, setMenuZone] = useState<ZoneTreeNode | null>(null);
+  const [showUnclassified, setShowUnclassified] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const addPending = usePendingPhotosStore((state) => state.addPending);
 
   const {
     data: tree = [],
@@ -42,6 +64,23 @@ export default function ZonesTreeScreen() {
     refetch,
   } = useZonesTree(buildingId);
   const deleteZoneMutation = useDeleteZone(buildingId);
+
+  // Photos de la mission : pour le badge « Photos non classées » et pour la
+  // feuille de classement, mêmes sources que l'écran mission.
+  const { data: photos = [] } = useMissionPhotos(missionId ?? "");
+  const createPhotoMutation = useCreatePhoto(missionId ?? "");
+  const { capture, isCapturing } = usePhotoCapture();
+
+  const unclassifiedCount = useMemo(
+    () =>
+      photos.filter(
+        (photo) =>
+          !photo.zoneId &&
+          !photo.observationId &&
+          !photo.id.startsWith("pending-"),
+      ).length,
+    [photos],
+  );
 
   const error = queryError
     ? queryError instanceof ApiError
@@ -139,6 +178,33 @@ export default function ZonesTreeScreen() {
     [buildingId],
   );
 
+  const canCapture = !archived && missionStatus === "EN_COURS";
+
+  const handleCaptureFree = useCallback(async () => {
+    if (!missionId) return;
+    setUploadError(null);
+    const uri = await capture();
+    if (!uri) return;
+
+    try {
+      await createPhotoMutation.mutateAsync({ uri });
+      logger.info("Photos", "Photo capturée (libre)", { missionId });
+      setShowUnclassified(true);
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Impossible d'envoyer la photo. Vérifie ta connexion.";
+      addPending({ missionId, zoneId: null, observationId: null, uri });
+      setUploadError(message);
+      setShowUnclassified(true);
+      logger.error("Photos", "Échec upload photo libre", {
+        missionId,
+        message,
+      });
+    }
+  }, [addPending, capture, createPhotoMutation, missionId]);
+
   const handleDelete = useCallback(
     (zone: ZoneTreeNode) => {
       setMenuZone(null);
@@ -194,7 +260,7 @@ export default function ZonesTreeScreen() {
                 themeColor="textSecondary"
                 className="text-base"
               >
-                Zones du bâtiment
+                Bâtiment
               </ThemedText>
               <ThemedText
                 type="smallBold"
@@ -204,106 +270,144 @@ export default function ZonesTreeScreen() {
                 {building?.name ?? "Bâtiment"}
               </ThemedText>
             </View>
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/buildings/[buildingId]/technical-sheet" as any,
-                  params: {
-                    buildingId,
-                    isArchived: String(archived),
-                    missionStatus: missionStatus ?? "",
-                  },
-                })
-              }
-              hitSlop={8}
-              className="flex-row items-center gap-one rounded-three border border-border bg-background-element px-two py-two dark:border-border-dark dark:bg-background-element-dark"
-            >
-              <Ionicons
-                name="clipboard-outline"
-                color={theme.accent}
-                size={16}
-              />
-              <ThemedText type="small" themeColor="accent">
-                Fiche technique
-              </ThemedText>
-            </Pressable>
           </View>
 
-          {isLoading && (
-            <ThemedText themeColor="textSecondary" className="px-four py-four">
-              Chargement...
-            </ThemedText>
-          )}
+          <View className="pb-three">
+            <SegmentedControl
+              options={BUILDING_TABS}
+              value={activeTab}
+              onChange={(key) => setActiveTab(key as BuildingTabKey)}
+            />
+          </View>
 
-          {error && !isLoading && (
-            <ThemedText themeColor="danger" className="px-four py-four">
-              {error}
-            </ThemedText>
-          )}
-
-          {!isLoading && !error && tree.length === 0 && (
-            <View className="items-center px-four py-six">
-              <Ionicons
-                name="git-branch-outline"
-                color={theme.textSecondary}
-                size={32}
-              />
-              <ThemedText
-                themeColor="textSecondary"
-                className="mt-two text-center"
-              >
-                Aucune zone pour ce bâtiment
-              </ThemedText>
-              <ThemedText
-                type="small"
-                themeColor="textSecondary"
-                className="mt-one text-center"
-              >
-                Ajoutez un étage, une pièce, une façade...
-              </ThemedText>
-              {!archived && (
-                <Pressable
-                  onPress={handleAddRoot}
-                  className="mt-three flex-row items-center gap-one rounded-three bg-accent px-four py-two"
+          {activeTab === "zones" && (
+            <>
+              {isLoading && (
+                <ThemedText
+                  themeColor="textSecondary"
+                  className="px-four py-four"
                 >
-                  <Ionicons name="add" color={theme.background} size={16} />
-                  <ThemedText type="smallBold" themeColor="background">
-                    + Ajouter une zone racine
-                  </ThemedText>
-                </Pressable>
+                  Chargement...
+                </ThemedText>
               )}
-            </View>
+
+              {error && !isLoading && (
+                <ThemedText themeColor="danger" className="px-four py-four">
+                  {error}
+                </ThemedText>
+              )}
+
+              {!isLoading && !error && tree.length === 0 && (
+                <View className="items-center px-four py-six">
+                  <Ionicons
+                    name="git-branch-outline"
+                    color={theme.textSecondary}
+                    size={32}
+                  />
+                  <ThemedText
+                    themeColor="textSecondary"
+                    className="mt-two text-center"
+                  >
+                    Aucune zone pour ce bâtiment
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    themeColor="textSecondary"
+                    className="mt-one text-center"
+                  >
+                    Ajoutez un étage, une pièce, une façade...
+                  </ThemedText>
+                  {!archived && (
+                    <Pressable
+                      onPress={handleAddRoot}
+                      className="mt-three flex-row items-center gap-one rounded-three bg-accent px-four py-two"
+                    >
+                      <Ionicons name="add" color={theme.background} size={16} />
+                      <ThemedText type="smallBold" themeColor="background">
+                        + Ajouter une zone racine
+                      </ThemedText>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+
+              {!isLoading && !error && tree.length > 0 && (
+                <ScrollView
+                  className="flex-1"
+                  contentContainerClassName="px-four pb-20"
+                  showsVerticalScrollIndicator={false}
+                >
+                  {tree.map((root) => (
+                    <ZoneNode
+                      key={root.id}
+                      zone={root}
+                      depth={0}
+                      isArchived={archived}
+                      onMenuPress={setMenuZone}
+                      onZonePress={handleOpenZone}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+
+              {!isLoading && !error && tree.length > 0 && !archived && (
+                <View className="border-t border-border px-four py-three dark:border-border-dark">
+                  <PrimaryButton
+                    label="Ajouter une zone racine"
+                    icon="add"
+                    onPress={handleAddRoot}
+                  />
+                </View>
+              )}
+            </>
           )}
 
-          {!isLoading && !error && tree.length > 0 && (
-            <ScrollView
-              className="flex-1"
-              contentContainerClassName="px-four pb-20"
-              showsVerticalScrollIndicator={false}
-            >
-              {tree.map((root) => (
-                <ZoneNode
-                  key={root.id}
-                  zone={root}
-                  depth={0}
-                  isArchived={archived}
-                  onMenuPress={setMenuZone}
-                  onZonePress={handleOpenZone}
-                />
-              ))}
-            </ScrollView>
-          )}
-
-          {!isLoading && !error && tree.length > 0 && !archived && (
-            <View className="border-t border-border px-four py-three dark:border-border-dark">
-              <PrimaryButton
-                label="Ajouter une zone racine"
-                icon="add"
-                onPress={handleAddRoot}
+          {activeTab === "fiche" && (
+            <View className="flex-1 px-four">
+              <BuildingTechnicalSheetTab
+                buildingId={buildingId}
+                isArchived={archived}
+                missionStatus={missionStatus}
               />
             </View>
           )}
         </ScreenFade>
+
+        {uploadError && (
+          <View className="absolute bottom-24 left-four right-four rounded-three border border-danger/40 bg-danger/10 px-three py-two">
+            <View className="flex-row items-center gap-two">
+              <Ionicons
+                name="cloud-offline-outline"
+                color={theme.danger}
+                size={16}
+              />
+              <ThemedText type="small" themeColor="danger" className="flex-1">
+                {uploadError} La photo reste enregistrée dans « Photos non
+                classées » de la mission.
+              </ThemedText>
+            </View>
+            <Pressable
+              onPress={() => setUploadError(null)}
+              className="mt-one self-end"
+              hitSlop={8}
+            >
+              <ThemedText type="smallBold" themeColor="danger">
+                Fermer
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
+
+        <UnclassifiedPhotosSheet
+          visible={showUnclassified}
+          missionId={missionId ?? ""}
+          buildingId={buildingId}
+          photos={photos}
+          onClose={() => {
+            setShowUnclassified(false);
+            setUploadError(null);
+          }}
+        />
       </SafeAreaView>
 
       <ZoneContextMenu

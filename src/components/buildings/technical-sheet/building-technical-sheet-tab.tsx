@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 
@@ -9,22 +9,20 @@ import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/hooks/use-theme";
 import { queryClient } from "@/lib/query-client";
 import {
-  findSelectionByMaterialOptionId,
-  technicalSheetKeys,
-  useCopyFromParent,
-  useOuvrageCatalog,
-  useToggleTechnicalSelection,
-  useUpdateTechnicalSelection,
-  useZoneTechnicalSelections,
+    findSelectionByMaterialOptionId,
+    technicalSheetKeys,
+    useBuildingTechnicalSelections,
+    useOuvrageCatalog,
+    useToggleTechnicalSelection,
+    useUpdateTechnicalSelection,
 } from "@/queries/technical-sheets";
 import { ApiError } from "@/services/api-client";
 import type { FicheType, TechnicalSelection } from "@/types/technical-sheet";
 import { logger } from "@/utils/logger";
 
-type ZoneTechnicalSheetSectionProps = {
-  zoneId: string;
+type BuildingTechnicalSheetTabProps = {
   buildingId: string;
-  /** Statut de la mission : édition réservée à EN_COURS. */
+  isArchived: boolean;
   missionStatus?: string;
 };
 
@@ -44,58 +42,46 @@ const NOTE_PLACEHOLDERS: Record<FicheType, string> = {
 };
 
 /**
- * Fiche technique d'une zone (n'importe quelle profondeur de sous-zone) :
- * mêmes accords catalogues / cases / notes que la fiche du bâtiment, mais
- * les sélections sont propres à la zone. L'héritage du niveau au-dessus
- * (zone parente, ou bâtiment pour une zone racine) se fait par copie
- * explicite, déclenchée automatiquement à chaque ouverture de la fiche
- * (pas de bouton manuel : l'utilisateur n'a rien à faire).
+ * Fiche technique du bâtiment (racine de la hiérarchie : contrairement
+ * aux zones, il n'y a pas de niveau parent dont copier les sélections).
+ * Onglet de l'écran Bâtiment (option A) : monté uniquement quand
+ * l'onglet « Fiche technique » est actif, comme les onglets de
+ * MissionDetailScreen.
  */
-export function ZoneTechnicalSheetSection({
-  zoneId,
+export function BuildingTechnicalSheetTab({
   buildingId,
+  isArchived,
   missionStatus,
-}: ZoneTechnicalSheetSectionProps) {
-  const archived =
-    useLocalSearchParams<{ isArchived?: string }>().isArchived === "true";
-  // Backends récents exigent une mission EN_COURS pour cocher/décocher ;
-  // la copie n'est bloquée que si la mission est archivée.
+}: BuildingTechnicalSheetTabProps) {
+  // Backends récents exigent une mission EN_COURS pour cocher/décocher.
   const missionAllowsEdit = !missionStatus || missionStatus === "EN_COURS";
-  const canEdit = !archived && missionAllowsEdit;
+  const canEdit = !isArchived && missionAllowsEdit;
   const theme = useTheme();
 
-  const [activeTab, setActiveTab] = useState<FicheType>("GROS_OEUVRE");
+  const [activeFicheTab, setActiveFicheTab] =
+    useState<FicheType>("GROS_OEUVRE");
   const [toggleError, setToggleError] = useState<string | null>(null);
-  const [copyError, setCopyError] = useState<string | null>(null);
-  const [copyNotice, setCopyNotice] = useState<string | null>(null);
 
   const {
     data: catalog = [],
     isLoading: isLoadingCatalog,
     error: catalogError,
-  } = useOuvrageCatalog(activeTab);
+  } = useOuvrageCatalog(activeFicheTab);
 
   const {
     data: selections,
     isLoading: isLoadingSelections,
     error: selectionsError,
     refetch: refetchSelections,
-  } = useZoneTechnicalSelections(zoneId);
+  } = useBuildingTechnicalSelections(buildingId);
 
-  const toggleMutation = useToggleTechnicalSelection({
-    kind: "zone",
-    zoneId,
-    buildingId,
-  });
-  const updateNoteMutation = useUpdateTechnicalSelection({
-    kind: "zone",
-    zoneId,
-    buildingId,
-  });
-  const copyMutation = useCopyFromParent(zoneId);
+  const buildingTarget = { kind: "building", buildingId } as const;
+  const toggleMutation = useToggleTechnicalSelection(buildingTarget);
+  const updateNoteMutation = useUpdateTechnicalSelection(buildingTarget);
 
-  // Toggles en vol, par option : seule la ligne concernée est verrouillée
-  // (anti double-tap) ; les autres cases restent cliquables.
+  // Toggles en vol, par option : grâce à la mise à jour optimiste, SEULE
+  // la ligne concernée est verrouillée (anti double-tap) ; toutes les
+  // autres cases restent cliquables instantanément.
   const pendingToggleIdsRef = useRef<Set<string>>(new Set<string>());
   const [pendingToggleIds, setPendingToggleIds] = useState<ReadonlySet<string>>(
     () => new Set<string>(),
@@ -122,57 +108,13 @@ export function ZoneTechnicalSheetSection({
         : "Impossible de charger les sélections"
       : null;
 
-  /**
-   * Copie automatique du niveau parent à l'ouverture de la fiche. Le
-   * verrou module-scope dans useCopyFromParent garantit qu'un seul appel
-   * part même si le focus et le bouton se croisent.
-   */
-  const runAutoCopy = useCallback(async () => {
-    setCopyError(null);
-    try {
-      const result = await copyMutation.mutateAsync();
-      if (result === null) return; // Appel doublonné : no-op.
-      if (result.copiedCount > 0) {
-        setCopyNotice(
-          `${result.copiedCount} élément${result.copiedCount > 1 ? "s" : ""} copié${result.copiedCount > 1 ? "s" : ""} du niveau parent`,
-        );
-      } else {
-        setCopyNotice(null);
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        // Course entre deux copies concurrentes : le backend a déjà
-        // créé les lignes, on resynchronise silencieusement.
-        logger.warn(
-          "TechnicalSheet",
-          "409 : copie concurrente déjà effectuée, resynchronisation",
-          { zoneId },
-        );
-        queryClient.invalidateQueries({
-          queryKey: technicalSheetKeys.zoneSelections(zoneId),
-        });
-      } else {
-        const message =
-          err instanceof ApiError
-            ? err.message
-            : "Impossible de copier les sélections du niveau parent";
-        logger.error("TechnicalSheet", "Échec de la copie depuis le parent", {
-          zoneId,
-          message,
-        });
-        setCopyError(message);
-      }
-    }
-  }, [copyMutation.mutateAsync, zoneId]);
-
-  // Déclenchement automatique de la copie à chaque ouverture de la fiche
-  // (focus de l'écran hôte). Refetch des sélections en parallèle pour
-  // resynchroniser l'affichage avec le backend.
+  // Resynchronisation à chaque retour sur l'onglet (et à l'ouverture,
+  // puisque cet effet se déclenche aussi au montage si l'écran est déjà
+  // au premier plan).
   useFocusEffect(
     useCallback(() => {
       refetchSelections();
-      runAutoCopy();
-    }, [refetchSelections, runAutoCopy]),
+    }, [refetchSelections]),
   );
 
   const handleToggle = useCallback(
@@ -183,7 +125,7 @@ export function ZoneTechnicalSheetSection({
       // pour décider de l'action (POST vs DELETE).
       const selection = findSelectionByMaterialOptionId(
         queryClient.getQueryData<TechnicalSelection[]>(
-          technicalSheetKeys.zoneSelections(zoneId),
+          technicalSheetKeys.buildingSelections(buildingId),
         ),
         materialOptionId,
       );
@@ -194,7 +136,7 @@ export function ZoneTechnicalSheetSection({
         logger.warn(
           "TechnicalSheet",
           "État de la case incohérent avec le cache, action ignorée",
-          { zoneId, materialOptionId, checked },
+          { materialOptionId, checked },
         );
         return;
       }
@@ -205,19 +147,18 @@ export function ZoneTechnicalSheetSection({
         logger.info(
           "TechnicalSheet",
           selection ? "Matériau décoché" : "Matériau coché",
-          { zoneId, materialOptionId },
+          { buildingId, materialOptionId },
         );
       } catch (err) {
         if (err instanceof ApiError && err.status === 409) {
           // Double-tap rapide : la sélection existe déjà côté backend.
-          // Pas d'erreur alarmante, on resynchronise silencieusement.
           logger.warn(
             "TechnicalSheet",
-            "409 : option déjà cochée pour cette zone, resynchronisation",
-            { zoneId, materialOptionId },
+            "409 : option déjà cochée pour ce bâtiment, resynchronisation",
+            { buildingId, materialOptionId },
           );
           queryClient.invalidateQueries({
-            queryKey: technicalSheetKeys.zoneSelections(zoneId),
+            queryKey: technicalSheetKeys.buildingSelections(buildingId),
           });
         } else {
           const message =
@@ -225,7 +166,7 @@ export function ZoneTechnicalSheetSection({
               ? err.message
               : "Impossible d'enregistrer la sélection";
           logger.error("TechnicalSheet", "Échec du toggle", {
-            zoneId,
+            buildingId,
             materialOptionId,
             message,
           });
@@ -235,7 +176,7 @@ export function ZoneTechnicalSheetSection({
         setTogglePending(materialOptionId, false);
       }
     },
-    [canEdit, setTogglePending, toggleMutation, zoneId],
+    [buildingId, canEdit, setTogglePending, toggleMutation],
   );
 
   const handleSaveNote = useCallback(
@@ -245,7 +186,7 @@ export function ZoneTechnicalSheetSection({
         {
           onSuccess: () =>
             logger.info("TechnicalSheet", "Note enregistrée", {
-              zoneId,
+              buildingId,
               selectionId,
             }),
           onError: (err) =>
@@ -253,7 +194,7 @@ export function ZoneTechnicalSheetSection({
               "TechnicalSheet",
               "Échec de l'enregistrement de la note",
               {
-                zoneId,
+                buildingId,
                 selectionId,
                 message: err instanceof Error ? err.message : err,
               },
@@ -261,47 +202,22 @@ export function ZoneTechnicalSheetSection({
         },
       );
     },
-    [updateNoteMutation, zoneId],
+    [buildingId, updateNoteMutation],
   );
 
   const dismissToggleError = () => setToggleError(null);
-  const dismissCopyError = () => setCopyError(null);
 
   const isLoadingAnything = isLoadingCatalog || isLoadingSelections;
 
   return (
-    <View className="mb-four">
+    <View className="flex-1">
       <View className="mb-three">
         <SegmentedControl
           options={FICHE_TABS}
-          value={activeTab}
-          onChange={(key) => setActiveTab(key as FicheType)}
+          value={activeFicheTab}
+          onChange={(key) => setActiveFicheTab(key as FicheType)}
         />
       </View>
-
-      {copyNotice && (
-        <View className="mb-two flex-row items-center gap-two rounded-two border border-success/40 bg-success/10 px-three py-two">
-          <Ionicons name="copy-outline" color={theme.success} size={16} />
-          <ThemedText type="small" themeColor="success" className="flex-1">
-            {copyNotice}
-          </ThemedText>
-          <Pressable onPress={() => setCopyNotice(null)} hitSlop={8}>
-            <Ionicons name="close" color={theme.success} size={16} />
-          </Pressable>
-        </View>
-      )}
-
-      {copyError && (
-        <View className="mb-two flex-row items-center gap-two rounded-two border border-danger/40 bg-danger/10 px-three py-two">
-          <Ionicons name="copy-outline" color={theme.danger} size={16} />
-          <ThemedText type="small" themeColor="danger" className="flex-1">
-            {copyError}
-          </ThemedText>
-          <Pressable onPress={dismissCopyError} hitSlop={8}>
-            <Ionicons name="close" color={theme.danger} size={16} />
-          </Pressable>
-        </View>
-      )}
 
       {toggleError && (
         <View className="mb-two flex-row items-center gap-two rounded-two border border-danger/40 bg-danger/10 px-three py-two">
@@ -362,8 +278,8 @@ export function ZoneTechnicalSheetSection({
                 selections={selections ?? []}
                 canEdit={canEdit}
                 pendingOptionIds={pendingToggleIds}
-                noteLabel={NOTE_LABELS[activeTab]}
-                notePlaceholder={NOTE_PLACEHOLDERS[activeTab]}
+                noteLabel={NOTE_LABELS[activeFicheTab]}
+                notePlaceholder={NOTE_PLACEHOLDERS[activeFicheTab]}
                 onToggle={handleToggle}
                 onSaveNote={handleSaveNote}
               />

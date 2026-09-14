@@ -32,14 +32,14 @@ const TABS = [
   {
     name: "calendar",
     href: "/(tabs)/calendar",
-    label: "Calendar",
+    label: "Calendrier",
     icon: "calendar" as const,
     iconInactive: "calendar-outline" as const,
   },
   {
     name: "settings",
     href: "/(tabs)/settings",
-    label: "Settings",
+    label: "Parametres",
     icon: "settings" as const,
     iconInactive: "settings-outline" as const,
   },
