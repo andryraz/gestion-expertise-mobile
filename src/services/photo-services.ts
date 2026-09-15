@@ -19,12 +19,19 @@ export function getZonePhotos(zoneId: string) {
   return apiRequest<Photo[]>(`/zones/${zoneId}/photos`, { auth: true });
 }
 
+export function getBuildingPhotos(buildingId: string) {
+  return apiRequest<Photo[]>(`/buildings/${buildingId}/photos`, {
+    auth: true,
+  });
+}
+
 export function createPhoto(missionId: string, payload: UploadPhotoPayload) {
   return uploadPhotoFile(
     `/missions/${missionId}/photos`,
     {
       uri: payload.uri,
       zoneId: payload.zoneId ?? undefined,
+      buildingId: payload.buildingId ?? undefined,
       caption: payload.caption,
       annotation: payload.annotation,
     },
@@ -55,18 +62,12 @@ export function deletePhoto(photoId: string) {
   });
 }
 
-/**
- * Upload d'une photo via le champ natif `File.upload` (expo-file-system),
- * même mécanisme que les documents de devis : le FormData JS ne sait pas
- * référencer un fichier local de manière fiable sur natif.
- * La photo ne doit jamais être perdue : l'appelant garde l'URI locale
- * jusqu'au succès (voir queries/photos.ts).
- */
 async function uploadPhotoFile(
   path: string,
   payload: {
     uri: string;
     zoneId?: string;
+    buildingId?: string;
     caption?: string;
     annotation?: string;
   },
@@ -96,6 +97,7 @@ async function uploadPhotoFile(
       uploadType: UploadType.MULTIPART,
       parameters: {
         ...(payload.zoneId ? { zoneId: payload.zoneId } : {}),
+        ...(payload.buildingId ? { buildingId: payload.buildingId } : {}),
         ...(payload.caption ? { caption: payload.caption } : {}),
         ...(payload.annotation ? { annotation: payload.annotation } : {}),
       },

@@ -20,6 +20,7 @@ import {
   StatusTimeline,
 } from "@/components/missions";
 import { CaptureFab } from "@/components/photos/capture-fab";
+import { PhotoCaptionSheet } from "@/components/photos/photo-caption-sheet";
 import { UnclassifiedPhotosSheet } from "@/components/photos/unclassified-photos-sheet";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
@@ -43,10 +44,15 @@ import {
   useUpdateMission,
   useUpdateMissionStatus,
 } from "@/queries/missions";
-import { useCreatePhoto, useMissionPhotos } from "@/queries/photos";
+import {
+  isUnclassifiedPhoto,
+  useCreatePhoto,
+  useMissionPhotos,
+} from "@/queries/photos";
 import { ApiError } from "@/services/api-client";
 import { usePendingPhotosStore } from "@/store/pending-photos-store";
 import { Mission, UpdateMissionPayload } from "@/types/mission";
+import type { Photo } from "@/types/photo";
 import { formatRelativeTime } from "@/utils/format-relative-time";
 import { logger } from "@/utils/logger";
 
@@ -79,6 +85,7 @@ export default function MissionDetailScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const [showUnclassified, setShowUnclassified] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<Photo | null>(null);
 
   const { data: mission, isLoading, error: queryError } = useMissionDetail(id);
   const loadError = queryError
@@ -97,10 +104,7 @@ export default function MissionDetailScreen() {
   const addPending = usePendingPhotosStore((state) => state.addPending);
 
   const unclassifiedCount = useMemo(
-    () =>
-      photos.filter(
-        (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
-      ).length,
+    () => photos.filter(isUnclassifiedPhoto).length,
     [photos],
   );
 
@@ -112,9 +116,12 @@ export default function MissionDetailScreen() {
     if (!uri || !id) return;
 
     try {
-      await createPhotoMutation.mutateAsync({ uri });
+      const { created } = await createPhotoMutation.mutateAsync({ uri });
       logger.info("Photos", "Photo capturée (libre)", { missionId: id });
-      setShowUnclassified(true);
+      // Upload déjà effectué : la légende est purement optionnelle et
+      // ne bloque jamais l'expert. La feuille de classement s'ouvrira
+      // à la fermeture de la légende (pas de modales empilées).
+      setCapturedPhoto(created);
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -478,6 +485,16 @@ export default function MissionDetailScreen() {
                 onClose={() => {
                   setShowUnclassified(false);
                   setUploadError(null);
+                }}
+              />
+
+              <PhotoCaptionSheet
+                photo={capturedPhoto}
+                onClose={() => {
+                  setCapturedPhoto(null);
+                  // Comportement existant : proposer le classement après
+                  // une capture libre réussie.
+                  setShowUnclassified(true);
                 }}
               />
             </>

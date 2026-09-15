@@ -1,14 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Alert, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { MeasurementContextMenu } from "@/components/measurements/measurement-context-menu";
+import { MeasurementList } from "@/components/measurements/measurement-list";
 import {
   SegmentedControl,
   type TabOption,
 } from "@/components/missions/segmented-control";
-import { CaptureFab } from "@/components/photos";
+import { CaptureFab, PhotoCaptionSheet } from "@/components/photos";
 import { PhotoGrid } from "@/components/photos/photo-thumbnail";
 import { PhotoViewerModal } from "@/components/photos/photo-viewer-modal";
 import { UnclassifiedPhotosSheet } from "@/components/photos/unclassified-photos-sheet";
@@ -21,6 +23,11 @@ import { ZONE_TYPE_ICONS, ZONE_TYPE_LABELS } from "@/constants/zone-labels";
 import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
 import {
+  useDeleteMeasurement,
+  useZoneMeasurements,
+} from "@/queries/measurements";
+import {
+  isUnclassifiedPhoto,
   useCreatePhoto,
   useMissionPhotos,
   useZonePhotos,
@@ -28,6 +35,7 @@ import {
 import { useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
 import { usePendingPhotosStore } from "@/store/pending-photos-store";
+import type { Measurement } from "@/types/measurement";
 import type { Photo } from "@/types/photo";
 import { logger } from "@/utils/logger";
 import { findZoneNode } from "@/utils/zone-tree";
@@ -44,7 +52,7 @@ type ZoneTabKey = "fiche" | "photos" | "mesures";
 const ZONE_TABS: TabOption[] = [
   { key: "fiche", label: "Fiche" },
   { key: "photos", label: "Photos" },
-  { key: "mesures", label: "Mesures", disabled: true },
+  { key: "mesures", label: "Mesures" },
 ];
 
 export default function ZoneDetailScreen() {
@@ -56,6 +64,10 @@ export default function ZoneDetailScreen() {
   const [showUnclassified, setShowUnclassified] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [viewedPhoto, setViewedPhoto] = useState<Photo | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<Photo | null>(null);
+  const [menuMeasurement, setMenuMeasurement] = useState<Measurement | null>(
+    null,
+  );
 
   const addPending = usePendingPhotosStore((state) => state.addPending);
 
@@ -73,9 +85,11 @@ export default function ZoneDetailScreen() {
     error: photosError,
   } = useZonePhotos(zoneId);
 
-  // Photos de la mission : pour le badge « Photos non classées » et la
-  // feuille de classement, mêmes sources que l'écran mission.
   const { data: missionPhotos = [] } = useMissionPhotos(missionId);
+
+  const { data: zoneMeasurements = [], error: measurementsError } =
+    useZoneMeasurements(zoneId);
+  const deleteMeasurementMutation = useDeleteMeasurement(missionId);
 
   const createPhotoMutation = useCreatePhoto(missionId);
   const { capture, isCapturing } = usePhotoCapture();
@@ -85,10 +99,7 @@ export default function ZoneDetailScreen() {
   const canCapture = missionStatus === "EN_COURS";
 
   const unclassifiedCount = useMemo(
-    () =>
-      missionPhotos.filter(
-        (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
-      ).length,
+    () => missionPhotos.filter(isUnclassifiedPhoto).length,
     [missionPhotos],
   );
 
@@ -98,8 +109,14 @@ export default function ZoneDetailScreen() {
     if (!uri) return;
 
     try {
-      await createPhotoMutation.mutateAsync({ uri, zoneId });
+      const { created } = await createPhotoMutation.mutateAsync({
+        uri,
+        zoneId,
+      });
       logger.info("Photos", "Photo rattachée à la zone", { zoneId });
+      // Upload déjà effectué : la légende est purement optionnelle et
+      // ne bloque jamais l'expert.
+      setCapturedPhoto(created);
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -113,6 +130,69 @@ export default function ZoneDetailScreen() {
 
   const handlePhotoPress = (photo: Photo) => {
     setViewedPhoto(photo);
+  };
+
+  const handleAddMeasurement = () => {
+    router.push({
+      pathname: "/measurements/measurement-form" as any,
+      params: {
+        missionId,
+        mode: "create",
+        zoneId,
+        contextLabel: node?.name ?? "Zone",
+      },
+    });
+  };
+
+  const handleEditMeasurement = (measurement: Measurement) => {
+    setMenuMeasurement(null);
+    router.push({
+      pathname: "/measurements/measurement-form" as any,
+      params: {
+        missionId,
+        mode: "edit",
+        measurementId: measurement.id,
+        measureType: measurement.measureType,
+        value: String(measurement.value),
+        unit: measurement.unit,
+        label: measurement.label ?? "",
+        zoneId,
+        contextLabel: node?.name ?? "Zone",
+      },
+    });
+  };
+
+  const handleDeleteMeasurement = (measurement: Measurement) => {
+    setMenuMeasurement(null);
+    Alert.alert(
+      "Supprimer cette mesure ?",
+      `"${measurement.measureType}" sera définitivement supprimée.`,
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMeasurementMutation.mutateAsync(measurement.id);
+              logger.info("Mesures", "Mesure supprimée", {
+                id: measurement.id,
+              });
+            } catch (err) {
+              const msg =
+                err instanceof ApiError
+                  ? err.message
+                  : "Impossible de supprimer la mesure";
+              Alert.alert("Erreur", msg);
+              logger.error("Mesures", "Echec de la suppression", {
+                id: measurement.id,
+                message: msg,
+              });
+            }
+          },
+        },
+      ],
+    );
   };
 
   const renderError = (err: unknown, label: string) =>
@@ -224,6 +304,30 @@ export default function ZoneDetailScreen() {
                     )}
                   </View>
                 )}
+
+                {activeTab === "mesures" && (
+                  <View className="mb-four">
+                    {renderError(
+                      measurementsError,
+                      "Impossible de charger les mesures",
+                    )}
+                    <MeasurementList
+                      measurements={zoneMeasurements}
+                      emptyLabel="Aucune mesure pour cette zone"
+                      canManage={canCapture}
+                      onMenuPress={setMenuMeasurement}
+                    />
+                    {canCapture && (
+                      <View className="mt-two">
+                        <PrimaryButton
+                          label="Ajouter une mesure"
+                          icon="add"
+                          onPress={handleAddMeasurement}
+                        />
+                      </View>
+                    )}
+                  </View>
+                )}
               </ScrollView>
             </>
           )}
@@ -277,6 +381,23 @@ export default function ZoneDetailScreen() {
             photo={viewedPhoto}
             missionId={missionId}
             onClose={() => setViewedPhoto(null)}
+          />
+
+          <PhotoCaptionSheet
+            photo={capturedPhoto}
+            onClose={() => setCapturedPhoto(null)}
+          />
+
+          <PhotoCaptionSheet
+            photo={capturedPhoto}
+            onClose={() => setCapturedPhoto(null)}
+          />
+
+          <MeasurementContextMenu
+            measurement={menuMeasurement}
+            onClose={() => setMenuMeasurement(null)}
+            onEdit={handleEditMeasurement}
+            onDelete={handleDeleteMeasurement}
           />
         </ScreenFade>
       </SafeAreaView>

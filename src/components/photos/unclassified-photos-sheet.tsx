@@ -9,7 +9,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { useTheme } from "@/hooks/use-theme";
-import { useAttachPhoto, useCreatePhoto } from "@/queries/photos";
+import { isUnclassifiedPhoto, useAttachPhoto, useCreatePhoto } from "@/queries/photos";
 import { ApiError } from "@/services/api-client";
 import { usePendingPhotosStore } from "@/store/pending-photos-store";
 import type { Photo } from "@/types/photo";
@@ -41,9 +41,7 @@ export function UnclassifiedPhotosSheet({
   const pending = usePendingPhotosStore((state) => state.pending);
   const removePending = usePendingPhotosStore((state) => state.removePending);
 
-  const unclassified = photos.filter(
-    (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
-  );
+  const unclassified = photos.filter(isUnclassifiedPhoto);
 
   const missionPending = pending.filter((p) => p.missionId === missionId);
 
@@ -52,6 +50,7 @@ export function UnclassifiedPhotosSheet({
       await createPhotoMutation.mutateAsync({
         uri: pendingPhoto.uri,
         zoneId: pendingPhoto.zoneId,
+        buildingId: pendingPhoto.buildingId ?? null,
       });
       removePending(pendingPhoto.localId);
       logger.info("Photos", "Upload relancé avec succès", {
@@ -70,16 +69,19 @@ export function UnclassifiedPhotosSheet({
     }
   };
 
-  const handleAttach = async (zoneId: string) => {
+  const handleAttach = async (target: {
+    zoneId?: string;
+    buildingId?: string;
+  }) => {
     if (!attachTarget) return;
     try {
       await attachMutation.mutateAsync({
         photoId: attachTarget.id,
-        payload: { zoneId },
+        payload: target,
       });
       logger.info("Photos", "Photo classée", {
         photoId: attachTarget.id,
-        zoneId,
+        ...target,
       });
       setAttachTarget(null);
     } catch (err) {

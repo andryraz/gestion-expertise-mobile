@@ -1661,7 +1661,7 @@
         ]
       },
       "delete": {
-        "description": "Supprime définitivement un bâtiment ainsi que toutes ses zones et observations associées (suppression en cascade). Les photos et mesures liées sont conservées mais déclassées (zoneId repasse à null). Impossible si la mission associée est archivée.",
+        "description": "Supprime définitivement un bâtiment ainsi que toutes ses zones associées (suppression en cascade). Les photos et mesures liées sont conservées mais déclassées (zoneId repasse à null). Impossible si la mission associée est archivée.",
         "operationId": "BuildingsController_delete",
         "parameters": [
           {
@@ -1876,7 +1876,7 @@
         ]
       },
       "delete": {
-        "description": "Supprime une zone ainsi que ses sous-zones et toutes les observations liées (cascade gérée par la base de données).",
+        "description": "Supprime une zone ainsi que ses sous-zones (cascade gérée par la base de données).",
         "operationId": "BuildingZonesController_remove",
         "parameters": [
           {
@@ -2267,474 +2267,9 @@
         ]
       }
     },
-    "/disorder-types": {
-      "post": {
-        "description": "Crée un nouveau type de désordre. Le nom doit être unique : si un type de désordre portant le même nom existe déjà, une erreur 409 est renvoyée.",
-        "operationId": "DisorderTypesController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateDisorderTypeDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Type de désordre créé avec succès",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DisorderTypeResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Créer un type de désordre",
-        "tags": [
-          "Types de désordres"
-        ]
-      },
-      "get": {
-        "description": "Retourne tous les types de désordres, avec filtrage optionnel par catégorie et recherche texte insensible à la casse sur le nom et la description. Pas de pagination.",
-        "operationId": "DisorderTypesController_findAll",
-        "parameters": [
-          {
-            "name": "category",
-            "required": false,
-            "in": "query",
-            "description": "Filtrer par catégorie de désordre",
-            "schema": {
-              "example": "STRUCTUREL",
-              "type": "string",
-              "enum": [
-                "STRUCTUREL",
-                "HUMIDITE",
-                "INTEMPERIES",
-                "CORROSION",
-                "AUTRE"
-              ]
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "Recherche texte insensible à la casse dans le nom et la description",
-            "schema": {
-              "example": "fiss",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Liste des types de désordres",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DisorderTypeResponseDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Lister les types de désordres",
-        "tags": [
-          "Types de désordres"
-        ]
-      }
-    },
-    "/disorder-types/{id}": {
-      "patch": {
-        "description": "Modifie le nom, la catégorie et/ou la description d'un type de désordre. Le nom doit rester unique (hors du type modifié lui-même).",
-        "operationId": "DisorderTypesController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateDisorderTypeDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Type de désordre modifié avec succès",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DisorderTypeResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Modifier un type de désordre",
-        "tags": [
-          "Types de désordres"
-        ]
-      },
-      "delete": {
-        "description": "Supprime un type de désordre. La suppression est bloquée (409) si le type est déjà utilisé par une ou plusieurs observations.",
-        "operationId": "DisorderTypesController_remove",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Type de désordre supprimé avec succès"
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Supprimer un type de désordre",
-        "tags": [
-          "Types de désordres"
-        ]
-      }
-    },
-    "/zones/{zoneId}/observations": {
-      "post": {
-        "description": "Crée une nouvelle observation sur une zone. La création n'est possible que si la mission de la zone est en cours ",
-        "operationId": "ObservationsController_create",
-        "parameters": [
-          {
-            "name": "zoneId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateObservationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Observation créée avec succès",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObservationResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Créer une observation pour une zone",
-        "tags": [
-          "Observations"
-        ]
-      },
-      "get": {
-        "description": "Retourne les observations d'une seule zone. Filtrage optionnel par sévérité. Tri par date de création croissante.",
-        "operationId": "ObservationsController_findAllByZone",
-        "parameters": [
-          {
-            "name": "zoneId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "severity",
-            "required": false,
-            "in": "query",
-            "description": "Filtrer par sévérité du désordre",
-            "schema": {
-              "example": "URGENT",
-              "type": "string",
-              "enum": [
-                "MINEUR",
-                "MODERE",
-                "URGENT"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Liste des observations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ObservationResponseDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Lister les observations d'une zone",
-        "tags": [
-          "Observations"
-        ]
-      }
-    },
-    "/missions/{missionId}/observations": {
-      "get": {
-        "description": "Retourne toutes les observations des zones d'une mission. Filtrage optionnel par sévérité. Tri par date de création croissante.",
-        "operationId": "ObservationsController_findAllByMission",
-        "parameters": [
-          {
-            "name": "missionId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "severity",
-            "required": false,
-            "in": "query",
-            "description": "Filtrer par sévérité du désordre",
-            "schema": {
-              "example": "URGENT",
-              "type": "string",
-              "enum": [
-                "MINEUR",
-                "MODERE",
-                "URGENT"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Liste des observations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ObservationResponseDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Lister les observations d'une mission",
-        "tags": [
-          "Observations"
-        ]
-      }
-    },
-    "/observations/{id}": {
-      "get": {
-        "description": "Retourne le détail complet d'une observation, incluant la zone, le type de désordre, les photos, les mesures et les résultats de calcul liés.",
-        "operationId": "ObservationsController_findOne",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Détail de l'observation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObservationResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Détail d'une observation",
-        "tags": [
-          "Observations"
-        ]
-      },
-      "patch": {
-        "description": "Modifie la description, la sévérité, la cause probable et/ou le type de désordre d'une observation. Passer probableCause à null efface la cause actuelle.",
-        "operationId": "ObservationsController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateObservationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Observation modifiée avec succès",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObservationResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Modifier une observation",
-        "tags": [
-          "Observations"
-        ]
-      },
-      "delete": {
-        "description": "Supprime une observation. Les photos et mesures liées sont détachées (observationId mis à null) mais ne sont pas supprimées.",
-        "operationId": "ObservationsController_remove",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Observation supprimée avec succès"
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Supprimer une observation",
-        "tags": [
-          "Observations"
-        ]
-      }
-    },
     "/missions/{missionId}/photos": {
       "post": {
-        "description": "Upload une photo pour une mission. La création n'est possible que si la mission est en cours (statut EN_COURS). zoneId, observationId, caption et annotation sont optionnels. Seuls les fichiers image sont acceptés (10 Mo max).",
+        "description": "Upload une photo pour une mission. La création n'est possible que si la mission est en cours (statut EN_COURS). zoneId, caption et annotation sont optionnels. Seuls les fichiers image sont acceptés (10 Mo max).",
         "operationId": "PhotosController_create",
         "parameters": [
           {
@@ -2760,10 +2295,10 @@
                     "type": "string",
                     "format": "binary"
                   },
-                  "zoneId": {
+                  "buildingId": {
                     "type": "string"
                   },
-                  "observationId": {
+                  "zoneId": {
                     "type": "string"
                   },
                   "caption": {
@@ -2844,6 +2379,49 @@
         ]
       }
     },
+    "/buildings/{buildingId}/photos": {
+      "get": {
+        "description": "Retourne toutes les photos d'un batiment, de la plus recente à la plus ancienne.",
+        "operationId": "PhotosController_findAllByBuilding",
+        "parameters": [
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des photos d un batiment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galerie d'un batiment",
+        "tags": [
+          "Photos"
+        ]
+      }
+    },
     "/zones/{zoneId}/photos": {
       "get": {
         "description": "Retourne les photos rattachées à une zone, de la plus récente à la plus ancienne.",
@@ -2887,52 +2465,9 @@
         ]
       }
     },
-    "/observations/{observationId}/photos": {
-      "get": {
-        "description": "Retourne les photos rattachées à une observation, de la plus récente à la plus ancienne.",
-        "operationId": "PhotosController_findAllByObservation",
-        "parameters": [
-          {
-            "name": "observationId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Liste des photos de observation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PhotoResponseDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Non authentifié"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Galerie d'un désordre (observation)",
-        "tags": [
-          "Photos"
-        ]
-      }
-    },
     "/photos/{id}/attach": {
       "patch": {
-        "description": "Rattache une photo à une zone et/ou une observation. La zone ou l observation doit appartenir à la même mission que la photo. Passer null pour détacher.",
+        "description": "Rattache une photo à un batiment et/ou une zone. Le batiment ou la zone doit appartenir à la même mission que la photo. Passer null pour détacher.",
         "operationId": "PhotosController_attach",
         "parameters": [
           {
@@ -2974,7 +2509,7 @@
             "bearer": []
           }
         ],
-        "summary": "Rattacher une photo à une zone ou une observation",
+        "summary": "Rattacher une photo à un batiment ou une zone",
         "tags": [
           "Photos"
         ]
@@ -3058,6 +2593,354 @@
         "summary": "Supprimer une photo",
         "tags": [
           "Photos"
+        ]
+      }
+    },
+    "/missions/{missionId}/measurements": {
+      "post": {
+        "description": "Crée une nouvelle mesure rattachée à une mission, avec un bâtiment et/ou une zone optionnels. La création n'est possible que si la mission est en cours (statut EN_COURS) et non archivée. Si fournis, le bâtiment et la zone doivent appartenir à la mission de l'URL. Trois niveaux de rattachement : mission seule (mesure générale), + buildingId (bâtiment entier), + zoneId (zone précise).",
+        "operationId": "MeasurementsController_create",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMeasurementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mesure créée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Créer une mesure pour une mission",
+        "tags": [
+          "Mesures"
+        ]
+      },
+      "get": {
+        "description": "Retourne toutes les mesures d'une mission (générales, par bâtiment et par zone), de la plus récente à la plus ancienne selon measuredAt.",
+        "operationId": "MeasurementsController_findAllByMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des mesures de la mission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MeasurementResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les mesures d'une mission",
+        "tags": [
+          "Mesures"
+        ]
+      }
+    },
+    "/missions/{missionId}/measurements/types": {
+      "get": {
+        "description": "Retourne la liste distincte (triée alphabétiquement) des measureType déjà saisis sur cette mission. Alimente l'autocomplétion côté app : aucune table de référence dédiée.",
+        "operationId": "MeasurementsController_findTypes",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste distincte des types de mesure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementTypesResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Types de mesure déjà saisis sur une mission",
+        "tags": [
+          "Mesures"
+        ]
+      }
+    },
+    "/buildings/{buildingId}/measurements": {
+      "get": {
+        "description": "Retourne les mesures rattachées à un bâtiment, de la plus récente à la plus ancienne selon measuredAt.",
+        "operationId": "MeasurementsController_findAllByBuilding",
+        "parameters": [
+          {
+            "name": "buildingId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des mesures du bâtiment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MeasurementResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les mesures d'un bâtiment",
+        "tags": [
+          "Mesures"
+        ]
+      }
+    },
+    "/zones/{zoneId}/measurements": {
+      "get": {
+        "description": "Retourne les mesures rattachées à une zone, de la plus récente à la plus ancienne selon measuredAt.",
+        "operationId": "MeasurementsController_findAllByZone",
+        "parameters": [
+          {
+            "name": "zoneId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des mesures de la zone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MeasurementResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lister les mesures d'une zone",
+        "tags": [
+          "Mesures"
+        ]
+      }
+    },
+    "/measurements/{id}": {
+      "patch": {
+        "description": "Modifie le type, la valeur, l'unité, le libellé et/ou la date de mesure. Impossible si la mission associée est archivée.",
+        "operationId": "MeasurementsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeasurementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mesure modifiée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Modifier une mesure",
+        "tags": [
+          "Mesures"
+        ]
+      },
+      "delete": {
+        "description": "Supprime définitivement une mesure. Impossible si la mission associée est archivée.",
+        "operationId": "MeasurementsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mesure supprimée avec succès"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Supprimer une mesure",
+        "tags": [
+          "Mesures"
+        ]
+      }
+    },
+    "/measurements/{id}/attach": {
+      "patch": {
+        "description": "Rattache une mesure à un bâtiment et/ou une zone de sa mission. Passer buildingId ou zoneId à null pour détacher. Supprimer le bâtiment ou la zone déclasse la mesure (buildingId/zoneId repassent à null), la mesure est conservée.",
+        "operationId": "MeasurementsController_attach",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachMeasurementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mesure rattachée avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rattacher une mesure à un bâtiment et/ou une zone",
+        "tags": [
+          "Mesures"
         ]
       }
     }
@@ -4373,219 +4256,6 @@
           }
         }
       },
-      "CreateDisorderTypeDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Nom du type de désordre",
-            "example": "Fissuration"
-          },
-          "category": {
-            "type": "string",
-            "description": "Catégorie du désordre",
-            "enum": [
-              "STRUCTUREL",
-              "HUMIDITE",
-              "INTEMPERIES",
-              "CORROSION",
-              "AUTRE"
-            ],
-            "example": "STRUCTUREL"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description du type de désordre",
-            "example": "Fissures de retrait apparaissant sur les murs porteurs"
-          }
-        },
-        "required": [
-          "name",
-          "category"
-        ]
-      },
-      "DisorderTypeResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-          },
-          "name": {
-            "type": "string",
-            "example": "Fissuration"
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "STRUCTUREL",
-              "HUMIDITE",
-              "INTEMPERIES",
-              "CORROSION",
-              "AUTRE"
-            ],
-            "example": "STRUCTUREL"
-          },
-          "description": {
-            "type": "object",
-            "example": "Fissures de retrait sur les murs porteurs"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-08-01T09:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "category",
-          "createdAt"
-        ]
-      },
-      "UpdateDisorderTypeDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Nom du type de désordre",
-            "example": "Fissuration"
-          },
-          "category": {
-            "type": "string",
-            "description": "Catégorie du désordre",
-            "enum": [
-              "STRUCTUREL",
-              "HUMIDITE",
-              "INTEMPERIES",
-              "CORROSION",
-              "AUTRE"
-            ],
-            "example": "STRUCTUREL"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description du type de désordre",
-            "example": "Fissures de retrait apparaissant sur les murs porteurs"
-          }
-        }
-      },
-      "CreateObservationDto": {
-        "type": "object",
-        "properties": {
-          "disorderTypeId": {
-            "type": "string",
-            "description": "Type de désordre constaté",
-            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description du désordre constaté",
-            "example": "Fissure horizontale sur le mur porteur"
-          },
-          "severity": {
-            "type": "string",
-            "description": "Sévérité du désordre",
-            "enum": [
-              "MINEUR",
-              "MODERE",
-              "URGENT"
-            ],
-            "example": "MODERE"
-          },
-          "probableCause": {
-            "type": "string",
-            "description": "Cause probable du désordre",
-            "example": "Retrait du béton après séchage"
-          }
-        },
-        "required": [
-          "disorderTypeId",
-          "description",
-          "severity"
-        ]
-      },
-      "ObservationResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-          },
-          "zoneId": {
-            "type": "string"
-          },
-          "disorderTypeId": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "example": "Fissure horizontale sur le mur porteur"
-          },
-          "severity": {
-            "type": "string",
-            "enum": [
-              "MINEUR",
-              "MODERE",
-              "URGENT"
-            ],
-            "example": "MODERE"
-          },
-          "probableCause": {
-            "type": "object",
-            "example": "Retrait du béton après séchage"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-08-01T09:00:00.000Z"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-08-01T09:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "zoneId",
-          "disorderTypeId",
-          "description",
-          "severity",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "UpdateObservationDto": {
-        "type": "object",
-        "properties": {
-          "disorderTypeId": {
-            "type": "string",
-            "description": "Type de désordre constaté",
-            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description du désordre constaté",
-            "example": "Fissure horizontale sur le mur porteur"
-          },
-          "severity": {
-            "type": "string",
-            "description": "Sévérité du désordre",
-            "enum": [
-              "MINEUR",
-              "MODERE",
-              "URGENT"
-            ],
-            "example": "MODERE"
-          },
-          "probableCause": {
-            "type": "object",
-            "description": "Cause probable du désordre. Passer null pour effacer la cause actuelle.",
-            "example": "Retrait du béton après séchage"
-          }
-        }
-      },
       "PhotoResponseDto": {
         "type": "object",
         "properties": {
@@ -4596,10 +4266,10 @@
           "missionId": {
             "type": "string"
           },
-          "zoneId": {
+          "buildingId": {
             "type": "object"
           },
-          "observationId": {
+          "zoneId": {
             "type": "object"
           },
           "filePath": {
@@ -4646,14 +4316,14 @@
       "AttachPhotoDto": {
         "type": "object",
         "properties": {
+          "buildingId": {
+            "type": "object",
+            "description": "batiment à rattacher à la photo. Passer null pour détacher.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
           "zoneId": {
             "type": "object",
             "description": "Zone à rattacher à la photo. Passer null pour détacher la zone actuelle.",
-            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-          },
-          "observationId": {
-            "type": "object",
-            "description": "Observation à rattacher à la photo. Passer null pour détacher.",
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
           }
         }
@@ -4665,6 +4335,182 @@
             "type": "object",
             "description": "Légende de la photo. Passer null pour effacer la légende actuelle.",
             "example": "Fissure verticale sur le mur porteur"
+          }
+        }
+      },
+      "CreateMeasurementDto": {
+        "type": "object",
+        "properties": {
+          "measureType": {
+            "type": "string",
+            "description": "Type de mesure (texte libre, alimente l'autocomplétion de la mission)",
+            "example": "Surface facade"
+          },
+          "value": {
+            "type": "number",
+            "example": 12.5
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "MM",
+              "CM",
+              "M",
+              "M2",
+              "M3",
+              "PERCENT",
+              "AUTRE"
+            ],
+            "example": "M2"
+          },
+          "label": {
+            "type": "string",
+            "example": "Facade nord - niveau RDC"
+          },
+          "measuredAt": {
+            "type": "string",
+            "example": "2026-09-16T09:30:00.000Z"
+          },
+          "buildingId": {
+            "type": "string",
+            "description": "Bâtiment auquel rattacher la mesure. Doit appartenir à la mission de l'URL.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "zoneId": {
+            "type": "string",
+            "description": "Zone à laquelle rattacher la mesure. Doit appartenir à la mission de l'URL.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          }
+        },
+        "required": [
+          "measureType",
+          "value",
+          "unit",
+          "measuredAt"
+        ]
+      },
+      "MeasurementResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "missionId": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "buildingId": {
+            "type": "object"
+          },
+          "zoneId": {
+            "type": "object"
+          },
+          "measureType": {
+            "type": "string",
+            "example": "Surface facade"
+          },
+          "value": {
+            "type": "number",
+            "example": 12.5
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "MM",
+              "CM",
+              "M",
+              "M2",
+              "M3",
+              "PERCENT",
+              "AUTRE"
+            ],
+            "example": "M2"
+          },
+          "label": {
+            "type": "object",
+            "example": "Facade nord - niveau RDC"
+          },
+          "measuredAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-16T09:30:00.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-16T09:30:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-16T09:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "missionId",
+          "measureType",
+          "value",
+          "unit",
+          "measuredAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "MeasurementTypesResponseDto": {
+        "type": "object",
+        "properties": {
+
+        }
+      },
+      "UpdateMeasurementDto": {
+        "type": "object",
+        "properties": {
+          "measureType": {
+            "type": "string",
+            "description": "Type de mesure (texte libre)",
+            "example": "Surface facade"
+          },
+          "value": {
+            "type": "number",
+            "example": 12.5
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "MM",
+              "CM",
+              "M",
+              "M2",
+              "M3",
+              "PERCENT",
+              "AUTRE"
+            ],
+            "example": "M2"
+          },
+          "label": {
+            "type": "string",
+            "example": "Facade nord - niveau RDC"
+          },
+          "measuredAt": {
+            "type": "string",
+            "example": "2026-09-16T09:30:00.000Z"
+          }
+        }
+      },
+      "AttachMeasurementDto": {
+        "type": "object",
+        "properties": {
+          "buildingId": {
+            "type": "object",
+            "description": "Bâtiment à rattacher à la mesure. Passer null pour détacher.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          },
+          "zoneId": {
+            "type": "object",
+            "description": "Zone à rattacher à la mesure. Passer null pour détacher.",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
           }
         }
       }

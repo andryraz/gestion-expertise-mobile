@@ -18,12 +18,18 @@ import { ApiError } from "@/services/api-client";
 import type { ZoneTreeNode } from "@/types/zone";
 import { flattenTree } from "@/utils/zone-tree";
 
+type AttachTarget = { zoneId?: string; buildingId?: string };
+
+type Selection =
+  | { kind: "building" }
+  | { kind: "zone"; id: string; name: string };
+
 type PhotoAttachModalProps = {
   visible: boolean;
   buildingId: string | null;
   isAttaching?: boolean;
   onClose: () => void;
-  onAttach: (zoneId: string) => Promise<void>;
+  onAttach: (target: AttachTarget) => Promise<void>;
 };
 
 export function PhotoAttachModal({
@@ -35,8 +41,7 @@ export function PhotoAttachModal({
 }: PhotoAttachModalProps) {
   const theme = useTheme();
 
-  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
-  const [selectedZoneName, setSelectedZoneName] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
 
   const {
     data: tree = [],
@@ -44,24 +49,26 @@ export function PhotoAttachModal({
     error: treeError,
   } = useZonesTree(buildingId ?? "");
 
-  const reset = () => {
-    setSelectedZoneId(null);
-    setSelectedZoneName(null);
-  };
+  const reset = () => setSelection(null);
 
   const handleClose = () => {
     reset();
     onClose();
   };
 
-  const handleSelectZone = (zone: ZoneTreeNode) => {
-    setSelectedZoneId(zone.id);
-    setSelectedZoneName(zone.name);
-  };
+  const handleSelectBuilding = () => setSelection({ kind: "building" });
+
+  const handleSelectZone = (zone: ZoneTreeNode) =>
+    setSelection({ kind: "zone", id: zone.id, name: zone.name });
 
   const handleConfirm = async () => {
-    if (!selectedZoneId) return;
-    await onAttach(selectedZoneId);
+    if (!selection) return;
+    if (selection.kind === "building") {
+      if (!buildingId) return;
+      await onAttach({ buildingId });
+    } else {
+      await onAttach({ zoneId: selection.id });
+    }
   };
 
   const options = flattenTree(tree);
@@ -87,7 +94,7 @@ export function PhotoAttachModal({
               Classer la photo
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              Choisis une zone
+              {buildingId ? "Choisis une destination" : "Choisis une zone"}
             </ThemedText>
           </View>
         </View>
@@ -108,7 +115,7 @@ export function PhotoAttachModal({
 
         {!isLoadingTree && !treeError && (
           <>
-            {selectedZoneId ? (
+            {selection ? (
               <View className="px-four pb-two">
                 <ThemedView
                   type="backgroundElement"
@@ -120,15 +127,11 @@ export function PhotoAttachModal({
                     size={16}
                   />
                   <ThemedText type="smallBold" className="flex-1">
-                    {selectedZoneName}
+                    {selection.kind === "building"
+                      ? "Vue d'ensemble du bâtiment"
+                      : selection.name}
                   </ThemedText>
-                  <Pressable
-                    onPress={() => {
-                      setSelectedZoneId(null);
-                      setSelectedZoneName(null);
-                    }}
-                    hitSlop={8}
-                  >
+                  <Pressable onPress={reset} hitSlop={8}>
                     <Ionicons
                       name="close-circle"
                       color={theme.textSecondary}
@@ -144,8 +147,63 @@ export function PhotoAttachModal({
               keyExtractor={({ node }) => node.id}
               contentContainerClassName="px-four pb-four"
               showsVerticalScrollIndicator={false}
+              ListHeaderComponent={
+                buildingId ? (
+                  <>
+                    <Pressable
+                      onPress={handleSelectBuilding}
+                      className={[
+                        "flex-row items-center gap-two py-two pr-two mb-one",
+                        selection?.kind === "building"
+                          ? "bg-background-selected dark:bg-background-selected-dark rounded-two"
+                          : "",
+                      ].join(" ")}
+                      style={{ paddingLeft: 8 }}
+                    >
+                      <Ionicons
+                        name={
+                          selection?.kind === "building"
+                            ? "radio-button-on"
+                            : "radio-button-off"
+                        }
+                        color={
+                          selection?.kind === "building"
+                            ? theme.accent
+                            : theme.textSecondary
+                        }
+                        size={18}
+                      />
+                      <Ionicons
+                        name="business-outline"
+                        color={theme.textSecondary}
+                        size={16}
+                      />
+                      <ThemedText
+                        type="smallBold"
+                        themeColor={
+                          selection?.kind === "building" ? "accent" : "text"
+                        }
+                        className="flex-1"
+                      >
+                        Vue d&apos;ensemble du bâtiment
+                      </ThemedText>
+                    </Pressable>
+
+                    {options.length > 0 && (
+                      <ThemedText
+                        type="eyebrow"
+                        themeColor="textSecondary"
+                        className="pb-one pl-two"
+                      >
+                        Zones
+                      </ThemedText>
+                    )}
+                  </>
+                ) : null
+              }
               renderItem={({ item: { node, depth } }) => {
-                const isSelected = selectedZoneId === node.id;
+                const isSelected =
+                  selection?.kind === "zone" && selection.id === node.id;
                 return (
                   <Pressable
                     onPress={() => handleSelectZone(node)}
@@ -183,13 +241,13 @@ export function PhotoAttachModal({
             <View className="border-t border-border px-four py-three dark:border-border-dark">
               <PrimaryButton
                 label={
-                  selectedZoneId
+                  selection
                     ? "Rattacher la photo"
-                    : "Choisis d'abord une zone"
+                    : "Choisis d'abord une destination"
                 }
                 icon="link-outline"
                 onPress={handleConfirm}
-                disabled={!selectedZoneId || isAttaching}
+                disabled={!selection || isAttaching}
               />
             </View>
           </>

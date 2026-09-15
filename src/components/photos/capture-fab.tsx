@@ -9,6 +9,7 @@ type CaptureFabProps = {
   onLongPress?: () => void;
   badgeCount?: number;
   disabled?: boolean;
+  bottomOffset?: number;
 };
 
 export function CaptureFab({
@@ -16,6 +17,7 @@ export function CaptureFab({
   onLongPress,
   badgeCount = 0,
   disabled,
+  bottomOffset = 64,
 }: CaptureFabProps) {
   const theme = useTheme();
 
@@ -26,6 +28,7 @@ export function CaptureFab({
       disabled={disabled}
       className="absolute bottom-six right-four h-14 w-14 items-center justify-center rounded-five bg-accent active:opacity-85"
       style={{
+        bottom: bottomOffset,
         elevation: 4,
         shadowColor: "#000",
         shadowOpacity: 0.2,

@@ -5,12 +5,18 @@ import { Alert, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BuildingTechnicalSheetTab } from "@/components/buildings/technical-sheet/building-technical-sheet-tab";
+import { MeasurementContextMenu } from "@/components/measurements/measurement-context-menu";
+import { MeasurementList } from "@/components/measurements/measurement-list";
 import {
   SegmentedControl,
   type TabOption,
 } from "@/components/missions/segmented-control";
 import { ZoneContextMenu } from "@/components/missions/zones/zone-context-menu";
 import { ZoneNode } from "@/components/missions/zones/zone-node";
+import { CaptureFab } from "@/components/photos/capture-fab";
+import { PhotoCaptionSheet } from "@/components/photos/photo-caption-sheet";
+import { PhotoGrid } from "@/components/photos/photo-thumbnail";
+import { PhotoViewerModal } from "@/components/photos/photo-viewer-modal";
 import { UnclassifiedPhotosSheet } from "@/components/photos/unclassified-photos-sheet";
 import { ScreenFade } from "@/components/screen-fade";
 import { ThemedText } from "@/components/themed-text";
@@ -18,12 +24,23 @@ import { ThemedView } from "@/components/themed-view";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { usePhotoCapture } from "@/hooks/use-photo-capture";
 import { useTheme } from "@/hooks/use-theme";
-import { useCreatePhoto, useMissionPhotos } from "@/queries/photos";
+import {
+  useBuildingMeasurements,
+  useDeleteMeasurement,
+} from "@/queries/measurements";
+import {
+  isUnclassifiedPhoto,
+  useBuildingPhotos,
+  useCreatePhoto,
+  useMissionPhotos,
+} from "@/queries/photos";
 import { useDeleteZone, useZonesTree } from "@/queries/zones";
 import { ApiError } from "@/services/api-client";
 import { getBuilding } from "@/services/building-services";
 import { usePendingPhotosStore } from "@/store/pending-photos-store";
 import type { Building } from "@/types/building";
+import type { Measurement } from "@/types/measurement";
+import type { Photo } from "@/types/photo";
 import type { ZoneTreeNode } from "@/types/zone";
 import { logger } from "@/utils/logger";
 import { countDescendants, findZoneNode } from "@/utils/zone-tree";
@@ -35,12 +52,13 @@ type TreeParams = {
   missionStatus?: string;
 };
 
-type BuildingTabKey = "zones" | "fiche" | "mesures";
+type BuildingTabKey = "zones" | "fiche" | "photos" | "mesures";
 
 const BUILDING_TABS: TabOption[] = [
   { key: "zones", label: "Zones" },
-  { key: "fiche", label: "Fiche technique" },
-  { key: "mesures", label: "Mesures", disabled: true },
+  { key: "fiche", label: "Fiche" },
+  { key: "photos", label: "Photos" },
+  { key: "mesures", label: "Mesures" },
 ];
 
 export default function ZonesTreeScreen() {
@@ -52,8 +70,13 @@ export default function ZonesTreeScreen() {
   const [activeTab, setActiveTab] = useState<BuildingTabKey>("zones");
   const [building, setBuilding] = useState<Building | null>(null);
   const [menuZone, setMenuZone] = useState<ZoneTreeNode | null>(null);
+  const [menuMeasurement, setMenuMeasurement] = useState<Measurement | null>(
+    null,
+  );
   const [showUnclassified, setShowUnclassified] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<Photo | null>(null);
+  const [viewedPhoto, setViewedPhoto] = useState<Photo | null>(null);
 
   const addPending = usePendingPhotosStore((state) => state.addPending);
 
@@ -66,14 +89,19 @@ export default function ZonesTreeScreen() {
   const deleteZoneMutation = useDeleteZone(buildingId);
 
   const { data: photos = [] } = useMissionPhotos(missionId ?? "");
+  const {
+    data: buildingPhotos = [],
+    error: buildingPhotosError,
+    isFetching: isFetchingBuildingPhotos,
+  } = useBuildingPhotos(buildingId);
+  const { data: buildingMeasurements = [], error: measurementsError } =
+    useBuildingMeasurements(buildingId);
   const createPhotoMutation = useCreatePhoto(missionId ?? "");
+  const deleteMeasurementMutation = useDeleteMeasurement(missionId ?? "");
   const { capture, isCapturing } = usePhotoCapture();
 
   const unclassifiedCount = useMemo(
-    () =>
-      photos.filter(
-        (photo) => !photo.zoneId && !photo.id.startsWith("pending-"),
-      ).length,
+    () => photos.filter(isUnclassifiedPhoto).length,
     [photos],
   );
 
@@ -175,6 +203,9 @@ export default function ZonesTreeScreen() {
 
   const canCapture = !archived && missionStatus === "EN_COURS";
 
+  const showAddRootFooter =
+    !isLoading && !error && tree.length > 0 && !archived;
+
   const handleCaptureFree = useCallback(async () => {
     if (!missionId) return;
     setUploadError(null);
@@ -182,9 +213,10 @@ export default function ZonesTreeScreen() {
     if (!uri) return;
 
     try {
-      await createPhotoMutation.mutateAsync({ uri });
+      const { created } = await createPhotoMutation.mutateAsync({ uri });
       logger.info("Photos", "Photo capturée (libre)", { missionId });
       setShowUnclassified(true);
+      setCapturedPhoto(created);
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -199,6 +231,104 @@ export default function ZonesTreeScreen() {
       });
     }
   }, [addPending, capture, createPhotoMutation, missionId]);
+
+  const handleCaptureOverview = useCallback(async () => {
+    if (!missionId || !buildingId) return;
+    setUploadError(null);
+    const uri = await capture();
+    if (!uri) return;
+
+    try {
+      const { created } = await createPhotoMutation.mutateAsync({
+        uri,
+        buildingId,
+      });
+      logger.info("Photos", "Vue d'ensemble capturée", { buildingId });
+      setCapturedPhoto(created);
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Impossible d'envoyer la photo. Vérifie ta connexion.";
+      addPending({ missionId, zoneId: null, buildingId, uri });
+      setUploadError(message);
+      logger.error("Photos", "Échec upload vue d'ensemble", {
+        buildingId,
+        message,
+      });
+    }
+  }, [addPending, buildingId, capture, createPhotoMutation, missionId]);
+
+  const handleCaptioned = useCallback(() => {
+    const wasFree = !capturedPhoto?.buildingId && !capturedPhoto?.zoneId;
+    setCapturedPhoto(null);
+    if (wasFree) setShowUnclassified(true);
+  }, [capturedPhoto]);
+
+  const handleAddMeasurement = () => {
+    if (!missionId) return;
+    router.push({
+      pathname: "/measurements/measurement-form" as any,
+      params: {
+        missionId,
+        mode: "create",
+        buildingId,
+        contextLabel: building?.name ?? "Bâtiment",
+      },
+    });
+  };
+
+  const handleEditMeasurement = (measurement: Measurement) => {
+    setMenuMeasurement(null);
+    if (!missionId) return;
+    router.push({
+      pathname: "/measurements/measurement-form" as any,
+      params: {
+        missionId,
+        mode: "edit",
+        measurementId: measurement.id,
+        measureType: measurement.measureType,
+        value: String(measurement.value),
+        unit: measurement.unit,
+        label: measurement.label ?? "",
+        buildingId,
+        contextLabel: building?.name ?? "Bâtiment",
+      },
+    });
+  };
+
+  const handleDeleteMeasurement = (measurement: Measurement) => {
+    setMenuMeasurement(null);
+    Alert.alert(
+      "Supprimer cette mesure ?",
+      `"${measurement.measureType}" sera définitivement supprimée.`,
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMeasurementMutation.mutateAsync(measurement.id);
+              logger.info("Mesures", "Mesure supprimée", {
+                id: measurement.id,
+              });
+            } catch (err) {
+              const msg =
+                err instanceof ApiError
+                  ? err.message
+                  : "Impossible de supprimer la mesure";
+              Alert.alert("Erreur", msg);
+              logger.error("Mesures", "Échec de la suppression", {
+                id: measurement.id,
+                message: msg,
+              });
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const handleDelete = useCallback(
     (zone: ZoneTreeNode) => {
@@ -357,6 +487,70 @@ export default function ZonesTreeScreen() {
             </>
           )}
 
+          {activeTab === "photos" && (
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="px-four pb-20"
+              showsVerticalScrollIndicator={false}
+            >
+              {buildingPhotosError && (
+                <ThemedText themeColor="danger" type="small" className="py-two">
+                  {buildingPhotosError instanceof ApiError
+                    ? `Chargement des photos : ${buildingPhotosError.message}`
+                    : "Impossible de charger les photos du bâtiment"}
+                </ThemedText>
+              )}
+              <PhotoGrid
+                photos={buildingPhotos}
+                emptyLabel="Aucune vue d'ensemble pour ce bâtiment"
+                onPhotoPress={setViewedPhoto}
+              />
+              {canCapture && (
+                <View className="mt-three">
+                  <PrimaryButton
+                    label="Capturer une vue d'ensemble"
+                    icon="camera-outline"
+                    onPress={handleCaptureOverview}
+                    disabled={isCapturing || createPhotoMutation.isPending}
+                    loading={createPhotoMutation.isPending}
+                    loadingLabel="Envoi..."
+                  />
+                </View>
+              )}
+            </ScrollView>
+          )}
+
+          {activeTab === "mesures" && (
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="px-four pb-20"
+              showsVerticalScrollIndicator={false}
+            >
+              {measurementsError && (
+                <ThemedText themeColor="danger" type="small" className="py-two">
+                  {measurementsError instanceof ApiError
+                    ? measurementsError.message
+                    : "Impossible de charger les mesures"}
+                </ThemedText>
+              )}
+              <MeasurementList
+                measurements={buildingMeasurements}
+                emptyLabel="Aucune mesure pour ce bâtiment"
+                canManage={canCapture}
+                onMenuPress={setMenuMeasurement}
+              />
+              {canCapture && (
+                <View className="mt-three">
+                  <PrimaryButton
+                    label="Ajouter une mesure"
+                    icon="add"
+                    onPress={handleAddMeasurement}
+                  />
+                </View>
+              )}
+            </ScrollView>
+          )}
+
           {activeTab === "fiche" && (
             <View className="flex-1 px-four">
               <BuildingTechnicalSheetTab
@@ -393,6 +587,16 @@ export default function ZonesTreeScreen() {
           </View>
         )}
 
+        {canCapture && activeTab === "zones" && (
+          <CaptureFab
+            onPress={handleCaptureFree}
+            onLongPress={() => setShowUnclassified(true)}
+            badgeCount={unclassifiedCount}
+            disabled={isCapturing || createPhotoMutation.isPending}
+            bottomOffset={showAddRootFooter ? 96 : 64}
+          />
+        )}
+
         <UnclassifiedPhotosSheet
           visible={showUnclassified}
           missionId={missionId ?? ""}
@@ -403,6 +607,14 @@ export default function ZonesTreeScreen() {
             setUploadError(null);
           }}
         />
+
+        <PhotoViewerModal
+          photo={viewedPhoto}
+          missionId={missionId ?? ""}
+          onClose={() => setViewedPhoto(null)}
+        />
+
+        <PhotoCaptionSheet photo={capturedPhoto} onClose={handleCaptioned} />
       </SafeAreaView>
 
       <ZoneContextMenu
@@ -412,6 +624,21 @@ export default function ZonesTreeScreen() {
         onEdit={handleEdit}
         onMove={handleMove}
         onDelete={handleDelete}
+      />
+      <ZoneContextMenu
+        zone={menuZone}
+        onClose={() => setMenuZone(null)}
+        onAddSubzone={handleAddSubzone}
+        onEdit={handleEdit}
+        onMove={handleMove}
+        onDelete={handleDelete}
+      />
+
+      <MeasurementContextMenu
+        measurement={menuMeasurement}
+        onClose={() => setMenuMeasurement(null)}
+        onEdit={handleEditMeasurement}
+        onDelete={handleDeleteMeasurement}
       />
     </ThemedView>
   );
